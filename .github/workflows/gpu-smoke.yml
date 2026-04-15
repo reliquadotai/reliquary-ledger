@@ -1,0 +1,17 @@
+name: GPU Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      smoke_script:
+        description: "Deploy script to run on the self-hosted GPU runner"
+        required: true
+        default: "deploy/smoke-inference.sh"
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, gpu]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run smoke
+        run: bash "${{ github.event.inputs.smoke_script }}"

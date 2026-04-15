@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Reliquary Audit Preview</title>
+  <desc id="desc">Stylized preview of the public audit index showing recent windows, acceptance totals, failures, and weights.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1020"/>
+      <stop offset="100%" stop-color="#101936"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="720" fill="url(#bg)"/>
+  <rect x="48" y="48" width="1104" height="624" rx="20" fill="#121a33" stroke="#253055"/>
+  <text x="84" y="108" fill="#eef2ff" font-family="Arial, sans-serif" font-size="34" font-weight="700">Reliquary Audit Index</text>
+  <text x="84" y="144" fill="#c7d2fe" font-family="Arial, sans-serif" font-size="18">Public summary of finalized window manifests, verification totals, and published weights.</text>
+  <rect x="84" y="184" width="1032" height="64" rx="14" fill="#1b2550"/>
+  <text x="110" y="224" fill="#eef2ff" font-family="Arial, sans-serif" font-size="18">Network: test</text>
+  <text x="360" y="224" fill="#eef2ff" font-family="Arial, sans-serif" font-size="18">Model: Qwen/Qwen2.5-1.5B-Instruct</text>
+  <text x="880" y="224" fill="#eef2ff" font-family="Arial, sans-serif" font-size="18">Windows indexed: 3</text>
+  <rect x="84" y="280" width="1032" height="308" rx="18" fill="#0f1730" stroke="#253055"/>
+  <rect x="84" y="280" width="1032" height="56" rx="18" fill="#1b2550"/>
+  <text x="110" y="315" fill="#eef2ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Window</text>
+  <text x="220" y="315" fill="#eef2ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Task Source</text>
+  <text x="430" y="315" fill="#eef2ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Accepted / Submitted</text>
+  <text x="690" y="315" fill="#eef2ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Hard / Soft Fails</text>
+  <text x="880" y="315" fill="#eef2ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Weights</text>
+  <text x="84" y="374" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">6910532</text>
+  <text x="220" y="374" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">reasoning_tasks</text>
+  <text x="470" y="374" fill="#8bd3ff" font-family="Arial, sans-serif" font-size="16">4 / 4</text>
+  <text x="730" y="374" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">0 / 0</text>
+  <text x="880" y="374" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">miner-uid-103: 1.0000</text>
+  <line x1="110" y1="400" x2="1090" y2="400" stroke="#253055"/>
+  <text x="84" y="458" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">6910531</text>
+  <text x="220" y="458" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">reasoning_tasks</text>
+  <text x="470" y="458" fill="#8bd3ff" font-family="Arial, sans-serif" font-size="16">3 / 4</text>
+  <text x="730" y="458" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">0 / 1</text>
+  <text x="880" y="458" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">miner-uid-103: 0.8750</text>
+  <line x1="110" y1="484" x2="1090" y2="484" stroke="#253055"/>
+  <text x="84" y="542" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">6910530</text>
+  <text x="220" y="542" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">dataset_prompts</text>
+  <text x="470" y="542" fill="#8bd3ff" font-family="Arial, sans-serif" font-size="16">2 / 4</text>
+  <text x="730" y="542" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">0 / 2</text>
+  <text x="880" y="542" fill="#eef2ff" font-family="Arial, sans-serif" font-size="16">miner-uid-103: 0.5000</text>
+  <rect x="84" y="614" width="360" height="28" rx="14" fill="#1b2550"/>
+  <text x="104" y="633" fill="#c7d2fe" font-family="Arial, sans-serif" font-size="14">Artifacts remain private by default; the audit layer is public.</text>
+</svg>
