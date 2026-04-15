@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Reliquary GPU and service metrics collector
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=30s
+Unit=reliquary-gpu-metrics.service
+
+[Install]
+WantedBy=timers.target

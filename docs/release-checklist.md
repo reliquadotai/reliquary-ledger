@@ -17,6 +17,9 @@ Use this checklist before treating the repo as a public-facing subnet surface.
 - real-model readonly smoke passes
 - live miner/validator cycle succeeds
 - audit publish succeeds
+- metrics exporter scrape succeeds
+- Prometheus targets are healthy
+- Grafana dashboards load with provisioned datasources
 
 ## Storage Posture
 
@@ -29,5 +32,6 @@ Use this checklist before treating the repo as a public-facing subnet surface.
 
 - dedicated websocket endpoint decision is documented
 - runtime status command works
+- runtime health command works
 - rollback steps are documented
 - release notes clearly explain testnet scope and known limitations

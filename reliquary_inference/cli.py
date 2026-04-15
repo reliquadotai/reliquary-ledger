@@ -12,10 +12,12 @@ from .audit import build_audit_index
 from .chain.adapter import BittensorChainAdapter, LocalChainAdapter
 from .config import load_config
 from .dataset.task_sources import build_task_source
+from .metrics import MetricsCache, serve_metrics
 from .miner.engine import MiningEngine
 from .protocol.artifacts import make_artifact
+from .status import status_summary
 from .storage.registry import LocalRegistry, R2Registry
-from .utils.json_io import read_json, write_json
+from .utils.json_io import write_json
 from .validator.service import finalize_window_manifest, validate_window, write_run_manifest
 
 app = typer.Typer(no_args_is_help=True)
@@ -124,87 +126,6 @@ def _validate_and_score_single_window(cfg: dict, registry, chain, window_context
         publish_result=publish_result,
     )
     return scorecard, finalized
-
-
-def _bucket_mode(cfg: dict) -> str:
-    has_public_audit = bool(str(cfg.get("public_audit_base_url", "")).strip())
-    has_dedicated_audit_target = bool(str(cfg.get("audit_bucket", "")).strip())
-    exposes_public_artifacts = bool(cfg.get("expose_public_artifact_urls", False))
-    if has_dedicated_audit_target and has_public_audit:
-        return "private_artifacts_public_audit"
-    if has_public_audit and exposes_public_artifacts:
-        return "public_artifacts_public_audit"
-    if has_public_audit:
-        return "private_artifacts_public_audit_links"
-    if str(cfg["storage_backend"]) == "r2":
-        return "private_r2"
-    return "local"
-
-
-def _chain_endpoint_mode(cfg: dict) -> str:
-    endpoint = str(cfg.get("chain_endpoint", "")).strip()
-    if str(cfg["network"]) in {"local", "mock"}:
-        return "local"
-    if endpoint:
-        return "dedicated"
-    return "network_default"
-
-
-def _status_summary(cfg: dict, registry) -> dict:
-    latest_completion = None
-    latest_manifest = None
-    latest_publish = None
-    export_root = cfg.get("export_dir", getattr(registry, "export_root", "./exports"))
-    audit_index_path = Path(str(export_root)) / "audit" / "index.json"
-    if audit_index_path.exists():
-        payload = read_json(audit_index_path)
-        if payload.get("windows"):
-            latest_window = payload["windows"][0]
-            latest_manifest = {
-                "window_id": latest_window["window_id"],
-                "payload": {
-                    "chain_publish_result": latest_window.get("chain_publish_result"),
-                },
-            }
-            latest_publish = latest_window.get("chain_publish_result")
-            latest_completion = {"window_id": latest_window["window_id"]}
-    if latest_manifest is None:
-        completions = registry.list_artifacts("completion")
-        finalized_manifests = [
-            manifest
-            for manifest in registry.list_artifacts("window_manifest")
-            if manifest["payload"].get("chain_publish_result") is not None
-        ]
-        latest_completion = max(
-            completions,
-            key=lambda item: (int(item["window_id"]), str(item["created_at"])),
-            default=None,
-        )
-        latest_manifest = max(
-            finalized_manifests,
-            key=lambda item: (int(item["window_id"]), str(item["created_at"])),
-            default=None,
-        )
-        latest_publish = latest_manifest["payload"]["chain_publish_result"] if latest_manifest else None
-    return {
-        "network": cfg["network"],
-        "netuid": int(cfg["netuid"]),
-        "model_ref": cfg["model_ref"],
-        "task_source": cfg["task_source"],
-        "storage_backend": cfg["storage_backend"],
-        "bucket_mode": _bucket_mode(cfg),
-        "chain_endpoint_mode": _chain_endpoint_mode(cfg),
-        "chain_endpoint": cfg.get("chain_endpoint", ""),
-        "artifact_bucket": cfg.get("r2_bucket", "") if str(cfg["storage_backend"]) == "r2" else "",
-        "audit_bucket": cfg.get("audit_bucket", ""),
-        "public_audit_base_url": cfg.get("public_audit_base_url", ""),
-        "latest_window_mined": int(latest_completion["window_id"]) if latest_completion else None,
-        "latest_weight_publication": {
-            "window_id": int(latest_manifest["window_id"]) if latest_manifest else None,
-            "success": latest_publish.get("success") if isinstance(latest_publish, dict) else None,
-            "uids": latest_publish.get("uids") if isinstance(latest_publish, dict) else None,
-        },
-    }
 
 
 @app.command("publish-tasks")
@@ -361,7 +282,7 @@ def status_command(
 ) -> None:
     cfg = _cfg()
     registry = _registry(cfg)
-    summary = _status_summary(cfg, registry)
+    summary = status_summary(cfg, registry)
     if as_json:
         console.print_json(json.dumps(summary))
         return
@@ -386,6 +307,24 @@ def status_command(
         "latest weight publication: "
         f"[bold]{latest_publish['window_id']}[/bold] "
         f"success={latest_publish['success']} uids={latest_publish['uids']}"
+    )
+
+
+@app.command("metrics-exporter")
+def metrics_exporter_command(
+    bind: Annotated[str | None, typer.Option("--bind")] = None,
+    port: Annotated[int | None, typer.Option("--port")] = None,
+) -> None:
+    cfg = _cfg()
+    registry = _registry(cfg)
+    chain = _chain(cfg)
+    metrics_bind = bind or str(cfg["metrics_bind"])
+    metrics_port = port or int(cfg["metrics_port"])
+    console.print(f"serving metrics on [bold]{metrics_bind}:{metrics_port}[/bold]")
+    serve_metrics(
+        bind=metrics_bind,
+        port=metrics_port,
+        cache=MetricsCache(cfg=cfg, registry=registry, chain=chain),
     )
 
 

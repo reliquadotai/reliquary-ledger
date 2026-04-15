@@ -1,0 +1,9 @@
+[Unit]
+Description=Reliquary GPU and service metrics collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/bin/bash /srv/reliquary-inference/current/deploy/monitoring/bin/collect-gpu-metrics.sh

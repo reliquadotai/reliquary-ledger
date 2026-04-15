@@ -37,7 +37,10 @@ Use this order for a clean staging or testnet bring-up:
 9. `bash deploy/runtime-status.sh`
 10. `bash deploy/testnet-readonly-smoke.sh`
 11. `bash deploy/real-model-readonly-smoke.sh`
-12. `sudo CREATE_SUBNET=false ENABLE_SERVICES=true bash deploy/activate-testnet.sh`
+12. `sudo bash deploy/install-monitoring.sh`
+13. `sudo bash deploy/apply-monitoring-profile.sh`
+14. `bash deploy/runtime-health.sh`
+15. `sudo CREATE_SUBNET=false ENABLE_SERVICES=true bash deploy/activate-testnet.sh`
 
 If you are switching an existing node from R2-backed artifacts to local private artifacts, mirror the current window state first:
 
@@ -132,6 +135,21 @@ The runtime status path summarizes:
 - current storage and bucket mode
 - chain endpoint mode
 - public audit target and bucket selection
+
+## Monitoring
+
+Use the dedicated monitoring runbook for the full Grafana and Prometheus setup:
+
+- [monitoring.md](monitoring.md)
+
+The supported baseline is:
+
+- Prometheus on `127.0.0.1:9090`
+- Grafana on `127.0.0.1:3000`
+- node exporter on `127.0.0.1:9100`
+- `reliquary-inference metrics-exporter` on `127.0.0.1:9108`
+
+Access those services through SSH tunneling rather than public exposure.
 
 ## Rollback
 

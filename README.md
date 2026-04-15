@@ -58,6 +58,7 @@ Included:
 - local registry for development
 - R2-backed registry for staging and testnet
 - public audit index with stable `audit/index.json` and `audit/index.html`
+- private-first monitoring with Prometheus, Grafana, node exporter, and a local metrics exporter
 
 Excluded:
 
@@ -76,6 +77,8 @@ Excluded:
 - [Protocol](docs/protocol.md)
 - [Scoring](docs/scoring.md)
 - [Audit surface](docs/audit.md)
+- [Monitoring](docs/monitoring.md)
 - [Deployment guide](docs/deployment.md)
 - [Readiness review](docs/readiness-review.md)
+- [Review findings](docs/review-findings.md)
 - [Release checklist](docs/release-checklist.md)

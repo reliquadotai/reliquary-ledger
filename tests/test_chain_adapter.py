@@ -94,3 +94,26 @@ def test_bittensor_adapter_reuses_cached_subtensor(monkeypatch) -> None:
     assert adapter.get_current_block() == 321
     assert adapter.get_block_hash(120) == f"0x{120:064x}"
     assert calls == [(None, "wss://example.test")]
+
+
+def test_describe_hotkeys_uses_metagraph_mapping(monkeypatch) -> None:
+    adapter = BittensorChainAdapter(
+        network="test",
+        netuid=1,
+        wallet_name="wallet",
+        hotkey_name="validator",
+        wallet_path="/tmp/wallets",
+        use_drand=False,
+    )
+    monkeypatch.setattr(
+        adapter,
+        "get_metagraph",
+        lambda: types.SimpleNamespace(hotkeys=["5miner", "5validator"], uids=[11, 12]),
+    )
+
+    details = adapter.describe_hotkeys({"miner": "5miner", "validator": "5missing"})
+
+    assert details == {
+        "miner": {"hotkey": "5miner", "registered": True, "uid": 11},
+        "validator": {"hotkey": "5missing", "registered": False, "uid": -1},
+    }

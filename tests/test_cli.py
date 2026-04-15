@@ -1,6 +1,7 @@
 from reliquary_inference.chain.adapter import BittensorChainAdapter, LocalChainAdapter
-from reliquary_inference.cli import _bucket_mode, _chain, _status_summary
+from reliquary_inference.cli import _chain
 from reliquary_inference.protocol.artifacts import make_artifact
+from reliquary_inference.status import bucket_mode, status_summary
 from reliquary_inference.storage.registry import LocalRegistry
 
 
@@ -67,7 +68,7 @@ def test_status_summary_reports_latest_mined_and_published_windows(tmp_path) -> 
         "expose_public_artifact_urls": False,
     }
 
-    summary = _status_summary(cfg, registry)
+    summary = status_summary(cfg, registry)
 
     assert summary["latest_window_mined"] == 10
     assert summary["latest_weight_publication"]["window_id"] == 9
@@ -84,7 +85,7 @@ def test_bucket_mode_marks_public_artifacts_when_urls_are_exposed() -> None:
         "public_audit_base_url": "https://pub.example.com",
         "expose_public_artifact_urls": True,
     }
-    assert _bucket_mode(cfg) == "public_artifacts_public_audit"
+    assert bucket_mode(cfg) == "public_artifacts_public_audit"
 
 
 def test_status_summary_hides_artifact_bucket_when_storage_is_local(tmp_path) -> None:
@@ -101,7 +102,7 @@ def test_status_summary_hides_artifact_bucket_when_storage_is_local(tmp_path) ->
         "expose_public_artifact_urls": False,
     }
 
-    summary = _status_summary(cfg, registry)
+    summary = status_summary(cfg, registry)
 
     assert summary["artifact_bucket"] == ""
     assert summary["audit_bucket"] == "reliquary"

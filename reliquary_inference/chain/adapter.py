@@ -132,6 +132,23 @@ class BittensorChainAdapter:
     def get_metagraph(self):
         return self._with_subtensor(lambda subtensor: subtensor.metagraph(self.netuid))
 
+    def describe_hotkeys(self, hotkeys: dict[str, str]) -> dict[str, dict[str, Any]]:
+        metagraph = self.get_metagraph()
+        hotkey_to_uid = {
+            str(hotkey): int(uid)
+            for hotkey, uid in zip(metagraph.hotkeys, metagraph.uids)
+        }
+        details: dict[str, dict[str, Any]] = {}
+        for role, hotkey in hotkeys.items():
+            normalized = str(hotkey).strip()
+            uid = hotkey_to_uid.get(normalized)
+            details[role] = {
+                "hotkey": normalized,
+                "registered": uid is not None,
+                "uid": int(uid) if uid is not None else -1,
+            }
+        return details
+
     def get_window_context(self, *, cfg: dict[str, Any], window_id: int | None = None) -> WindowContext:
         current_block = self.get_current_block()
         target_window = window_id if window_id is not None else (current_block // WINDOW_LENGTH) * WINDOW_LENGTH

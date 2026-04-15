@@ -1,0 +1,58 @@
+groups:
+  - name: reliquary-live
+    rules:
+      - alert: ReliquaryNoSuccessfulWeightPublication
+        expr: reliquary_latest_window_mined - reliquary_latest_weight_publication_window > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Weight publication is lagging mined windows.
+
+      - alert: ReliquaryChainScrapeStale
+        expr: reliquary_chain_scrape_age_seconds > 300
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Chain scrape is stale.
+
+      - alert: ReliquaryAuditPublishStale
+        expr: reliquary_audit_publish_age_seconds > 900
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Audit publish is stale.
+
+      - alert: ReliquaryGpuUnavailable
+        expr: reliquary_gpu_available == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: GPU metrics are unavailable on the node.
+
+      - alert: ReliquaryLowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}) < 0.10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Root filesystem free space is below 10 percent.
+
+      - alert: ReliquaryServiceRestarting
+        expr: changes(reliquary_systemd_unit_nrestarts{unit=~"inference-miner.service|inference-validator.service|reliquary-metrics-exporter.service"}[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: A Reliquary service is restarting repeatedly.
+
+      - alert: ReliquaryHotkeyRegistrationMismatch
+        expr: min by (role, hotkey) (reliquary_hotkey_registered) == 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: A configured hotkey is not registered on the target subnet.

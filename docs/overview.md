@@ -84,6 +84,7 @@ The current repository includes:
 - single-GPU Hugging Face miner and validator paths on a real RTX staging box
 - R2-backed artifacts
 - public audit index
+- private-first Prometheus and Grafana monitoring
 - deterministic `dataset_prompts` and `reasoning_tasks`
 
 See [status.md](status.md) for the current live snapshot.

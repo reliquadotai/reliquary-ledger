@@ -44,6 +44,10 @@ def load_config() -> dict[str, object]:
     artifact_dir = _env_str("RELIQUARY_INFERENCE_ARTIFACT_DIR", f"{state_root}/artifacts")
     export_dir = _env_str("RELIQUARY_INFERENCE_EXPORT_DIR", f"{state_root}/exports")
     log_dir = _env_str("RELIQUARY_INFERENCE_LOG_DIR", f"{state_root}/logs")
+    wallet_public_file = _env_str(
+        "RELIQUARY_INFERENCE_WALLET_PUBLIC_FILE",
+        f"{state_root}/bootstrap/wallet-public.json",
+    )
     miner_id = _env_str("RELIQUARY_INFERENCE_MINER_ID", "local-miner")
     signing_secret = _env_str("RELIQUARY_INFERENCE_SIGNING_SECRET", "local-secret")
     return {
@@ -51,10 +55,15 @@ def load_config() -> dict[str, object]:
         "artifact_dir": artifact_dir,
         "export_dir": export_dir,
         "log_dir": log_dir,
+        "wallet_public_file": wallet_public_file,
         "model_ref": _env_str("RELIQUARY_INFERENCE_MODEL_REF", "toy://local-inference-v1"),
         "task_source": _env_str("RELIQUARY_INFERENCE_TASK_SOURCE", "reasoning_tasks"),
         "task_count": _env_int("RELIQUARY_INFERENCE_TASK_COUNT", 8),
         "poll_interval": _env_int("RELIQUARY_INFERENCE_POLL_INTERVAL", 10),
+        "metrics_bind": _env_str("RELIQUARY_INFERENCE_METRICS_BIND", "127.0.0.1"),
+        "metrics_port": _env_int("RELIQUARY_INFERENCE_METRICS_PORT", 9108),
+        "metrics_refresh_interval": _env_int("RELIQUARY_INFERENCE_METRICS_REFRESH_INTERVAL", 15),
+        "metrics_window_count": _env_int("RELIQUARY_INFERENCE_METRICS_WINDOW_COUNT", 10),
         "samples_per_task": _env_int("RELIQUARY_INFERENCE_SAMPLES_PER_TASK", 1),
         "max_new_tokens": _env_int("RELIQUARY_INFERENCE_MAX_NEW_TOKENS", 48),
         "device": _env_str("RELIQUARY_INFERENCE_DEVICE", "cpu"),
@@ -63,6 +72,8 @@ def load_config() -> dict[str, object]:
         "vllm_base_url": _env_str("RELIQUARY_INFERENCE_VLLM_BASE_URL", ""),
         "miner_id": miner_id,
         "validator_id": _env_str("RELIQUARY_INFERENCE_VALIDATOR_ID", "local-validator"),
+        "miner_ss58": _env_str("RELIQUARY_INFERENCE_MINER_SS58", ""),
+        "validator_ss58": _env_str("RELIQUARY_INFERENCE_VALIDATOR_SS58", ""),
         "signature_scheme": _env_str("RELIQUARY_INFERENCE_SIGNATURE_SCHEME", "local_hmac"),
         "signing_secret": signing_secret,
         "local_signer_id": _env_str(

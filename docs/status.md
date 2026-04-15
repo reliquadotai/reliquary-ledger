@@ -23,12 +23,14 @@ This page is the sanitized public status surface for Reliquary.
 - live miner and validator services on testnet
 - on-chain weight publication
 - audit index generation and publishing
+- localhost-only Prometheus and Grafana monitoring with exporter-backed subnet metrics
 
 ## Operational Posture
 
 - inference-only runtime
 - proof-first and audit-first
 - private artifacts with a public audit surface
+- private monitoring surfaces through SSH tunneling
 - explicit websocket endpoint support
 - testnet-first deployment
 
@@ -37,4 +39,5 @@ This page is the sanitized public status surface for Reliquary.
 - public testnet websocket endpoints can still rate-limit under load; a dedicated endpoint is recommended for sustained operations
 - the current live public audit is intentionally lightweight, not a full explorer
 - a fully separate public audit bucket or custom domain still depends on operator-managed bucket permissions
+- alert rules are provisioned, but notification routing is intentionally left to the operator
 - the repo is testnet-first today, not presented as a finished mainnet deployment
