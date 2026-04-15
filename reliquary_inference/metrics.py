@@ -33,18 +33,39 @@ def _window_totals(audit_payload: dict[str, Any] | None, *, limit: int) -> dict[
         "soft_failed": 0.0,
         "publish_success": 0.0,
         "publish_failure": 0.0,
+        "reasoning_eval_count": 0.0,
+        "reasoning_correct_total": 0.0,
+        "reasoning_format_ok_total": 0.0,
+        "reasoning_policy_compliance_total": 0.0,
     }
     for window in windows:
         verification_totals = window.get("verification_totals", {})
+        window_metrics = window.get("window_metrics", {})
         totals["submitted"] += float(verification_totals.get("submitted", 0))
         totals["accepted"] += float(verification_totals.get("accepted", 0))
         totals["hard_failed"] += float(verification_totals.get("hard_failed", 0))
         totals["soft_failed"] += float(verification_totals.get("soft_failed", 0))
+        totals["reasoning_eval_count"] += float(window_metrics.get("reasoning_eval_count", 0))
+        totals["reasoning_correct_total"] += float(window_metrics.get("reasoning_correct_total", 0.0))
+        totals["reasoning_format_ok_total"] += float(window_metrics.get("reasoning_format_ok_total", 0.0))
+        totals["reasoning_policy_compliance_total"] += float(window_metrics.get("reasoning_policy_compliance_total", 0.0))
         publish_result = window.get("chain_publish_result") or {}
         if publish_result.get("success") is True:
             totals["publish_success"] += 1.0
         elif publish_result.get("success") is False:
             totals["publish_failure"] += 1.0
+    return totals
+
+
+def _task_source_totals(audit_payload: dict[str, Any] | None, *, limit: int) -> dict[str, dict[str, float]]:
+    windows = list((audit_payload or {}).get("windows", []))[:limit]
+    totals: dict[str, dict[str, float]] = {}
+    for window in windows:
+        task_source = str(window.get("task_source", "unknown"))
+        verification_totals = window.get("verification_totals", {})
+        bucket = totals.setdefault(task_source, {"submitted": 0.0, "accepted": 0.0})
+        bucket["submitted"] += float(verification_totals.get("submitted", 0))
+        bucket["accepted"] += float(verification_totals.get("accepted", 0))
     return totals
 
 
@@ -133,6 +154,7 @@ def collect_metrics_snapshot(
     summary = status_summary(cfg, registry)
     audit_payload = read_audit_index(cfg, registry)
     rolling_totals = _window_totals(audit_payload, limit=int(cfg.get("metrics_window_count", 10)))
+    task_source_totals = _task_source_totals(audit_payload, limit=int(cfg.get("metrics_window_count", 10)))
     chain_state, last_success = _chain_state(
         cfg=cfg,
         chain=chain,
@@ -144,6 +166,16 @@ def collect_metrics_snapshot(
     latest_publish = summary.get("latest_weight_publication", {})
     submitted = rolling_totals["submitted"]
     acceptance_rate = (rolling_totals["accepted"] / submitted) if submitted else 0.0
+    reasoning_eval_count = rolling_totals["reasoning_eval_count"]
+    reasoning_correct_rate = (
+        rolling_totals["reasoning_correct_total"] / reasoning_eval_count if reasoning_eval_count else 0.0
+    )
+    reasoning_format_rate = (
+        rolling_totals["reasoning_format_ok_total"] / reasoning_eval_count if reasoning_eval_count else 0.0
+    )
+    reasoning_policy_compliance = (
+        rolling_totals["reasoning_policy_compliance_total"] / reasoning_eval_count if reasoning_eval_count else 0.0
+    )
     snapshot = {
         "generated_at": now,
         "runtime": summary,
@@ -156,9 +188,16 @@ def collect_metrics_snapshot(
         "rolling_soft_failed_total": rolling_totals["soft_failed"],
         "rolling_rejected_total": rolling_totals["hard_failed"] + rolling_totals["soft_failed"],
         "rolling_acceptance_rate": acceptance_rate,
+        "rolling_reasoning_eval_count": reasoning_eval_count,
+        "rolling_reasoning_correct_rate": reasoning_correct_rate,
+        "rolling_reasoning_format_rate": reasoning_format_rate,
+        "rolling_reasoning_policy_compliance": reasoning_policy_compliance,
+        "task_source_totals": task_source_totals,
         "publish_success_total": rolling_totals["publish_success"],
         "publish_failure_total": rolling_totals["publish_failure"],
         "latest_window_mined": float(summary.get("latest_window_mined") or -1),
+        "latest_importable_window": float(summary.get("latest_importable_window") or -1),
+        "import_lag_windows": float(summary.get("import_lag_windows") or 0),
         "latest_weight_publication_window": float(latest_publish.get("window_id") or -1),
         "latest_weight_publication_success": 1.0 if latest_publish.get("success") is True else 0.0,
         "latest_weight_publication_uid_count": float(len(latest_publish.get("uids") or [])),
@@ -217,6 +256,14 @@ def render_metrics(snapshot: dict[str, Any]) -> str:
             snapshot["latest_weight_publication_window"],
             "Latest window with a finalized weight publication.",
         ),
+        "reliquary_latest_importable_window": (
+            snapshot["latest_importable_window"],
+            "Latest finalized window available for import by downstream training runtimes.",
+        ),
+        "reliquary_import_lag_windows": (
+            snapshot["import_lag_windows"],
+            "Difference between the latest mined window and the latest finalized importable window.",
+        ),
         "reliquary_latest_weight_publication_success": (
             snapshot["latest_weight_publication_success"],
             "Whether the latest finalized weight publication succeeded.",
@@ -248,6 +295,18 @@ def render_metrics(snapshot: dict[str, Any]) -> str:
         "reliquary_rolling_acceptance_rate": (
             snapshot["rolling_acceptance_rate"],
             "Acceptance rate across the rolling audit window.",
+        ),
+        "reliquary_rolling_reasoning_correct_rate": (
+            snapshot["rolling_reasoning_correct_rate"],
+            "Reasoning correctness rate across recent finalized windows.",
+        ),
+        "reliquary_rolling_reasoning_format_rate": (
+            snapshot["rolling_reasoning_format_rate"],
+            "Reasoning final-answer format rate across recent finalized windows.",
+        ),
+        "reliquary_rolling_reasoning_policy_compliance": (
+            snapshot["rolling_reasoning_policy_compliance"],
+            "Mean reasoning policy-compliance score across recent finalized windows.",
         ),
         "reliquary_publish_success_total": (
             snapshot["publish_success_total"],
@@ -292,6 +351,23 @@ def render_metrics(snapshot: dict[str, Any]) -> str:
     }
     for metric_name, (value, help_text) in simple_metrics.items():
         lines.extend(_metric_lines(metric_name, float(value), help_text=help_text))
+    for task_source, totals in sorted(snapshot["task_source_totals"].items()):
+        lines.extend(
+            _metric_lines(
+                "reliquary_task_source_submitted_total",
+                float(totals["submitted"]),
+                help_text="Submitted completions across the rolling audit window by task source.",
+                labels={"task_source": task_source},
+            )
+        )
+        lines.extend(
+            _metric_lines(
+                "reliquary_task_source_accepted_total",
+                float(totals["accepted"]),
+                help_text="Accepted completions across the rolling audit window by task source.",
+                labels={"task_source": task_source},
+            )
+        )
     if snapshot["audit_generated_at"] is not None:
         lines.extend(
             _metric_lines(

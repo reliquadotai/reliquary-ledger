@@ -39,6 +39,22 @@ def validate_window(
         "copycat_rejections": 0,
         "digest_rejections": 0,
     }
+    window_metrics = {
+        "submitted_count": len(all_completions),
+        "accepted_count": 0,
+        "training_eligible_count": 0,
+        "hard_failed_count": 0,
+        "soft_failed_count": 0,
+        "copycat_rejections": 0,
+        "digest_rejections": 0,
+        "reasoning_eval_count": 0,
+        "reasoning_correct_total": 0.0,
+        "reasoning_format_ok_total": 0.0,
+        "reasoning_policy_compliance_total": 0.0,
+        "reasoning_difficulty_total": 0.0,
+        "reasoning_final_answer_count": 0,
+        "per_task_source": {},
+    }
     for completion in all_completions:
         miner_id = completion["producer_id"]
         payload = completion["payload"]
@@ -62,16 +78,52 @@ def validate_window(
             miner_totals[miner_id]["valid"] += 1
             miner_totals[miner_id]["unique"] += 1
             verification_totals["accepted"] += 1
+            window_metrics["accepted_count"] += 1
+            window_metrics["training_eligible_count"] += 1
         elif report["hard_fail_reason"] is not None:
             miner_totals[miner_id]["hard_failed"] += 1
             verification_totals["hard_failed"] += 1
+            window_metrics["hard_failed_count"] += 1
         else:
             miner_totals[miner_id]["soft_failed"] += 1
             verification_totals["soft_failed"] += 1
+            window_metrics["soft_failed_count"] += 1
             if report["soft_fail_reason"] == "dataset_copycat":
                 verification_totals["copycat_rejections"] += 1
+                window_metrics["copycat_rejections"] += 1
             if report["soft_fail_reason"] == "duplicate_completion_digest":
                 verification_totals["digest_rejections"] += 1
+                window_metrics["digest_rejections"] += 1
+        task = report.get("task_binding_summary", {}).get("task", {})
+        task_source = str(report["task_source"])
+        task_source_totals = window_metrics["per_task_source"].setdefault(
+            task_source,
+            {
+                "submitted": 0,
+                "accepted": 0,
+                "correct_total": 0.0,
+                "format_ok_total": 0.0,
+                "policy_compliance_total": 0.0,
+            },
+        )
+        task_source_totals["submitted"] += 1
+        if report["accepted"]:
+            task_source_totals["accepted"] += 1
+        semantic_evaluation = report.get("semantic_evaluation", {})
+        if task_source == "reasoning_tasks":
+            window_metrics["reasoning_eval_count"] += 1
+            window_metrics["reasoning_correct_total"] += float(semantic_evaluation.get("correctness_or_judge", 0.0))
+            window_metrics["reasoning_format_ok_total"] += 1.0 if semantic_evaluation.get("format_ok") else 0.0
+            window_metrics["reasoning_policy_compliance_total"] += float(semantic_evaluation.get("policy_compliance", 0.0))
+            window_metrics["reasoning_difficulty_total"] += float(task.get("difficulty", 0.0))
+            if semantic_evaluation.get("final_answer") is not None:
+                window_metrics["reasoning_final_answer_count"] += 1
+            task_source_totals["correct_total"] += float(semantic_evaluation.get("correctness_or_judge", 0.0))
+            task_source_totals["format_ok_total"] += 1.0 if semantic_evaluation.get("format_ok") else 0.0
+            task_source_totals["policy_compliance_total"] += float(semantic_evaluation.get("policy_compliance", 0.0))
+        contamination_tags = set(payload.get("contamination_tags", []))
+        forbidden_overlap_tags = set(task.get("contamination_policy", {}).get("forbidden_overlap_tags", []))
+        contamination_overlap = sorted(contamination_tags & forbidden_overlap_tags)
         verdicts.append(
             make_artifact(
                 artifact_type="verdict",
@@ -92,6 +144,18 @@ def validate_window(
                     "task_binding_summary": report["task_binding_summary"],
                     "copycat_summary": {"status": report["copycat_status"]},
                     "task_source": report["task_source"],
+                    "task_id": payload["task_id"],
+                    "task_index": payload.get("task_index"),
+                    "difficulty": float(task.get("difficulty", 0.0)),
+                    "task_tags": list(task.get("tags", [])),
+                    "contamination_tags": list(payload.get("contamination_tags", [])),
+                    "contamination_overlap_tags": contamination_overlap,
+                    "final_answer": semantic_evaluation.get("final_answer"),
+                    "correctness": float(semantic_evaluation.get("correctness_or_judge", 0.0)),
+                    "policy_compliance": float(semantic_evaluation.get("policy_compliance", 0.0)),
+                    "format_ok": bool(semantic_evaluation.get("format_ok", False)),
+                    "format_reason": semantic_evaluation.get("format_reason"),
+                    "semantic_evaluation": semantic_evaluation,
                 },
             )
         )
@@ -112,6 +176,7 @@ def validate_window(
         verdict_bundle_ref=verdict_bundle_ref,
         miner_totals=miner_totals,
         verification_totals=verification_totals,
+        window_metrics=window_metrics,
     )
     registry.put_artifact(scorecard)
     window_manifest = make_artifact(
@@ -148,6 +213,7 @@ def score_window(
     verdict_bundle_ref: dict[str, Any],
     miner_totals: dict[str, dict[str, int]],
     verification_totals: dict[str, int],
+    window_metrics: dict[str, Any],
 ) -> dict[str, Any]:
     weights = compute_weights(miner_totals)
     return make_artifact(
@@ -162,6 +228,7 @@ def score_window(
             "weights": weights,
             "miner_totals": miner_totals,
             "verification_totals": verification_totals,
+            "window_metrics": window_metrics,
             "completion_bundle_refs": completion_bundle_refs,
             "verdict_bundle_ref": verdict_bundle_ref,
         },

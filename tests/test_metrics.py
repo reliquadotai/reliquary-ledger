@@ -84,6 +84,12 @@ def test_collect_metrics_snapshot_uses_audit_and_chain_state(tmp_path: Path) -> 
                 "hard_failed": 1,
                 "soft_failed": 0,
             },
+            "window_metrics": {
+                "reasoning_eval_count": 4,
+                "reasoning_correct_total": 3.0,
+                "reasoning_format_ok_total": 4.0,
+                "reasoning_policy_compliance_total": 3.5,
+            },
             "weights": {"5miner": 1.0},
             "miner_totals": {"5miner": {"accepted": 3}},
         },
@@ -117,11 +123,15 @@ def test_collect_metrics_snapshot_uses_audit_and_chain_state(tmp_path: Path) -> 
     assert snapshot["rolling_submitted_total"] == 4.0
     assert snapshot["rolling_accepted_total"] == 3.0
     assert snapshot["rolling_acceptance_rate"] == 0.75
+    assert snapshot["rolling_reasoning_correct_rate"] == 0.75
+    assert snapshot["latest_importable_window"] == 6911280.0
     assert snapshot["publish_success_total"] == 1.0
     assert snapshot["chain"]["hotkeys"]["miner"]["uid"] == 103
 
     rendered = render_metrics(snapshot)
     assert "reliquary_rolling_acceptance_rate 0.75" in rendered
+    assert "reliquary_rolling_reasoning_format_rate 1.0" in rendered
+    assert 'reliquary_task_source_accepted_total{task_source="reasoning_tasks"} 3.0' in rendered
     assert 'reliquary_hotkey_registered{hotkey="5miner",role="miner"} 1.0' in rendered
 
 

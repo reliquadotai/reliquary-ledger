@@ -13,7 +13,11 @@ from ..protocol.sketch_verifier import SketchProofVerifier
 from ..protocol.signatures import sign_commit_binding
 from ..shared.forward import forward_single_layer
 from ..shared.hf_compat import resolve_hidden_size
-from ..shared.modeling import decode_completion, load_model_bundle
+from ..shared.modeling import (
+    compute_completion_logprobs,
+    decode_completion,
+    load_model_bundle,
+)
 
 
 class MiningEngine:
@@ -95,7 +99,14 @@ class MiningEngine:
             wallet=self.wallet,
         )
         prompt_length = int(prompt_ids.shape[1])
+        prompt_token_ids = prompt_ids[0].detach().cpu().tolist()
         completion_token_ids = full_tokens[prompt_length:]
+        completion_logprobs = compute_completion_logprobs(
+            model=self.model,
+            full_token_ids=full_tokens,
+            prompt_length=prompt_length,
+            device=str(next(self.model.parameters()).device),
+        )
         upload_ref = registry.predicted_completion_bundle_ref(
             window_id=int(window_context["window_id"]),
             miner_id=miner_id,
@@ -111,7 +122,11 @@ class MiningEngine:
                 "task_index": task.get("dataset_index", task.get("order_index")),
                 "prompt_hash": task.get("prompt_hash"),
                 "tokens": full_tokens,
+                "prompt_token_ids": prompt_token_ids,
                 "prompt_length": prompt_length,
+                "completion_token_ids": completion_token_ids,
+                "completion_logprobs": completion_logprobs,
+                "old_sum_logprob": float(sum(completion_logprobs)),
                 "completion_text": decode_completion(self.tokenizer, completion_token_ids),
                 "completion_digest": hashlib.sha256(json.dumps(completion_token_ids).encode("utf-8")).hexdigest(),
                 "model_name": self.model_name,

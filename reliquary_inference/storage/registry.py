@@ -7,8 +7,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
-from aiobotocore.session import get_session
-
 from ..protocol.artifacts import artifact_directory_name
 from ..utils.json_io import read_json, write_json
 
@@ -179,6 +177,8 @@ class R2ObjectStore:
         self.region_name = region_name
 
     async def _put_bytes(self, key: str, data: bytes) -> dict[str, Any]:
+        from aiobotocore.session import get_session
+
         session = get_session()
         async with session.create_client(
             "s3",
@@ -191,6 +191,8 @@ class R2ObjectStore:
         return {"backend": "r2", "key": key}
 
     async def _get_bytes(self, key: str) -> bytes:
+        from aiobotocore.session import get_session
+
         session = get_session()
         async with session.create_client(
             "s3",
@@ -203,6 +205,8 @@ class R2ObjectStore:
             return await response["Body"].read()
 
     async def _list_prefix(self, prefix: str) -> list[dict[str, Any]]:
+        from aiobotocore.session import get_session
+
         session = get_session()
         refs: list[dict[str, Any]] = []
         async with session.create_client(

@@ -43,9 +43,15 @@ def read_audit_index(cfg: dict[str, Any], registry) -> dict[str, Any] | None:
 
 
 def status_summary(cfg: dict[str, Any], registry) -> dict[str, Any]:
-    latest_completion = None
+    completions = registry.list_artifacts("completion")
+    latest_completion = max(
+        completions,
+        key=lambda item: (int(item["window_id"]), str(item["created_at"])),
+        default=None,
+    )
     latest_manifest = None
     latest_publish = None
+    latest_importable_window = None
     audit_payload = read_audit_index(cfg, registry)
     if audit_payload and audit_payload.get("windows"):
         latest_window = audit_payload["windows"][0]
@@ -56,9 +62,8 @@ def status_summary(cfg: dict[str, Any], registry) -> dict[str, Any]:
             },
         }
         latest_publish = latest_window.get("chain_publish_result")
-        latest_completion = {"window_id": latest_window["window_id"]}
+        latest_importable_window = int(latest_window["window_id"])
     if latest_manifest is None:
-        completions = registry.list_artifacts("completion")
         finalized_manifests = [
             manifest
             for manifest in registry.list_artifacts("window_manifest")
@@ -75,6 +80,11 @@ def status_summary(cfg: dict[str, Any], registry) -> dict[str, Any]:
             default=None,
         )
         latest_publish = latest_manifest["payload"]["chain_publish_result"] if latest_manifest else None
+        latest_importable_window = int(latest_manifest["window_id"]) if latest_manifest else None
+    latest_window_mined = int(latest_completion["window_id"]) if latest_completion else None
+    import_lag_windows = None
+    if latest_window_mined is not None and latest_importable_window is not None:
+        import_lag_windows = max(latest_window_mined - latest_importable_window, 0)
     return {
         "network": cfg["network"],
         "netuid": int(cfg["netuid"]),
@@ -87,7 +97,9 @@ def status_summary(cfg: dict[str, Any], registry) -> dict[str, Any]:
         "artifact_bucket": cfg.get("r2_bucket", "") if str(cfg["storage_backend"]) == "r2" else "",
         "audit_bucket": cfg.get("audit_bucket", ""),
         "public_audit_base_url": cfg.get("public_audit_base_url", ""),
-        "latest_window_mined": int(latest_completion["window_id"]) if latest_completion else None,
+        "latest_window_mined": latest_window_mined,
+        "latest_importable_window": latest_importable_window,
+        "import_lag_windows": import_lag_windows,
         "latest_weight_publication": {
             "window_id": int(latest_manifest["window_id"]) if latest_manifest else None,
             "success": latest_publish.get("success") if isinstance(latest_publish, dict) else None,

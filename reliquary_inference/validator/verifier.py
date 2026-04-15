@@ -41,6 +41,8 @@ def verify_completion(
         "signature_status": "pending",
         "task_binding_summary": {},
         "proof_summary": {},
+        "semantic_result": {},
+        "semantic_evaluation": {},
     }
     if payload.get("proof_version") != PROOF_VERSION:
         report["hard_fail_reason"] = "invalid_proof_version"
@@ -101,6 +103,8 @@ def verify_completion(
         return report
     task = binding_summary["task"]
     semantic_result = task_source.evaluate_completion(completion, task)
+    report["semantic_result"] = semantic_result
+    report["semantic_evaluation"] = semantic_result.get("evaluation", {})
     if not semantic_result["accepted"]:
         report["soft_fail_reason"] = semantic_result["reason"]
         return report

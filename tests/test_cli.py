@@ -71,6 +71,8 @@ def test_status_summary_reports_latest_mined_and_published_windows(tmp_path) -> 
     summary = status_summary(cfg, registry)
 
     assert summary["latest_window_mined"] == 10
+    assert summary["latest_importable_window"] == 9
+    assert summary["import_lag_windows"] == 1
     assert summary["latest_weight_publication"]["window_id"] == 9
     assert summary["bucket_mode"] == "private_artifacts_public_audit"
     assert summary["chain_endpoint_mode"] == "network_default"

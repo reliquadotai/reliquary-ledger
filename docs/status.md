@@ -31,6 +31,7 @@ This page is the sanitized public status surface for Reliquary.
 - proof-first and audit-first
 - private artifacts with a public audit surface
 - private monitoring surfaces through SSH tunneling
+- finalized reasoning windows exported with additive semantic verdict fields for downstream training import
 - explicit websocket endpoint support
 - testnet-first deployment
 

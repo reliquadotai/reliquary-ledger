@@ -75,6 +75,13 @@ This combines:
 - raw metrics freshness
 - Prometheus scrape target health
 
+The exporter also surfaces:
+
+- latest finalized window available for import
+- import lag between mined and finalized windows
+- task-source submitted and accepted totals
+- rolling reasoning correctness, format, and policy-compliance rates
+
 ## Rollback
 
 - revert the model profile by restoring the previous env backup under `/srv/reliquary-inference/state`

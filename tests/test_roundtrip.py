@@ -55,15 +55,19 @@ def test_local_roundtrip_for_both_task_sources(tmp_path: Path) -> None:
             engine = MiningEngine(cfg={**cfg, "miner_id": miner_id})
             completions = []
             for task in task_batch["payload"]["tasks"]:
-                completions.append(
-                    engine.generate_completion(
-                        task=task,
-                        window_context=window_context,
-                        registry=registry,
-                        miner_id=miner_id,
-                        sample_index=0,
-                    )
+                completion = engine.generate_completion(
+                    task=task,
+                    window_context=window_context,
+                    registry=registry,
+                    miner_id=miner_id,
+                    sample_index=0,
                 )
+                assert isinstance(completion["payload"]["completion_token_ids"], list)
+                assert isinstance(completion["payload"]["completion_logprobs"], list)
+                assert completion["payload"]["old_sum_logprob"] == sum(
+                    completion["payload"]["completion_logprobs"]
+                )
+                completions.append(completion)
             bundle_ref = registry.write_completion_bundle(window_id=window_id, miner_id=miner_id, completions=completions)
             completion_refs.append(bundle_ref)
             for completion in completions:
@@ -79,6 +83,10 @@ def test_local_roundtrip_for_both_task_sources(tmp_path: Path) -> None:
         assert verdicts
         assert scorecard["payload"]["verification_totals"]["submitted"] > 0
         assert scorecard["payload"]["weights"]
+        if source_id == "reasoning_tasks":
+            assert "window_metrics" in scorecard["payload"]
+            assert scorecard["payload"]["window_metrics"]["reasoning_eval_count"] > 0
+            assert any("final_answer" in verdict["payload"] for verdict in verdicts)
 
         publish_result = chain.publish_weights(window_id=window_id, weights=scorecard["payload"]["weights"])
         finalized = finalize_window_manifest(

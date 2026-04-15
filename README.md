@@ -59,6 +59,7 @@ Included:
 - R2-backed registry for staging and testnet
 - public audit index with stable `audit/index.json` and `audit/index.html`
 - private-first monitoring with Prometheus, Grafana, node exporter, and a local metrics exporter
+- import-ready finalized reasoning windows with explicit semantic verdict fields for downstream RL runtimes
 
 Excluded:
 

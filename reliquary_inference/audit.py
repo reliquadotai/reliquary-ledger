@@ -117,6 +117,7 @@ def _window_audit_entry(
             "scorecard": payload["scorecard_id"],
         },
         "verification_totals": verification_totals,
+        "window_metrics": score_payload.get("window_metrics", {}),
         "weights": score_payload.get("weights", {}),
         "miner_totals": miner_totals,
         "chain_publish_result": payload.get("chain_publish_result"),
@@ -205,6 +206,7 @@ def _render_html(payload: dict[str, Any]) -> str:
             f"{html.escape(str(miner))}: {weight:.4f}" for miner, weight in entry["weights"].items()
         ) or "none"
         totals = entry["verification_totals"]
+        window_metrics = entry.get("window_metrics", {})
         manifest_link = _html_link(entry["refs"]["window_manifest"])
         scorecard_link = _html_link(entry["refs"]["scorecard"])
         task_batch_link = _html_link(entry["refs"]["task_batch"])
@@ -214,7 +216,8 @@ def _render_html(payload: dict[str, Any]) -> str:
             f"<td>{html.escape(entry['created_at'])}</td>"
             f"<td>{html.escape(entry['task_source'])}</td>"
             f"<td>{totals.get('accepted', 0)} / {totals.get('submitted', 0)}</td>"
-            f"<td>{totals.get('hard_failed', 0)} / {totals.get('soft_failed', 0)}</td>"
+            f"<td>{totals.get('hard_failed', 0)} / {totals.get('soft_failed', 0)}"
+            f"<br><small>format {window_metrics.get('reasoning_format_ok_total', 0)}</small></td>"
             f"<td>{html.escape(weights)}</td>"
             f"<td>{manifest_link}<br>{scorecard_link}<br>{task_batch_link}</td>"
             "</tr>"
