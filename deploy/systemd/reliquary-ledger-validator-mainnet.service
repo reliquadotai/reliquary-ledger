@@ -1,0 +1,24 @@
+[Unit]
+Description=Reliquary Ledger validator — SN81 mainnet
+After=network-online.target
+Wants=network-online.target
+ConditionEnvironment=ALLOW_MAINNET=1
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/reliquary-ledger/sn81.env
+WorkingDirectory=/opt/reliquary-inference
+ExecStart=/usr/bin/env python3 -m reliquary_inference.cli validator
+Restart=on-failure
+RestartSec=10
+StartLimitBurst=5
+StartLimitIntervalSec=600
+TimeoutStopSec=30
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/reliquary-ledger /var/log/reliquary-ledger
+
+[Install]
+WantedBy=default.target

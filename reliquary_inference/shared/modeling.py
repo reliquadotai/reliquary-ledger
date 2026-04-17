@@ -157,8 +157,16 @@ def load_tokenizer_for_model(model_ref: str):
 
 
 @lru_cache(maxsize=4)
-def _load_eval_bundle(model_ref: str, device: str, dtype_name: str) -> tuple[Any, Any, str]:
+def _load_eval_bundle(
+    model_ref: str,
+    device: str,
+    dtype_name: str,
+    require_flash_attention: bool,
+) -> tuple[Any, Any, str]:
     from transformers import AutoModelForCausalLM
+
+    from ..protocol.constants import ATTN_IMPLEMENTATION
+    from .flash_attention import require_flash_attention_2
 
     resolved_ref, kwargs = _resolve_pretrained_ref(model_ref)
     tokenizer = load_tokenizer_for_model(model_ref)
@@ -167,9 +175,13 @@ def _load_eval_bundle(model_ref: str, device: str, dtype_name: str) -> tuple[Any
     torch_dtype = _resolve_torch_dtype(device, dtype_name)
     if torch_dtype is not None:
         model_kwargs["dtype"] = torch_dtype
+    if require_flash_attention:
+        model_kwargs["attn_implementation"] = ATTN_IMPLEMENTATION
     model = AutoModelForCausalLM.from_pretrained(resolved_ref, **model_kwargs)
     model.to(device)
     model.eval()
+    if require_flash_attention:
+        require_flash_attention_2(model)
     return model, tokenizer, resolved_ref
 
 
@@ -178,13 +190,19 @@ def load_model_bundle(
     device: str = "cpu",
     trainable: bool = False,
     dtype_name: str = "auto",
+    require_flash_attention: bool = False,
 ) -> dict[str, Any]:
     if model_ref.startswith("toy://"):
         return _build_toy_bundle(model_ref, device)
     if not trainable:
-        model, tokenizer, resolved_ref = _load_eval_bundle(model_ref, device, dtype_name)
+        model, tokenizer, resolved_ref = _load_eval_bundle(
+            model_ref, device, dtype_name, require_flash_attention
+        )
         return {"model": model, "tokenizer": tokenizer, "device": device, "model_ref": resolved_ref}
     from transformers import AutoModelForCausalLM
+
+    from ..protocol.constants import ATTN_IMPLEMENTATION
+    from .flash_attention import require_flash_attention_2
 
     resolved_ref, kwargs = _resolve_pretrained_ref(model_ref)
     tokenizer = load_tokenizer_for_model(model_ref)
@@ -192,8 +210,12 @@ def load_model_bundle(
     torch_dtype = _resolve_torch_dtype(device, dtype_name)
     if torch_dtype is not None:
         model_kwargs["dtype"] = torch_dtype
+    if require_flash_attention:
+        model_kwargs["attn_implementation"] = ATTN_IMPLEMENTATION
     model = AutoModelForCausalLM.from_pretrained(resolved_ref, **model_kwargs)
     model.to(device)
+    if require_flash_attention:
+        require_flash_attention_2(model)
     return {"model": model, "tokenizer": tokenizer, "device": device, "model_ref": resolved_ref}
 
 

@@ -1,17 +1,36 @@
+"""Entry point for validator-side completion verification.
+
+Delegates to the nine-stage pipeline in ``validator.pipeline`` while
+preserving the legacy dict return shape used by callers (service layer,
+weight aggregator, copycat pass). New code should consume ``VerdictResult``
+directly via ``run_pipeline``.
+"""
+
 from __future__ import annotations
 
 from typing import Any
 
-import torch
-
-from ..constants import CHALLENGE_K, PROOF_VERSION, LAYER_INDEX
-from ..dataset.task_sources import build_task_source
-from ..protocol.sketch_verifier import SketchProofVerifier
 from ..protocol.signatures import verify_commit_signature
-from ..protocol.tokens import hash_tokens, verify_tokens
-from ..shared.forward import forward_single_layer
-from ..shared.hf_compat import resolve_hidden_size
 from ..shared.modeling import load_model_bundle
+from .pipeline import run_pipeline, default_stages, VerdictResult
+from .validators.base import RejectReason, StageContext
+
+
+# Legacy hard_fail_reason string mapping kept stable for downstream consumers
+# (scorecard emitters, copycat pass, audit index). New reasons use the enum
+# value verbatim; legacy reasons are mapped through this table.
+_LEGACY_REASON_MAP: dict[RejectReason, str] = {
+    RejectReason.SCHEMA_VERSION_MISMATCH: "invalid_proof_version",
+    RejectReason.SCHEMA_DUPLICATE_NONCE: "duplicate_nonce",
+    RejectReason.SCHEMA_MISSING_FIELD: "schema_missing_field",
+    RejectReason.TOKENS_OUT_OF_VOCAB: "invalid_tokens",
+    RejectReason.TOKENS_LENGTH_EXCEEDED: "invalid_tokens",
+    RejectReason.PROMPT_BINDING_MISMATCH: "prompt_binding_mismatch",
+    RejectReason.PROOF_SKETCH_MISMATCH: "proof_failed",
+    RejectReason.PROOF_NO_POSITIONS_CHECKED: "proof_failed",
+    RejectReason.ENVIRONMENT_FAILED_EVALUATION: "environment_failed_evaluation",
+    RejectReason.SIGNATURE_INVALID: "invalid_signature",
+}
 
 
 def verify_completion(
@@ -21,16 +40,23 @@ def verify_completion(
     task_batch: dict[str, Any],
     seen_nonces: set[tuple[str, int]],
 ) -> dict[str, Any]:
+    """Verify a single completion artifact against the window's task batch.
+
+    Returns a legacy-shape report dict. Internally runs the nine-stage
+    pipeline; see ``validator.pipeline.run_pipeline`` for the new canonical
+    return type.
+    """
     bundle = load_model_bundle(
         str(task_batch["payload"]["model_ref"]),
         device=str(cfg["device"]),
         dtype_name=str(cfg.get("load_dtype", "auto")),
+        require_flash_attention=bool(cfg.get("require_flash_attention", False)),
     )
     model = bundle["model"]
     tokenizer = bundle["tokenizer"]
     payload = completion["payload"]
-    task_source = build_task_source(payload["task_source"])
-    report = {
+
+    report: dict[str, Any] = {
         "accepted": False,
         "hard_fail_reason": None,
         "soft_fail_reason": None,
@@ -43,18 +69,11 @@ def verify_completion(
         "proof_summary": {},
         "semantic_result": {},
         "semantic_evaluation": {},
+        "stage_failed": None,
+        "reject_reason": None,
+        "soft_flags": [],
     }
-    if payload.get("proof_version") != PROOF_VERSION:
-        report["hard_fail_reason"] = "invalid_proof_version"
-        return report
-    if not verify_tokens(payload["tokens"], model.config):
-        report["hard_fail_reason"] = "invalid_tokens"
-        return report
-    nonce_key = (completion["producer_id"], int(payload["nonce"]))
-    if nonce_key in seen_nonces:
-        report["hard_fail_reason"] = "duplicate_nonce"
-        return report
-    seen_nonces.add(nonce_key)
+
     signature_ok = verify_commit_signature(
         {
             "tokens": payload["tokens"],
@@ -72,47 +91,49 @@ def verify_completion(
     report["signature_status"] = "ok" if signature_ok else "invalid_signature"
     if not signature_ok:
         report["hard_fail_reason"] = "invalid_signature"
+        report["reject_reason"] = RejectReason.SIGNATURE_INVALID.value
+        report["stage_failed"] = "signature"
         return report
-    task_binding_ok, binding_summary = task_source.verify_task_binding(completion, task_batch, tokenizer)
-    report["task_binding_summary"] = binding_summary
-    if not task_binding_ok:
-        report["hard_fail_reason"] = binding_summary["reason"]
-        return report
-    hidden_dim = resolve_hidden_size(model)
-    verifier = SketchProofVerifier(hidden_dim=hidden_dim)
-    r_vec = verifier.generate_r_vec(payload["randomness"]).to(next(model.parameters()).device)
-    input_ids = torch.tensor([payload["tokens"]], device=next(model.parameters()).device)
-    attention_mask = torch.ones_like(input_ids, device=input_ids.device)
-    with torch.no_grad():
-        hidden_states, _ = forward_single_layer(model, input_ids, attention_mask, LAYER_INDEX)
-    hidden_states = hidden_states[0]
-    checked = 0
-    passed = 0
-    for idx in verifier_indices(payload["tokens"], payload["randomness"], len(payload["tokens"])):
-        if idx >= len(payload["commitments"]):
-            continue
-        checked += 1
-        valid, diag = verifier.verify_commitment(hidden_states[idx], payload["commitments"][idx], r_vec, len(payload["tokens"]), idx)
-        if valid:
-            passed += 1
-        report["proof_summary"] = diag
-    report["checked_positions"] = checked
-    report["passed_positions"] = passed
-    if checked == 0 or passed != checked:
-        report["hard_fail_reason"] = "proof_failed"
-        return report
-    task = binding_summary["task"]
-    semantic_result = task_source.evaluate_completion(completion, task)
-    report["semantic_result"] = semantic_result
-    report["semantic_evaluation"] = semantic_result.get("evaluation", {})
-    if not semantic_result["accepted"]:
-        report["soft_fail_reason"] = semantic_result["reason"]
-        return report
-    report["accepted"] = True
+
+    context = StageContext(
+        completion=completion,
+        task_batch=task_batch,
+        seen_nonces=seen_nonces,
+        model=model,
+        tokenizer=tokenizer,
+        randomness=str(payload["randomness"]),
+        signing_secret=cfg.get("signing_secret"),
+    )
+
+    verdict = run_pipeline(default_stages(), context)
+    _merge_verdict_into_report(verdict, context, report)
     return report
 
 
-def verifier_indices(tokens: list[int], randomness: str, seq_len: int) -> list[int]:
-    from ..protocol.crypto import indices_from_root
+def _merge_verdict_into_report(
+    verdict: VerdictResult,
+    context: StageContext,
+    report: dict[str, Any],
+) -> None:
+    report["accepted"] = verdict.accepted
+    report["stage_failed"] = verdict.stage_failed
+    if verdict.reason is not None:
+        report["reject_reason"] = verdict.reason.value
+        report["hard_fail_reason"] = _LEGACY_REASON_MAP.get(verdict.reason, verdict.reason.value)
 
-    return indices_from_root(tokens, randomness, seq_len, min(CHALLENGE_K, seq_len))
+    report["soft_flags"] = [
+        {"stage": f.stage, "reason": f.reason.value if f.reason else None, "metadata": f.metadata}
+        for f in verdict.soft_flags
+    ]
+
+    report["task_binding_summary"] = context.extras.get("task_binding_summary", {}) or {}
+    report["proof_summary"] = context.extras.get("proof_summary", {}) or {}
+    report["semantic_result"] = context.extras.get("semantic_result", {}) or {}
+    report["semantic_evaluation"] = context.extras.get("semantic_evaluation", {}) or {}
+    report["checked_positions"] = context.extras.get("checked_positions", 0) or 0
+    report["passed_positions"] = context.extras.get("passed_positions", 0) or 0
+
+    if not verdict.accepted and verdict.stage_failed == "environment":
+        env_reason = context.extras.get("environment_reject_reason")
+        if env_reason:
+            report["soft_fail_reason"] = env_reason

@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-04-17T06:14:48Z",
+  "host": "wrk-mnmhkheic6r7-c99c9fcdc-l4xlq",
+  "torch_version": "2.11.0+cu130",
+  "cuda_available": true,
+  "hidden_dim": 256,
+  "challenge_k": 32,
+  "trials_per_class": 1000,
+  "duration_seconds": 240.00072717666626,
+  "classes": {
+    "honest": {
+      "name": "honest",
+      "trials": 1000,
+      "accept_count": 1000,
+      "reject_count": 0,
+      "false_negative_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "median_min_sketch_diff": 0.0
+    },
+    "tamper_wholesale": {
+      "name": "tamper_wholesale",
+      "trials": 500,
+      "accept_count": 500,
+      "reject_count": 0,
+      "false_negative_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "median_min_sketch_diff": 14.0
+    },
+    "tamper_zero": {
+      "name": "tamper_zero",
+      "trials": 500,
+      "accept_count": 500,
+      "reject_count": 0,
+      "false_negative_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "median_min_sketch_diff": 8.0
+    },
+    "tamper_cross_prompt": {
+      "name": "tamper_cross_prompt",
+      "trials": 500,
+      "accept_count": 500,
+      "reject_count": 0,
+      "false_negative_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "median_min_sketch_diff": 18.0
+    }
+  }
+}
