@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Sequence
 
+from .metrics import StageMetrics
 from .validators.base import (
     RejectReason,
     StageContext,
@@ -77,11 +78,16 @@ def run_pipeline(
     stages: Sequence[VerifierStage],
     context: StageContext,
     policy: StagePolicy | None = None,
+    metrics: StageMetrics | None = None,
 ) -> VerdictResult:
     """Execute ``stages`` in order against ``context``.
 
     Hard failures short-circuit; soft failures (distribution stage) are
     appended to ``soft_flags`` but do not halt execution.
+
+    When ``metrics`` is provided, per-stage outcomes are recorded into
+    ``reliquary_verifier_stage_total{stage, result}`` etc. for Prometheus
+    exposition.
     """
     policy = policy or StagePolicy()
     stage_results: list[StageResult] = []
@@ -101,6 +107,12 @@ def run_pipeline(
                 metadata={"exc": type(exc).__name__, "detail": str(exc)[:240]},
             )
             stage_results.append(result)
+            if metrics is not None:
+                metrics.record(
+                    stage.name,
+                    result="reject",
+                    reason=result.reason.value if result.reason else None,
+                )
             return VerdictResult(
                 accepted=False,
                 stage_failed=stage.name,
@@ -113,12 +125,27 @@ def run_pipeline(
         stage_results.append(result)
 
         if result.passed:
+            if metrics is not None:
+                metrics.record(stage.name, result="accept")
             continue
 
         if result.soft_fail:
             soft_flags.append(result)
+            if metrics is not None:
+                metrics.record(
+                    stage.name,
+                    result="soft_flag",
+                    reason=result.reason.value if result.reason else None,
+                    soft_fail=True,
+                )
             continue
 
+        if metrics is not None:
+            metrics.record(
+                stage.name,
+                result="reject",
+                reason=result.reason.value if result.reason else None,
+            )
         return VerdictResult(
             accepted=False,
             stage_failed=stage.name,
