@@ -27,6 +27,7 @@ Issues = "https://github.com/0xgrizz/reliquary-inference/issues"
 [project.optional-dependencies]
 dev = [
   "pytest>=8.2.0",
+  "hypothesis>=6.100.0",
 ]
 gpu = [
   "vllm>=0.8.5",
