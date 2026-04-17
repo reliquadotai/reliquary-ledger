@@ -3,11 +3,32 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Callable
 from urllib import request
 
 from ..constants import WINDOW_LENGTH
+from .cache import MetagraphCache
+from .retry import RetryPolicy, retry_with_backoff
+
+
+@dataclass
+class WeightSubmissionResult:
+    success: bool
+    attempts: int
+    uids: list[int]
+    weights: list[float]
+    window_id: int
+    last_error: str | None = None
+
+
+@dataclass
+class PolicyCommitResult:
+    success: bool
+    attempts: int
+    commitment_key: str
+    commitment_hash: str
+    last_error: str | None = None
 
 
 @dataclass
@@ -203,3 +224,142 @@ class BittensorChainAdapter:
             "weights": weight_values,
             "success": bool(success),
         }
+
+    def set_weights_with_retry(
+        self,
+        *,
+        window_id: int,
+        weights: dict[str, float],
+        retry_policy: RetryPolicy | None = None,
+        metagraph_cache: MetagraphCache | None = None,
+        sleep: Callable[[float], None] | None = None,
+    ) -> WeightSubmissionResult:
+        """Hardened weight-setter with bounded retries and early-exit on empty uids.
+
+        Callers may supply ``metagraph_cache`` to avoid a live metagraph fetch
+        when the cached snapshot is fresh.
+        """
+        from bittensor_wallet import Wallet
+
+        wallet = Wallet(name=self.wallet_name, hotkey=self.hotkey_name, path=self.wallet_path)
+        if metagraph_cache is not None and not metagraph_cache.is_stale():
+            metagraph = metagraph_cache.snapshot()
+        else:
+            metagraph = self.get_metagraph()
+            if metagraph_cache is not None:
+                metagraph_cache.set(metagraph)
+
+        hotkey_to_uid = dict(zip(metagraph.hotkeys, metagraph.uids))
+        uids: list[int] = []
+        weight_values: list[float] = []
+        for hotkey, weight in weights.items():
+            if hotkey in hotkey_to_uid and weight > 0:
+                uids.append(int(hotkey_to_uid[hotkey]))
+                weight_values.append(float(weight))
+        if not uids:
+            return WeightSubmissionResult(
+                success=False,
+                attempts=0,
+                uids=[],
+                weights=[],
+                window_id=window_id,
+                last_error="no_matching_hotkeys",
+            )
+
+        policy = retry_policy or RetryPolicy(max_attempts=3, base_delay_seconds=2.0, max_delay_seconds=8.0)
+
+        attempts_counter = {"n": 0}
+
+        def attempt() -> bool:
+            attempts_counter["n"] += 1
+            return bool(
+                self._with_subtensor(
+                    lambda subtensor: subtensor.set_weights(
+                        wallet=wallet,
+                        netuid=self.netuid,
+                        uids=uids,
+                        weights=weight_values,
+                        wait_for_inclusion=True,
+                        wait_for_finalization=False,
+                    )
+                )
+            )
+
+        try:
+            ok = retry_with_backoff(
+                attempt,
+                policy=policy,
+                sleep=sleep or time.sleep,
+            )
+        except Exception as exc:
+            return WeightSubmissionResult(
+                success=False,
+                attempts=attempts_counter["n"],
+                uids=uids,
+                weights=weight_values,
+                window_id=window_id,
+                last_error=f"{type(exc).__name__}: {exc}",
+            )
+
+        return WeightSubmissionResult(
+            success=bool(ok),
+            attempts=attempts_counter["n"],
+            uids=uids,
+            weights=weight_values,
+            window_id=window_id,
+        )
+
+    def commit_policy_metadata(
+        self,
+        *,
+        policy_version: str,
+        metadata_hash: str,
+        retry_policy: RetryPolicy | None = None,
+        sleep: Callable[[float], None] | None = None,
+    ) -> PolicyCommitResult:
+        """Publish a namespaced ``reliquary_policy_<version>`` commitment onchain.
+
+        Miners and validators read the same commitment to resolve the
+        authoritative policy checkpoint for the current window.
+        """
+        from bittensor_wallet import Wallet
+
+        wallet = Wallet(name=self.wallet_name, hotkey=self.hotkey_name, path=self.wallet_path)
+        commitment_key = f"reliquary_policy_{policy_version}"
+        policy = retry_policy or RetryPolicy(max_attempts=3, base_delay_seconds=2.0, max_delay_seconds=8.0)
+
+        attempts_counter = {"n": 0}
+
+        def attempt() -> bool:
+            attempts_counter["n"] += 1
+            return bool(
+                self._with_subtensor(
+                    lambda subtensor: subtensor.commit(
+                        wallet=wallet,
+                        netuid=self.netuid,
+                        data=f"{commitment_key}={metadata_hash}",
+                    )
+                )
+            )
+
+        try:
+            ok = retry_with_backoff(
+                attempt,
+                policy=policy,
+                sleep=sleep or time.sleep,
+            )
+        except Exception as exc:
+            return PolicyCommitResult(
+                success=False,
+                attempts=attempts_counter["n"],
+                commitment_key=commitment_key,
+                commitment_hash=metadata_hash,
+                last_error=f"{type(exc).__name__}: {exc}",
+            )
+
+        return PolicyCommitResult(
+            success=bool(ok),
+            attempts=attempts_counter["n"],
+            commitment_key=commitment_key,
+            commitment_hash=metadata_hash,
+        )
