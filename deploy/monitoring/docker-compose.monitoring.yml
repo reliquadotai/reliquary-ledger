@@ -1,0 +1,86 @@
+version: "3.8"
+name: reliquary-monitoring
+
+# Local observability stack for Tier 2 Epic 5 acceptance smoke:
+#   - Prometheus scrapes reliquary_verifier_* + reliquary_mesh_* + reliquary_miner_*
+#     from reliquary-inference-validator:9090 (placeholder substitute before run).
+#   - Grafana auto-loads the dashboard JSON under grafana/dashboards/.
+#   - Jaeger all-in-one accepts OTLP/gRPC traces on 4317 (opt-in; the tracing
+#     facade stays a silent no-op until the operator sets OTEL_EXPORTER_OTLP_ENDPOINT
+#     to http://localhost:4317).
+#
+# Smoke test flow:
+#   1. docker compose -f docker-compose.monitoring.yml up -d
+#   2. ./bin/monitoring-smoke.sh   (health-checks each service, tails one scrape)
+#   3. Grafana at http://localhost:3000 renders all dashboards with live data
+#      once a reliquary-inference process is emitting on its metrics port.
+#
+# This file intentionally runs only the monitoring plane; the validator / miner
+# containers are spun up separately by the node runbook.
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: reliquary-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=14d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/rules.d/reliquary-alerts.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: reliquary-grafana
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_INSTALL_PLUGINS: ""
+    volumes:
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.63
+    container_name: reliquary-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"  # UI
+      - "4317:4317"    # OTLP/gRPC
+      - "4318:4318"    # OTLP/HTTP
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:16686/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  prometheus_data:
+    name: reliquary-prometheus-data
+  grafana_data:
+    name: reliquary-grafana-data
