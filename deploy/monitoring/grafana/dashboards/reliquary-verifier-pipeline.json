@@ -1,0 +1,177 @@
+{
+  "uid": "reliquary-verifier-pipeline",
+  "title": "Reliquary Verifier Pipeline",
+  "tags": ["reliquary", "verifier", "epic5"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "timezone": "",
+  "time": {"from": "now-6h", "to": "now"},
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Stage throughput by result",
+      "description": "Accept / reject / soft_flag rate across all nine verifier stages over the last hour.",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineInterpolation": "linear", "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {"legend": {"displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "sum"]}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (result) (rate(reliquary_verifier_stage_total[5m]))",
+          "legendFormat": "{{result}}",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Rejection rate per stage",
+      "description": "Per-stage ratio of reject outcomes to total stage executions — isolates which stage is doing the rejecting.",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "color": {"mode": "palette-classic"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 0.05},
+              {"color": "red", "value": 0.25}
+            ]
+          },
+          "custom": {"lineInterpolation": "stepAfter", "fillOpacity": 5}
+        },
+        "overrides": []
+      },
+      "options": {"legend": {"displayMode": "table", "placement": "right", "calcs": ["lastNotNull"]}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (stage) (rate(reliquary_verifier_stage_total{result=\"reject\"}[1h])) / clamp_min(sum by (stage) (rate(reliquary_verifier_stage_total[1h])), 1e-9)",
+          "legendFormat": "{{stage}}",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "bargauge",
+      "title": "Top rejection reasons (cumulative)",
+      "description": "Which reject reasons dominate — surfaces which attack class / integrity failure is firing most.",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {"mode": "palette-classic"},
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "blue", "value": null}]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "showUnfilled": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(10, sum by (reason) (reliquary_verifier_rejections_total))",
+          "legendFormat": "{{reason}}",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Soft flags per stage",
+      "description": "Non-blocking flags (e.g. distribution drift) — track without gating so operators can see drift without rejecting completions.",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineInterpolation": "linear", "fillOpacity": 5}
+        },
+        "overrides": []
+      },
+      "options": {"legend": {"displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "sum"]}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (stage) (rate(reliquary_verifier_soft_flags_total[5m]))",
+          "legendFormat": "{{stage}}",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Total accept / reject / soft_flag (window)",
+      "description": "Aggregate verifier outcomes across the selected time window.",
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "gray", "value": null}]
+          }
+        },
+        "overrides": []
+      },
+      "options": {"reduceOptions": {"calcs": ["sum"]}, "colorMode": "value", "graphMode": "none"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(reliquary_verifier_stage_total{result=\"accept\"}[$__range]))",
+          "legendFormat": "accept",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "refId": "B",
+          "expr": "sum(increase(reliquary_verifier_stage_total{result=\"reject\"}[$__range]))",
+          "legendFormat": "reject",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "refId": "C",
+          "expr": "sum(increase(reliquary_verifier_stage_total{result=\"soft_flag\"}[$__range]))",
+          "legendFormat": "soft_flag",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    }
+  ],
+  "templating": {"list": []},
+  "annotations": {"list": []}
+}
