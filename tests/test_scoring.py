@@ -6,7 +6,7 @@ def test_detect_index_copycats_rejects_later_uploader() -> None:
     rejected = detect_index_copycats(
         {
             "miner-a": {"indices": {10, 11}, "upload_time": 1.0},
-            "miner-b": {"indices": {11, 12}, "upload_time": 2.0},
+            "miner-b": {"indices": {11, 12}, "upload_time": 5.0},
         }
     )
     assert rejected == {"miner-b": {11}}
