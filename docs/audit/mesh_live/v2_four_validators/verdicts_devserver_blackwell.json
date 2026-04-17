@@ -1,0 +1,1223 @@
+{
+  "window_id": 88888,
+  "validator_hotkey": "mesh-A",
+  "scenario": "honest",
+  "verdicts": [
+    {
+      "completion_id": "w088888-c0000",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0001",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0002",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0003",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0004",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0005",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0006",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0007",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0008",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0009",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0010",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0011",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0012",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0013",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0014",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0015",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0016",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0017",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0018",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0019",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0020",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0021",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0022",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0023",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0024",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0025",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0026",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0027",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0028",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0029",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0030",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0031",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0032",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0033",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0034",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0035",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0036",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0037",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0038",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0039",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0040",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0041",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0042",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0043",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0044",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0045",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0046",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0047",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0048",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0049",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0050",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0051",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0052",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0053",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0054",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0055",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0056",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0057",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0058",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0059",
+      "miner_hotkey": "miner-4",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0060",
+      "miner_hotkey": "miner-0",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0061",
+      "miner_hotkey": "miner-1",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0062",
+      "miner_hotkey": "miner-2",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    },
+    {
+      "completion_id": "w088888-c0063",
+      "miner_hotkey": "miner-3",
+      "window_id": 88888,
+      "validator": {
+        "hotkey": "mesh-A",
+        "stake": 40.0,
+        "signer_id": "mesh-A"
+      },
+      "accepted": true,
+      "stage_failed": null,
+      "reject_reason": null,
+      "scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      },
+      "signed_at": 1776443740.8121662,
+      "signature": ""
+    }
+  ]
+}

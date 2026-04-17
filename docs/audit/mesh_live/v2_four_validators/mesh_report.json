@@ -1,0 +1,1169 @@
+{
+  "window_id": 88888,
+  "total_completions": 64,
+  "accepted": 64,
+  "missing_validators": [],
+  "gated_validators": [
+    "mesh-M"
+  ],
+  "disagreement_rates": {
+    "mesh-A": 0.0,
+    "mesh-B": 0.0,
+    "mesh-C": 0.0,
+    "mesh-M": 1.0
+  },
+  "median_verdicts": {
+    "w088888-c0000": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0001": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0002": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0003": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0004": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0005": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0006": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0007": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0008": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0009": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0010": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0011": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0012": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0013": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0014": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0015": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0016": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0017": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0018": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0019": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0020": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0021": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0022": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0023": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0024": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0025": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0026": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0027": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0028": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0029": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0030": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0031": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0032": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0033": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0034": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0035": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0036": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0037": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0038": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0039": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0040": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0041": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0042": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0043": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0044": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0045": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0046": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0047": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0048": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0049": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0050": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0051": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0052": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0053": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0054": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0055": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0056": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0057": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0058": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0059": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0060": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0061": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0062": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w088888-c0063": {
+      "accepted": true,
+      "acceptance_score": 0.75,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-C",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    }
+  }
+}
