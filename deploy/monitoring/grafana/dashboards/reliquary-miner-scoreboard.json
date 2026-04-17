@@ -1,0 +1,178 @@
+{
+  "uid": "reliquary-miner-scoreboard",
+  "title": "Reliquary Miner Scoreboard",
+  "tags": ["reliquary", "miner", "scoreboard", "epic5"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "timezone": "",
+  "time": {"from": "now-6h", "to": "now"},
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "id": 1,
+      "type": "bargauge",
+      "title": "Top miners by acceptance rate",
+      "description": "Rolling acceptance rate over the last MINER_ACCEPTANCE_WINDOW=32 verdicts, top 25.",
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "orange", "value": 0.5},
+              {"color": "green", "value": 0.9}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "showUnfilled": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(25, reliquary_miner_acceptance_rate)",
+          "legendFormat": "{{miner_hotkey}}",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Verdicts per miner (accept/reject rate)",
+      "description": "Per-miner counts of accepted vs rejected verdicts over time.",
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineInterpolation": "linear", "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {"legend": {"displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "sum"]}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (miner_hotkey, outcome) (rate(reliquary_miner_verdicts_total[15m]))",
+          "legendFormat": "{{miner_hotkey}} {{outcome}}",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "bargauge",
+      "title": "Top rejection reasons across miners",
+      "description": "Most common rejection reasons across all miners — surfaces systemic failure modes.",
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 10},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {"mode": "palette-classic"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "red", "value": null}]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "showUnfilled": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(15, sum by (reason) (reliquary_miner_rejection_reasons_total))",
+          "legendFormat": "{{reason}}",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "heatmap",
+      "title": "Per-miner last-score heatmap",
+      "description": "Latest score per miner per metric — spot outlier miners / degraded scoring metrics.",
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 10},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {"mode": "continuous-GrYlRd"}
+        },
+        "overrides": []
+      },
+      "options": {
+        "calculate": false,
+        "calculation": {"xBuckets": {"mode": "count"}, "yBuckets": {"mode": "count"}},
+        "legend": {"show": true},
+        "tooltip": {"show": true, "yHistogram": false}
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "reliquary_miner_last_score",
+          "legendFormat": "{{miner_hotkey}}/{{metric}}",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Total verdicts (all miners, time window)",
+      "description": "Aggregate verdict counts across all miners over the selected time window.",
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 20},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "gray", "value": null}]
+          }
+        },
+        "overrides": []
+      },
+      "options": {"reduceOptions": {"calcs": ["sum"]}, "colorMode": "value", "graphMode": "none"},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(reliquary_miner_verdicts_total{outcome=\"accepted\"}[$__range]))",
+          "legendFormat": "accepted",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "refId": "B",
+          "expr": "sum(increase(reliquary_miner_verdicts_total{outcome=\"rejected\"}[$__range]))",
+          "legendFormat": "rejected",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    }
+  ],
+  "templating": {"list": []},
+  "annotations": {"list": []}
+}
