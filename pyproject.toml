@@ -36,6 +36,9 @@ tracing = [
   "opentelemetry-api>=1.25",
   "opentelemetry-sdk>=1.25",
 ]
+protocol = [
+  "reliquary-protocol>=0.1.0",
+]
 
 [project.scripts]
 reliquary-inference = "reliquary_inference.cli:app"
