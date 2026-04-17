@@ -1,0 +1,560 @@
+{
+  "window_id": 12345,
+  "total_completions": 32,
+  "accepted": 32,
+  "missing_validators": [],
+  "gated_validators": [
+    "mesh-M"
+  ],
+  "disagreement_rates": {
+    "mesh-A": 0.0,
+    "mesh-B": 0.0,
+    "mesh-M": 1.0
+  },
+  "median_verdicts": {
+    "w012345-c0000": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0001": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0002": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0003": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0004": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0005": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0006": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0007": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0008": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0009": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0010": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0011": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0012": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0013": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0014": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0015": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0016": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0017": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0018": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0019": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0020": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0021": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0022": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0023": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0024": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0025": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0026": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0027": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0028": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0029": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0030": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    },
+    "w012345-c0031": {
+      "accepted": true,
+      "acceptance_score": 0.6666666666666666,
+      "participating_validators": [
+        "mesh-A",
+        "mesh-B",
+        "mesh-M"
+      ],
+      "outlier_validators": [
+        "mesh-M"
+      ],
+      "quorum_satisfied": true,
+      "median_scores": {
+        "correctness": 0.9,
+        "format": 0.85
+      }
+    }
+  }
+}
