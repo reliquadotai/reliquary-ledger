@@ -27,6 +27,7 @@ class MiningEngine:
             str(cfg["model_ref"]),
             device=str(cfg["device"]),
             dtype_name=str(cfg.get("load_dtype", "auto")),
+            require_flash_attention=bool(cfg.get("require_flash_attention", False)),
         )
         self.model = self.bundle["model"]
         self.tokenizer = self.bundle["tokenizer"]

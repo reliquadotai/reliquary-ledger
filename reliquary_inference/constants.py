@@ -1,17 +1,28 @@
-"""Consensus and runtime constants for reliquary-inference."""
+"""Runtime and operational constants for reliquary-inference.
 
-PROOF_VERSION = "v5"
+Proof-layer constants (sketch, challenge, attention, version) are defined
+canonically in ``reliquary_inference.protocol.constants`` and re-exported here
+for backward compatibility with callers that import from the package root.
+"""
 
-PRIME_Q = 2_147_483_647
-CHALLENGE_K = 32
+from __future__ import annotations
+
+from .protocol.constants import (
+    ATTN_IMPLEMENTATION,
+    CHALLENGE_K,
+    LAYER_INDEX,
+    LEDGER_PROOF_VERSION,
+    PRIME_Q,
+    PROOF_COEFF_RANGE,
+    PROOF_NUM_BUCKETS,
+    PROOF_SKETCH_TOLERANCE_BASE,
+    PROOF_SKETCH_TOLERANCE_GROWTH,
+    PROOF_TOPK,
+)
+
+PROOF_VERSION = LEDGER_PROOF_VERSION
+
 RNG_LABEL = {"sketch": b"sketch", "open": b"open", "task": b"task"}
-LAYER_INDEX = -1
-PROOF_TOPK = 16
-PROOF_NUM_BUCKETS = 8
-PROOF_COEFF_RANGE = 127
-PROOF_SKETCH_TOLERANCE_BASE = 6000
-PROOF_SKETCH_TOLERANCE_GROWTH = 5.0
-ATTN_IMPLEMENTATION = "flash_attention_2"
 
 BLOCK_TIME_SECONDS = 12
 WINDOW_LENGTH = 30
@@ -37,3 +48,35 @@ DEFAULT_FALLBACK_PROMPTS = (
     "Write a concise argument for using content-addressed artifacts in subnets.",
     "Describe the tradeoff between throughput and verifiability in inference networks.",
 )
+
+__all__ = [
+    "ATTN_IMPLEMENTATION",
+    "BATCH_FAILURE_THRESHOLD",
+    "BLOCK_TIME_SECONDS",
+    "CHALLENGE_K",
+    "DEFAULT_DATASET_NAME",
+    "DEFAULT_DATASET_SPLIT",
+    "DEFAULT_FALLBACK_PROMPTS",
+    "LAYER_INDEX",
+    "LEDGER_PROOF_VERSION",
+    "MINER_SAMPLE_MAX",
+    "MINER_SAMPLE_MIN",
+    "MINER_SAMPLE_RATE",
+    "PRIME_Q",
+    "PROOF_COEFF_RANGE",
+    "PROOF_NUM_BUCKETS",
+    "PROOF_SKETCH_TOLERANCE_BASE",
+    "PROOF_SKETCH_TOLERANCE_GROWTH",
+    "PROOF_TOPK",
+    "PROOF_VERSION",
+    "RNG_LABEL",
+    "ROLLOUT_SAMPLE_MIN",
+    "ROLLOUT_SAMPLE_RATE",
+    "SUPERLINEAR_EXPONENT",
+    "UNIQUE_ROLLOUTS_CAP",
+    "UNIQUE_ROLLOUTS_CAP_ENABLED",
+    "VERIFICATION_BATCH_SIZE",
+    "WEIGHT_SUBMISSION_INTERVAL",
+    "WINDOW_LENGTH",
+    "WEIGHT_SUBMISSION_INTERVAL",
+]

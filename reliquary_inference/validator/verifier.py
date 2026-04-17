@@ -25,6 +25,7 @@ def verify_completion(
         str(task_batch["payload"]["model_ref"]),
         device=str(cfg["device"]),
         dtype_name=str(cfg.get("load_dtype", "auto")),
+        require_flash_attention=bool(cfg.get("require_flash_attention", False)),
     )
     model = bundle["model"]
     tokenizer = bundle["tokenizer"]
