@@ -39,6 +39,9 @@ tracing = [
 protocol = [
   "reliquary-protocol>=0.1.0",
 ]
+r2 = [
+  "boto3>=1.30.0",
+]
 
 [project.scripts]
 reliquary-inference = "reliquary_inference.cli:app"
