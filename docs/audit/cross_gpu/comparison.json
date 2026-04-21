@@ -1,19 +1,17 @@
 {
-  "reports": [
-    "wrk-mnmhkheic6r7-c99c9fcdc-l4xlq",
-    "wrk-j8nq3c7xn81v-78f5546865-gkvxn"
-  ],
-  "comparison": {
-    "matching_digests": true,
-    "digest_by_host": {
-      "wrk-mnmhkheic6r7-c99c9fcdc-l4xlq": "4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c",
-      "wrk-j8nq3c7xn81v-78f5546865-gkvxn": "4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c"
-    },
-    "mismatch_count": 0,
-    "mismatches": [],
-    "total_samples_per_host": {
-      "wrk-mnmhkheic6r7-c99c9fcdc-l4xlq": 90,
-      "wrk-j8nq3c7xn81v-78f5546865-gkvxn": 90
-    }
+  "matching_digests": true,
+  "digest_by_host": {
+    "wrk-mnmhkheic6r7-c99c9fcdc-l4xlq": "4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c",
+    "wrk-j8nq3c7xn81v-78f5546865-gkvxn": "4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c",
+    "wrk-nyfmqa78r5ld-994db9b-stnnz": "4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c",
+    "wrk-1yd80wogo5xd-689dbf778c-8zxt9": "4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c"
+  },
+  "mismatch_count": 0,
+  "mismatches": [],
+  "total_samples_per_host": {
+    "wrk-mnmhkheic6r7-c99c9fcdc-l4xlq": 90,
+    "wrk-j8nq3c7xn81v-78f5546865-gkvxn": 90,
+    "wrk-nyfmqa78r5ld-994db9b-stnnz": 90,
+    "wrk-1yd80wogo5xd-689dbf778c-8zxt9": 90
   }
 }
