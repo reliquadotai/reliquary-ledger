@@ -1,0 +1,22 @@
+[Unit]
+Description=Reliquary Inference Validator (staging mesh node)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/reliquary-state
+EnvironmentFile=/opt/reliquary-state/env/reliquary-inference.env
+ExecStart=/opt/reliquary-venv/bin/reliquary-inference run-validator
+# Restart unconditionally so a transient CF REST / HF Hub timeout doesn't
+# silently drop this validator out of the mesh.
+Restart=always
+RestartSec=10
+# Mesh nodes commonly lose their tmux/nohup children when the operator
+# SSH session closes on Targon-style containers; systemd detaches cleanly.
+StandardOutput=append:/opt/reliquary-state/logs/validator.log
+StandardError=append:/opt/reliquary-state/logs/validator.log
+
+[Install]
+WantedBy=multi-user.target
