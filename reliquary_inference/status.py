@@ -43,15 +43,30 @@ def read_audit_index(cfg: dict[str, Any], registry) -> dict[str, Any] | None:
 
 
 def status_summary(cfg: dict[str, Any], registry) -> dict[str, Any]:
-    completions = registry.list_artifacts("completion")
-    latest_completion = max(
-        completions,
-        key=lambda item: (int(item["window_id"]), str(item["created_at"])),
-        default=None,
+    # list_artifacts() is O(N) across all history on every R2-REST backend
+    # call, and the exporter invokes this on every scrape — that trips CF's
+    # per-account rate limit (429) and DoSes the metrics endpoint. Skip the
+    # expensive enumeration when window_count=0 (the documented "chain-state
+    # only" mode) or when the backend is the REST-API R2 store.
+    skip_enumeration = (
+        int(cfg.get("metrics_window_count", 0) or 0) == 0
+        or str(cfg.get("storage_backend", "")) == "r2_rest"
     )
+
+    completions: list[dict[str, Any]] = []
+    latest_completion: dict[str, Any] | None = None
     latest_manifest = None
     latest_publish = None
     latest_importable_window = None
+
+    if not skip_enumeration:
+        completions = registry.list_artifacts("completion")
+        latest_completion = max(
+            completions,
+            key=lambda item: (int(item["window_id"]), str(item["created_at"])),
+            default=None,
+        )
+
     audit_payload = read_audit_index(cfg, registry)
     if audit_payload and audit_payload.get("windows"):
         latest_window = audit_payload["windows"][0]
@@ -63,7 +78,7 @@ def status_summary(cfg: dict[str, Any], registry) -> dict[str, Any]:
         }
         latest_publish = latest_window.get("chain_publish_result")
         latest_importable_window = int(latest_window["window_id"])
-    if latest_manifest is None:
+    if latest_manifest is None and not skip_enumeration:
         finalized_manifests = [
             manifest
             for manifest in registry.list_artifacts("window_manifest")
