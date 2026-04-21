@@ -28,6 +28,45 @@ def _cfg() -> dict:
     return load_config()
 
 
+class _StorageBackendShim:
+    """Adapts the ObjectStore contract (put_bytes/get_bytes/list_prefix)
+    used by :class:`reliquary_inference.storage.registry.ObjectRegistry`'s
+    backing stores (FilesystemObjectStore / R2ObjectStore / RestR2ObjectStore)
+    into the :class:`reliquary_inference.validator.verdict_storage.StorageBackend`
+    Protocol (put/get/list/delete) that PolicyConsumer + RolloutBundleFetcher
+    expect.
+
+    Two API surfaces for a ~same-shaped object is a quirk of the repo's
+    evolution; this shim is the single place we reconcile them.
+    """
+
+    def __init__(self, inner) -> None:
+        self._inner = inner
+
+    def put(self, key: str, data: bytes) -> None:
+        self._inner.put_bytes(key, data)
+
+    def get(self, key: str):
+        # ObjectStore.get_bytes raises FileNotFoundError on missing; the
+        # StorageBackend Protocol expects None-on-missing.
+        try:
+            return self._inner.get_bytes(key)
+        except FileNotFoundError:
+            return None
+
+    def list(self, prefix: str) -> list[str]:
+        return [ref["key"] for ref in self._inner.list_prefix(prefix)]
+
+    def delete(self, key: str) -> None:
+        # Not all ObjectStores expose delete; best-effort.
+        delete_fn = getattr(self._inner, "delete", None) or getattr(self._inner, "delete_bytes", None)
+        if delete_fn is not None:
+            try:
+                delete_fn(key)
+            except FileNotFoundError:
+                pass
+
+
 def _registry(cfg: dict):
     backend = cfg["storage_backend"]
     if backend == "r2":
@@ -452,13 +491,14 @@ def _build_miner_policy_consumer_hook(cfg: dict):
 
     # Shared R2 backend — reuse the one the miner already uses for artifacts.
     registry = _registry(cfg)
-    store = getattr(registry, "store", None)
-    if store is None:
+    raw_store = getattr(registry, "store", None)
+    if raw_store is None:
         console.print(
             "[yellow]policy_consumer: registry has no underlying store — "
             "disabling hot-swap hook[/yellow]"
         )
         return None
+    store = _StorageBackendShim(raw_store)
 
     # Engine is built lazily on first call — the consumer may need to sign
     # and the HMAC check + attestation read are cheap even if we haven't
@@ -602,13 +642,14 @@ def _build_validator_policy_consumer_hook(cfg: dict):
     )
 
     registry = _registry(cfg)
-    store = getattr(registry, "store", None)
-    if store is None:
+    raw_store = getattr(registry, "store", None)
+    if raw_store is None:
         console.print(
             "[yellow]validator policy_consumer: registry has no underlying store — "
             "disabling hot-swap hook[/yellow]"
         )
         return None
+    store = _StorageBackendShim(raw_store)
 
     # The validator doesn't hold a single engine — the verifier loads bundles
     # lazily and now caches them in modeling._BUNDLE_CACHE. The applier
