@@ -11,7 +11,7 @@ live in ``reliquary_inference.constants``.
 
 from __future__ import annotations
 
-LEDGER_PROOF_VERSION: str = "v1"
+LEDGER_PROOF_VERSION: str = "v5"
 
 PRIME_Q: int = 2_147_483_647
 
