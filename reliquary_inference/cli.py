@@ -519,10 +519,22 @@ def run_validator(
     registry = _registry(cfg)
     chain = _chain(cfg)
     processed: set[int] = set()
+
+    # Matches the miner-side hook in run_miner: when the flag is on, every
+    # loop iteration polls for new PolicyCommitments + applies the delta
+    # to the validator's cached model bundles. Without this, miner weights
+    # would drift from validator weights and every verdict would
+    # hard-fail proof verification.
+    policy_consumer_hook = _build_validator_policy_consumer_hook(cfg)
+
     while True:
         try:
             window_context = chain.get_window_context(cfg=cfg).as_dict()
             window_id = int(window_context["window_id"])
+
+            if policy_consumer_hook is not None:
+                policy_consumer_hook(ledger_window=window_id)
+
             if window_id not in processed and registry.list_completion_bundles(window_id=window_id):
                 scorecard, _ = _validate_and_score_single_window(cfg, registry, chain, window_context)
                 processed.add(window_id)
@@ -534,3 +546,120 @@ def run_validator(
                 raise
             console.print(f"[yellow]validator loop error: {exc}[/yellow]")
         time.sleep(interval)
+
+
+def _build_validator_policy_consumer_hook(cfg: dict):
+    """Validator-side counterpart of _build_miner_policy_consumer_hook.
+
+    Uses the same gating env var (``RELIQUARY_INFERENCE_POLICY_CONSUMER_ENABLED``)
+    plus the same POLICY_AUTHORITY_HOTKEY + _SECRET as the miner. Applies
+    deltas to every cached model bundle in :mod:`reliquary_inference.shared.modeling`
+    so subsequent ``verify_completion`` calls use the updated weights
+    without a process restart.
+
+    Both miner and validator should be flag-enabled simultaneously. Turning
+    it on for one but not the other causes proof-verification failures
+    because the two models diverge.
+    """
+    import os
+
+    if not os.environ.get("RELIQUARY_INFERENCE_POLICY_CONSUMER_ENABLED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        return None
+
+    from .shared import modeling as _modeling  # for apply_delta_to_cached_bundles
+    from .shared.policy_consumer import LoadedDelta, PolicyConsumer, default_smoke_runner
+    from .validator.rollout_bundle import make_hmac_verifier
+
+    try:
+        from reliquary.training.checkpoint_storage import fetch_bundle as _fetch_bundle
+    except ImportError:
+        console.print(
+            "[yellow]validator policy_consumer: reliquary.training.checkpoint_storage "
+            "not importable — disabling hot-swap hook[/yellow]"
+        )
+        return None
+
+    authority_hotkey = str(
+        os.environ.get("RELIQUARY_INFERENCE_POLICY_AUTHORITY_HOTKEY", "")
+    ).strip()
+    authority_secret = str(
+        os.environ.get("RELIQUARY_INFERENCE_POLICY_AUTHORITY_SECRET", "")
+    ).strip()
+    if not authority_hotkey or not authority_secret:
+        console.print(
+            "[yellow]validator policy_consumer: authority hotkey / secret env unset — "
+            "disabling hot-swap hook[/yellow]"
+        )
+        return None
+
+    training_netuid = int(
+        os.environ.get("RELIQUARY_INFERENCE_TRAINING_NETUID", cfg["netuid"])
+    )
+
+    registry = _registry(cfg)
+    store = getattr(registry, "store", None)
+    if store is None:
+        console.print(
+            "[yellow]validator policy_consumer: registry has no underlying store — "
+            "disabling hot-swap hook[/yellow]"
+        )
+        return None
+
+    # The validator doesn't hold a single engine — the verifier loads bundles
+    # lazily and now caches them in modeling._BUNDLE_CACHE. The applier
+    # iterates every cached bundle and mutates all of them.
+    class _GlobalCacheApplier:
+        def __init__(self):
+            self.metrics_counters = {"reliquary_policy_applier_apply_total": 0}
+
+        def __call__(self, delta: LoadedDelta) -> None:
+            bundle = delta.extra.get("bundle") if delta.extra else None
+            if bundle is None:
+                raise RuntimeError("validator applier requires delta.extra['bundle']")
+            mutated = _modeling.apply_delta_to_cached_bundles(bundle)
+            self.metrics_counters["reliquary_policy_applier_apply_total"] += 1
+            console.print(
+                f"validator policy_consumer: delta applied to {mutated} cached "
+                f"model bundle(s) run_id={delta.run_id} window={delta.window_id}"
+            )
+
+    # Delta loader: same bundle_aware pattern as miner.
+    from .shared.policy_applier import bundle_aware_delta_loader
+
+    verifier = make_hmac_verifier({authority_hotkey: authority_secret})
+    loader = bundle_aware_delta_loader(_fetch_bundle, lambda: store)
+    applier = _GlobalCacheApplier()
+
+    consumer = PolicyConsumer(
+        backend=store,
+        verifier=verifier,
+        inference_netuid=int(cfg["netuid"]),
+        training_netuid=training_netuid,
+        delta_loader=loader,
+        smoke_runner=default_smoke_runner,
+        applier=applier,
+    )
+
+    def _hook(*, ledger_window: int) -> None:
+        try:
+            outcome = consumer.poll_once(ledger_window=ledger_window)
+        except Exception as exc:
+            console.print(f"[yellow]validator policy_consumer error: {exc}[/yellow]")
+            return
+        if outcome.state == "applied":
+            console.print(
+                f"validator policy_consumer applied run_id="
+                f"{outcome.attestation.checkpoint_run_id if outcome.attestation else '?'} "
+                f"at ledger_window={ledger_window}"
+            )
+        elif outcome.state == "rejected":
+            console.print(
+                f"[yellow]validator policy_consumer rejected: {outcome.reason}[/yellow]"
+            )
+
+    return _hook

@@ -185,6 +185,33 @@ def _load_eval_bundle(
     return model, tokenizer, resolved_ref
 
 
+# Global model-bundle cache + mutation registry.
+#
+# The verifier calls load_model_bundle() from inside verify_completion, which
+# runs once per completion per window — in a 4-validator 8-completions-per-
+# window mesh that's 32 loads/window. Without caching, each load is a 6GB
+# bfloat16 read of the Qwen2.5-3B weights; with caching it's a dict lookup.
+#
+# The second purpose of the cache is to support in-place weight mutation by
+# the closed-loop PolicyConsumer: when a delta bundle is applied, we mutate
+# each cached bundle's model tensors so subsequent verify_completion calls
+# run against the updated weights. The ReloadingPolicyApplier on the miner
+# side and the validator-side hook (see cli.py) both call into
+# apply_delta_to_cached_bundles() below.
+
+_BUNDLE_CACHE: dict[tuple, dict[str, Any]] = {}
+
+
+def _bundle_cache_key(
+    model_ref: str,
+    device: str,
+    trainable: bool,
+    dtype_name: str,
+    require_flash_attention: bool,
+) -> tuple:
+    return (model_ref, device, bool(trainable), dtype_name, bool(require_flash_attention))
+
+
 def load_model_bundle(
     model_ref: str,
     device: str = "cpu",
@@ -192,13 +219,28 @@ def load_model_bundle(
     dtype_name: str = "auto",
     require_flash_attention: bool = False,
 ) -> dict[str, Any]:
+    # Fast path: return a cached bundle if this exact (ref, device, dtype,
+    # trainable, flash_attn) combination has been loaded.  Prevents the
+    # per-completion 6GB re-load that was previously happening on the
+    # validator side.
+    key = _bundle_cache_key(
+        model_ref, device, trainable, dtype_name, require_flash_attention
+    )
+    cached = _BUNDLE_CACHE.get(key)
+    if cached is not None:
+        return cached
+
     if model_ref.startswith("toy://"):
-        return _build_toy_bundle(model_ref, device)
+        bundle = _build_toy_bundle(model_ref, device)
+        _BUNDLE_CACHE[key] = bundle
+        return bundle
     if not trainable:
         model, tokenizer, resolved_ref = _load_eval_bundle(
             model_ref, device, dtype_name, require_flash_attention
         )
-        return {"model": model, "tokenizer": tokenizer, "device": device, "model_ref": resolved_ref}
+        bundle = {"model": model, "tokenizer": tokenizer, "device": device, "model_ref": resolved_ref}
+        _BUNDLE_CACHE[key] = bundle
+        return bundle
     from transformers import AutoModelForCausalLM
 
     from ..protocol.constants import ATTN_IMPLEMENTATION
@@ -216,7 +258,59 @@ def load_model_bundle(
     model.to(device)
     if require_flash_attention:
         require_flash_attention_2(model)
-    return {"model": model, "tokenizer": tokenizer, "device": device, "model_ref": resolved_ref}
+    bundle = {"model": model, "tokenizer": tokenizer, "device": device, "model_ref": resolved_ref}
+    _BUNDLE_CACHE[key] = bundle
+    return bundle
+
+
+def clear_bundle_cache() -> None:
+    """Drop every cached bundle. Intended for tests + explicit operator reset."""
+    _BUNDLE_CACHE.clear()
+
+
+def cached_bundles() -> list[dict[str, Any]]:
+    """Return a list of every currently-cached bundle dict.
+
+    The PolicyConsumer applier uses this to mutate every running model
+    at once when a delta is applied. A mesh validator that serves
+    multiple model_refs will have multiple cached bundles; each gets
+    its own delta applied (scoped by tensor-name match).
+    """
+    return list(_BUNDLE_CACHE.values())
+
+
+def apply_delta_to_cached_bundles(delta_bundle) -> int:
+    """Apply a DeltaBundle in-place to every cached bundle's model.
+
+    Delegates to the ReloadingPolicyApplier via a per-bundle dispatch
+    so the same fp32-dequant path is used across miner + validator.
+    Returns the number of bundles mutated.
+    """
+    # Lazy import: policy_applier imports modeling (circular), so keep
+    # the reference chain broken until this is called.
+    from .policy_applier import ReloadingPolicyApplier
+    from .policy_consumer import LoadedDelta
+
+    mutated = 0
+    for bundle in cached_bundles():
+        class _EngineShim:
+            """Adapter: ReloadingPolicyApplier expects an object with
+            ``.model`` — our cached bundle dict has the model under
+            the "model" key."""
+            def __init__(self, b):
+                self.model = b["model"]
+        applier = ReloadingPolicyApplier(_EngineShim(bundle))
+        stub = LoadedDelta(
+            run_id="",
+            window_id=0,
+            merkle_root_hex="",
+            raw_manifest_bytes=b"",
+            shard_digests=(),
+            extra={"bundle": delta_bundle},
+        )
+        applier(stub)
+        mutated += 1
+    return mutated
 
 
 def save_model_bundle(model, tokenizer, output_dir: Path) -> None:
