@@ -351,10 +351,25 @@ def run_miner(
     registry = _registry(cfg)
     chain = _chain(cfg)
     processed: set[tuple[int, str]] = set()
+
+    # Policy-consumer integration: off by default. When enabled, the miner
+    # polls Forge-side PolicyCommitments each loop iteration and hot-swaps
+    # its model weights via ReloadingPolicyApplier at the window boundary.
+    # See reliquary_inference.shared.policy_applier for the delta-apply
+    # semantics. Operators flip this on only after wiring the matching
+    # consumer into run_validator — otherwise miner's proofs will fail
+    # verification because the validator's model copy hasn't been updated.
+    policy_consumer_hook = _build_miner_policy_consumer_hook(cfg)
+
     while True:
         try:
             window_context = chain.get_window_context(cfg=cfg).as_dict()
-            key = (int(window_context["window_id"]), str(cfg["miner_id"]))
+            ledger_window = int(window_context["window_id"])
+
+            if policy_consumer_hook is not None:
+                policy_consumer_hook(ledger_window=ledger_window)
+
+            key = (ledger_window, str(cfg["miner_id"]))
             if key not in processed:
                 mined = _mine_single_window(cfg, registry, window_context, str(cfg["miner_id"]))
                 processed.add(key)
@@ -366,6 +381,132 @@ def run_miner(
                 raise
             console.print(f"[yellow]miner loop error: {exc}[/yellow]")
         time.sleep(interval)
+
+
+def _build_miner_policy_consumer_hook(cfg: dict):
+    """Build a hot-swap hook that runs the Ledger-side PolicyConsumer once
+    per miner loop iteration, or ``None`` if the feature is disabled.
+
+    Gated by ``RELIQUARY_INFERENCE_POLICY_CONSUMER_ENABLED=true``. Requires
+    the shared HMAC signing secret (``RELIQUARY_INFERENCE_POLICY_AUTHORITY_HOTKEY``
+    + ``RELIQUARY_INFERENCE_POLICY_AUTHORITY_SECRET``) and a
+    ``RELIQUARY_INFERENCE_TRAINING_NETUID`` (defaults to the inference
+    netuid since Forge ships as a v2 update inside the same subnet).
+
+    Each invocation:
+      1. Constructs a fresh MiningEngine if we don't have one yet
+         (so the applier has a model to mutate).
+      2. consumer.poll_once(ledger_window=...) → applied|ready|idle|rejected.
+      3. On ``applied``, the delta has already been mutated into the
+         engine's model in place; subsequent ``_mine_single_window``
+         calls will generate with the updated weights.
+      4. On ``rejected``, the error is logged and the current weights
+         remain untouched.
+    """
+    import os
+
+    if not os.environ.get("RELIQUARY_INFERENCE_POLICY_CONSUMER_ENABLED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        return None
+
+    # Lazy imports so disabling the flag doesn't pay any import cost.
+    from .miner.engine import MiningEngine
+    from .shared.policy_applier import (
+        ReloadingPolicyApplier,
+        bundle_aware_delta_loader,
+    )
+    from .shared.policy_consumer import PolicyConsumer, default_smoke_runner
+    from .validator.rollout_bundle import make_hmac_verifier
+
+    # Cross-repo import — reliquary (Forge) package optional. If missing,
+    # the consumer can't fetch delta bundles, so disable gracefully.
+    try:
+        from reliquary.training.checkpoint_storage import fetch_bundle as _fetch_bundle
+    except ImportError:
+        console.print(
+            "[yellow]policy_consumer: reliquary.training.checkpoint_storage "
+            "not importable — disabling hot-swap hook[/yellow]"
+        )
+        return None
+
+    authority_hotkey = str(
+        os.environ.get("RELIQUARY_INFERENCE_POLICY_AUTHORITY_HOTKEY", "")
+    ).strip()
+    authority_secret = str(
+        os.environ.get("RELIQUARY_INFERENCE_POLICY_AUTHORITY_SECRET", "")
+    ).strip()
+    if not authority_hotkey or not authority_secret:
+        console.print(
+            "[yellow]policy_consumer: authority hotkey / secret env unset — "
+            "disabling hot-swap hook[/yellow]"
+        )
+        return None
+
+    training_netuid = int(
+        os.environ.get("RELIQUARY_INFERENCE_TRAINING_NETUID", cfg["netuid"])
+    )
+
+    # Shared R2 backend — reuse the one the miner already uses for artifacts.
+    registry = _registry(cfg)
+    store = getattr(registry, "store", None)
+    if store is None:
+        console.print(
+            "[yellow]policy_consumer: registry has no underlying store — "
+            "disabling hot-swap hook[/yellow]"
+        )
+        return None
+
+    # Engine is built lazily on first call — the consumer may need to sign
+    # and the HMAC check + attestation read are cheap even if we haven't
+    # loaded the model yet.
+    state = {"engine": None, "consumer": None}
+
+    def _ensure_engine():
+        if state["engine"] is None:
+            state["engine"] = MiningEngine(cfg=cfg)
+        return state["engine"]
+
+    def _ensure_consumer():
+        if state["consumer"] is None:
+            verifier = make_hmac_verifier({authority_hotkey: authority_secret})
+            loader = bundle_aware_delta_loader(_fetch_bundle, lambda: store)
+            engine = _ensure_engine()
+            applier = ReloadingPolicyApplier(engine)
+            state["consumer"] = PolicyConsumer(
+                backend=store,
+                verifier=verifier,
+                inference_netuid=int(cfg["netuid"]),
+                training_netuid=training_netuid,
+                delta_loader=loader,
+                smoke_runner=default_smoke_runner,
+                applier=applier,
+            )
+        return state["consumer"]
+
+    def _hook(*, ledger_window: int) -> None:
+        consumer = _ensure_consumer()
+        try:
+            outcome = consumer.poll_once(ledger_window=ledger_window)
+        except Exception as exc:
+            console.print(f"[yellow]policy_consumer error: {exc}[/yellow]")
+            return
+        if outcome.state == "applied":
+            console.print(
+                f"policy_consumer applied run_id="
+                f"{outcome.attestation.checkpoint_run_id if outcome.attestation else '?'} "
+                f"at ledger_window={ledger_window} "
+                f"merkle={outcome.delta.merkle_root_hex[:12] if outcome.delta else '?'}"
+            )
+        elif outcome.state == "rejected":
+            console.print(
+                f"[yellow]policy_consumer rejected: {outcome.reason}[/yellow]"
+            )
+
+    return _hook
 
 
 @app.command("run-validator")
