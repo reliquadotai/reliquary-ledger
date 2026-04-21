@@ -16,7 +16,7 @@ from .metrics import MetricsCache, serve_metrics
 from .miner.engine import MiningEngine
 from .protocol.artifacts import make_artifact
 from .status import status_summary
-from .storage.registry import LocalRegistry, R2Registry
+from .storage.registry import LocalRegistry, R2Registry, RestR2Registry
 from .utils.json_io import write_json
 from .validator.service import finalize_window_manifest, validate_window, write_run_manifest
 
@@ -29,7 +29,8 @@ def _cfg() -> dict:
 
 
 def _registry(cfg: dict):
-    if cfg["storage_backend"] == "r2":
+    backend = cfg["storage_backend"]
+    if backend == "r2":
         return R2Registry(
             artifact_root=str(cfg["artifact_dir"]),
             export_root=str(cfg["export_dir"]),
@@ -37,6 +38,18 @@ def _registry(cfg: dict):
             endpoint_url=str(cfg["r2_endpoint_url"]),
             access_key_id=str(cfg["r2_access_key_id"]),
             secret_access_key=str(cfg["r2_secret_access_key"]),
+        )
+    if backend == "r2_rest":
+        # CF REST API path — reuses reliquary-protocol's R2ObjectBackend.
+        # Authenticates with a single ``cfat_...`` account-level API token
+        # rather than an S3-style access-key/secret pair.
+        return RestR2Registry(
+            artifact_root=str(cfg["artifact_dir"]),
+            export_root=str(cfg["export_dir"]),
+            account_id=str(cfg["r2_rest_account_id"]),
+            bucket=str(cfg["r2_rest_bucket"]),
+            cf_api_token=str(cfg["r2_rest_cf_api_token"]),
+            public_url=str(cfg["r2_rest_public_url"]) or None,
         )
     return LocalRegistry(str(cfg["artifact_dir"]), str(cfg["export_dir"]))
 

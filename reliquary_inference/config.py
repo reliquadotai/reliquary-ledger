@@ -108,6 +108,12 @@ def load_config() -> dict[str, object]:
         "r2_endpoint_url": _env_str("RELIQUARY_INFERENCE_R2_ENDPOINT_URL", ""),
         "r2_access_key_id": _env_str("RELIQUARY_INFERENCE_R2_ACCESS_KEY_ID", ""),
         "r2_secret_access_key": _env_str("RELIQUARY_INFERENCE_R2_SECRET_ACCESS_KEY", ""),
+        # REST-mode R2 (reuses reliquary-protocol's R2ObjectBackend; authenticates
+        # via a single CF account API token rather than S3 access keys).
+        "r2_rest_account_id": _env_str("RELIQUARY_INFERENCE_R2_ACCOUNT_ID", ""),
+        "r2_rest_bucket": _env_str("RELIQUARY_INFERENCE_R2_BUCKET", ""),
+        "r2_rest_cf_api_token": _env_str("RELIQUARY_INFERENCE_R2_CF_API_TOKEN", ""),
+        "r2_rest_public_url": _env_str("RELIQUARY_INFERENCE_R2_PUBLIC_URL", ""),
         "dataset_name": _env_str("RELIQUARY_INFERENCE_DATASET_NAME", "karpathy/climbmix-400b-shuffle"),
         "dataset_split": _env_str("RELIQUARY_INFERENCE_DATASET_SPLIT", "train"),
         "git_sha": _git_sha(),

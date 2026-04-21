@@ -322,3 +322,77 @@ class R2Registry(ObjectRegistry):
             export_root=export_root,
         )
         self.artifact_root = artifact_root
+
+
+class RestR2ObjectStore:
+    """R2 object store that uses Cloudflare's REST API instead of the S3 API.
+
+    Satisfies the same ``put_bytes`` / ``get_bytes`` / ``list_prefix`` surface
+    that :class:`ObjectRegistry` consumes, but reaches R2 through the shared
+    :class:`reliquary_protocol.storage.R2ObjectBackend` — which authenticates
+    with an account-level Cloudflare API token (``cfat_...``) rather than an
+    S3-style access-key/secret pair.
+
+    Why: in deployments where we already have the CF API token (for
+    ``reliquary-protocol`` bridge work) but haven't provisioned separate
+    S3-compatible R2 tokens in the CF dashboard, this backend lets the
+    inference service write artifacts to R2 without touching boto3 or
+    duplicating credential material.
+
+    Caveat: Cloudflare's REST API edge-caches authenticated GETs for 4 h.
+    Reliquary writes only to fresh content-addressable keys (window_id ×
+    validator × completion_id, or artifact SHA-256), so the cache never
+    bites production reads — but any admin / migration path that requires
+    read-after-overwrite must use a fresh suffix instead.
+    """
+
+    def __init__(self, *, backend) -> None:  # backend is R2ObjectBackend
+        self.backend = backend
+
+    def put_bytes(self, key: str, data: bytes) -> dict[str, Any]:
+        self.backend.put(key, data)
+        return {"backend": "r2_rest", "key": key}
+
+    def get_bytes(self, key: str) -> bytes:
+        result = self.backend.get(key)
+        if result is None:
+            raise FileNotFoundError(f"R2 object not found: {key}")
+        return result
+
+    def list_prefix(self, prefix: str) -> list[dict[str, Any]]:
+        keys = self.backend.list(prefix)
+        return [{"backend": "r2_rest", "key": k} for k in keys]
+
+
+class RestR2Registry(ObjectRegistry):
+    """:class:`ObjectRegistry` backed by :class:`RestR2ObjectStore`.
+
+    Constructed from the four RELIQUARY_INFERENCE_R2_* env vars that
+    match ``reliquary_protocol.storage.R2ObjectBackend``'s contract:
+    account_id, bucket, cf_api_token, and optional public_url (for the
+    r2.dev fast-path on public buckets).
+    """
+
+    def __init__(
+        self,
+        *,
+        artifact_root: str,
+        export_root: str,
+        account_id: str,
+        bucket: str,
+        cf_api_token: str,
+        public_url: str | None = None,
+    ) -> None:
+        from reliquary_protocol.storage import R2ObjectBackend
+
+        backend = R2ObjectBackend(
+            account_id=account_id,
+            bucket=bucket,
+            cf_api_token=cf_api_token,
+            public_url=public_url or None,
+        )
+        super().__init__(
+            RestR2ObjectStore(backend=backend),
+            export_root=export_root,
+        )
+        self.artifact_root = artifact_root
