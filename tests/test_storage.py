@@ -1,7 +1,11 @@
 from pathlib import Path
 
 from reliquary_inference.protocol.artifacts import make_artifact
-from reliquary_inference.storage.registry import FilesystemObjectStore, LocalRegistry, ObjectRegistry
+from reliquary_inference.storage.registry import (
+    FilesystemObjectStore,
+    LocalRegistry,
+    ObjectRegistry,
+)
 
 
 def test_local_and_object_registry_round_trip(tmp_path: Path) -> None:

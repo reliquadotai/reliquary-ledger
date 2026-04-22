@@ -5,7 +5,10 @@ from reliquary_inference.dataset.task_sources import build_task_source
 from reliquary_inference.miner.engine import MiningEngine
 from reliquary_inference.protocol.artifacts import make_artifact
 from reliquary_inference.storage.registry import LocalRegistry
-from reliquary_inference.validator.service import finalize_window_manifest, validate_window
+from reliquary_inference.validator.service import (
+    finalize_window_manifest,
+    validate_window,
+)
 
 
 def _cfg(tmp_path: Path, *, task_source: str) -> dict:

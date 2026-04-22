@@ -1,6 +1,10 @@
 import torch
 
-from reliquary_inference.protocol.crypto import indices_from_root, prf, r_vec_from_randomness
+from reliquary_inference.protocol.crypto import (
+    indices_from_root,
+    prf,
+    r_vec_from_randomness,
+)
 from reliquary_inference.protocol.sketch_verifier import SketchProofVerifier
 
 

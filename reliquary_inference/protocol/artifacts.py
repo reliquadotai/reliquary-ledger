@@ -5,7 +5,6 @@ from typing import Any
 
 from ..utils.json_io import sha256_json
 
-
 ARTIFACT_DIRECTORIES = {
     "task_batch": "task_batches",
     "completion": "completions",

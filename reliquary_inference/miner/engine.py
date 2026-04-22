@@ -7,10 +7,10 @@ from urllib import request
 
 import torch
 
-from ..constants import PROOF_VERSION, LAYER_INDEX
+from ..constants import LAYER_INDEX, PROOF_VERSION
 from ..protocol.artifacts import make_artifact
-from ..protocol.sketch_verifier import SketchProofVerifier
 from ..protocol.signatures import sign_commit_binding
+from ..protocol.sketch_verifier import SketchProofVerifier
 from ..shared.forward import forward_single_layer
 from ..shared.hf_compat import resolve_hidden_size
 from ..shared.modeling import (

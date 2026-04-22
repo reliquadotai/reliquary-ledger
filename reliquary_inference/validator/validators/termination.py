@@ -8,8 +8,6 @@ or miners that emit partial output without a clean stop.
 
 from __future__ import annotations
 
-from typing import Any
-
 from .base import RejectReason, StageContext, StageResult, accept, reject
 
 

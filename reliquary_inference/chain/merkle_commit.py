@@ -22,8 +22,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any, Callable, Protocol
-
+from typing import Any, Protocol
 
 COMMITMENT_KEY_VERDICT_MEDIAN = "reliquary_mesh_verdicts"
 COMMITMENT_KEY_CHECKPOINT = "reliquary_checkpoint"

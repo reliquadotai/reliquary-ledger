@@ -9,6 +9,8 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -21,12 +23,8 @@ from reliquary_inference.validator.verdict_storage import (
     VerdictVerifier,
 )
 
-import sys
-from pathlib import Path
-
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_r2_backend import FakeS3  # noqa: E402
-
 
 NETUID = 81
 HMAC_KEY = b"shared-hmac-key"

@@ -18,7 +18,6 @@ from reliquary_inference.dataset.task_sources.math_env import (
     evaluate_math_trace,
 )
 
-
 # ---------------------------------------------------------------------------
 # Balanced-brace extractor
 # ---------------------------------------------------------------------------
@@ -185,7 +184,9 @@ class _FakeEnv:
         }
 
     def compute_reward(self, problem, completion):
-        from reliquary_inference.dataset.task_sources.math_env import compute_math_reward
+        from reliquary_inference.dataset.task_sources.math_env import (
+            compute_math_reward,
+        )
         return compute_math_reward(problem, completion)
 
 
@@ -292,7 +293,10 @@ def test_math_task_source_evaluate_completion_rejects_wrong():
 
 
 def test_math_task_source_registered_in_build():
-    from reliquary_inference.dataset.task_sources import build_task_source, MathTasksSource
+    from reliquary_inference.dataset.task_sources import (
+        MathTasksSource,
+        build_task_source,
+    )
 
     src = build_task_source("math")
     assert isinstance(src, MathTasksSource)

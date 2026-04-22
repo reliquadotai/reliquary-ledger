@@ -7,8 +7,6 @@ trace acceptance, SAT assignment validity, etc.).
 
 from __future__ import annotations
 
-from typing import Any
-
 from .base import RejectReason, StageContext, StageResult, accept, reject
 
 

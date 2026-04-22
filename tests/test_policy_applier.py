@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Any
 
 import pytest
 
@@ -22,7 +21,6 @@ from reliquary_inference.shared.policy_applier import (
     bundle_aware_delta_loader,
 )
 from reliquary_inference.shared.policy_consumer import LoadedDelta
-
 
 # --------------------------------------------------------------------------
 # Fixtures

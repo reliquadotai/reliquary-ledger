@@ -275,7 +275,6 @@ def test_r2_backend_satisfies_storage_backend_protocol() -> None:
     by constructing a VerdictPublisher and letting its type hints do
     the contract work.
     """
-    from reliquary_inference.validator.verdict_storage import StorageBackend
 
     client = FakeS3()
     backend = R2Backend(bucket="b", client=client)

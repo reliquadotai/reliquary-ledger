@@ -2,7 +2,11 @@
 
 import logging
 
-from ..constants import SUPERLINEAR_EXPONENT, UNIQUE_ROLLOUTS_CAP, UNIQUE_ROLLOUTS_CAP_ENABLED
+from ..constants import (
+    SUPERLINEAR_EXPONENT,
+    UNIQUE_ROLLOUTS_CAP,
+    UNIQUE_ROLLOUTS_CAP_ENABLED,
+)
 
 logger = logging.getLogger(__name__)
 

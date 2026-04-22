@@ -51,6 +51,7 @@ def compute_cached_hidden_states(
         return {}
     try:
         import torch
+
         from ..protocol.constants import LAYER_INDEX as DEFAULT_LAYER_INDEX
         from ..shared.forward import forward_single_layer
 

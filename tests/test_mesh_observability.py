@@ -10,17 +10,14 @@ import json
 import re
 from pathlib import Path
 
-import pytest
-
 from reliquary_inference.validator.mesh import (
-    MeshAggregationReport,
     MedianVerdict,
+    MeshAggregationReport,
 )
 from reliquary_inference.validator.mesh_observability import (
     MeshMetrics,
     render_mesh_prometheus,
 )
-
 
 _DASHBOARD_PATH = (
     Path(__file__).resolve().parent.parent

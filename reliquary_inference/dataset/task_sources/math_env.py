@@ -30,7 +30,6 @@ import hashlib
 import re
 from typing import Any, ClassVar, Optional
 
-
 # ---------------------------------------------------------------------------
 # Balanced-brace extraction of the last \boxed{...} / \fbox{...}
 # ---------------------------------------------------------------------------

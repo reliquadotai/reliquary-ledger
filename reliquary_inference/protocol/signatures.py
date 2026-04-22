@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import hmac
 import hashlib
+import hmac
 import json
 import logging
 from typing import TYPE_CHECKING

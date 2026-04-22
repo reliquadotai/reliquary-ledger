@@ -12,9 +12,8 @@ from typing import Any
 
 from ..protocol.signatures import verify_commit_signature
 from ..shared.modeling import load_model_bundle
-from .pipeline import run_pipeline, default_stages, VerdictResult
+from .pipeline import VerdictResult, default_stages, run_pipeline
 from .validators.base import RejectReason, StageContext
-
 
 # Legacy hard_fail_reason string mapping kept stable for downstream consumers
 # (scorecard emitters, copycat pass, audit index). New reasons use the enum

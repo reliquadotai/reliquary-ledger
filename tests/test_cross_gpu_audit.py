@@ -10,7 +10,6 @@ from reliquary_inference.cross_gpu_audit import (
     DEFAULT_HIDDEN_DIMS,
     DEFAULT_SCALES,
     DEFAULT_SEEDS,
-    CrossGpuReport,
     SketchSample,
     collect_samples,
     compare_reports,

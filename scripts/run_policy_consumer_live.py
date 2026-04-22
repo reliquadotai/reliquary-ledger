@@ -23,10 +23,10 @@ R2 artifacts, with real Qwen2.5-3B weights underlying them.
 
 from __future__ import annotations
 
-import hashlib
 import json
-import sys
 import time
+
+from reliquary_protocol.storage import R2ObjectBackend
 
 from reliquary_inference.shared.policy_consumer import (
     LoadedDelta,
@@ -34,8 +34,6 @@ from reliquary_inference.shared.policy_consumer import (
     default_smoke_runner,
 )
 from reliquary_inference.validator.rollout_bundle import make_hmac_verifier
-from reliquary_protocol.storage import R2ObjectBackend
-
 
 POLICY_AUTHORITY_HOTKEY = "reliquary-policy-authority-v1"
 INFERENCE_NETUID = 462

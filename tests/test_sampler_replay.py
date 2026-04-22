@@ -88,7 +88,7 @@ def test_repetition_penalty_reduces_prior_token_probability() -> None:
 
 def test_replay_matches_hf_logits_processor_pipeline() -> None:
     """Parity check against HuggingFace's canonical LogitsProcessorList."""
-    transformers = pytest.importorskip("transformers")
+    pytest.importorskip("transformers")
     from transformers import (
         LogitsProcessorList,
         RepetitionPenaltyLogitsProcessor,

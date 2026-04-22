@@ -31,7 +31,6 @@ from typing import Callable
 from .protocol.constants import CHALLENGE_K
 from .protocol.sketch_verifier import SketchProofVerifier
 
-
 HIDDEN_DIM_DEFAULT = 256
 RANDOMNESS_HEX_DEFAULT = "00000000000000000000000000000000000000000000000000000000deadbeef"
 

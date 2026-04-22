@@ -57,15 +57,22 @@ def load_config() -> dict[str, object]:
         "log_dir": log_dir,
         "wallet_public_file": wallet_public_file,
         "model_ref": _env_str("RELIQUARY_INFERENCE_MODEL_REF", "toy://local-inference-v1"),
-        "task_source": _env_str("RELIQUARY_INFERENCE_TASK_SOURCE", "reasoning_tasks"),
-        "task_count": _env_int("RELIQUARY_INFERENCE_TASK_COUNT", 8),
+        # `math` is the live target on testnet netuid 462. `reasoning_tasks`
+        # and `dataset_prompts` remain in the source tree for tests + low-
+        # resource fallbacks; set the env var explicitly to pick them.
+        "task_source": _env_str("RELIQUARY_INFERENCE_TASK_SOURCE", "math"),
+        # With samples_per_task=8 (DAPO M=8), a single task per window is the
+        # canonical shape: one prompt, M rollouts, one GRPO group per window.
+        "task_count": _env_int("RELIQUARY_INFERENCE_TASK_COUNT", 1),
         "poll_interval": _env_int("RELIQUARY_INFERENCE_POLL_INTERVAL", 10),
         "metrics_bind": _env_str("RELIQUARY_INFERENCE_METRICS_BIND", "127.0.0.1"),
         "metrics_port": _env_int("RELIQUARY_INFERENCE_METRICS_PORT", 9108),
         "metrics_refresh_interval": _env_int("RELIQUARY_INFERENCE_METRICS_REFRESH_INTERVAL", 15),
         "metrics_window_count": _env_int("RELIQUARY_INFERENCE_METRICS_WINDOW_COUNT", 10),
-        "samples_per_task": _env_int("RELIQUARY_INFERENCE_SAMPLES_PER_TASK", 1),
-        "max_new_tokens": _env_int("RELIQUARY_INFERENCE_MAX_NEW_TOKENS", 48),
+        "samples_per_task": _env_int("RELIQUARY_INFERENCE_SAMPLES_PER_TASK", 8),
+        # 1024 tokens = room for Qwen2.5-3B to finish a MATH reasoning chain +
+        # \boxed{} answer. Bump lower for lighter task sources / smaller models.
+        "max_new_tokens": _env_int("RELIQUARY_INFERENCE_MAX_NEW_TOKENS", 1024),
         "device": _env_str("RELIQUARY_INFERENCE_DEVICE", "cpu"),
         "load_dtype": _env_str("RELIQUARY_INFERENCE_LOAD_DTYPE", "auto"),
         "miner_mode": _env_str("RELIQUARY_INFERENCE_MINER_MODE", "single_gpu_hf"),

@@ -13,7 +13,6 @@ from reliquary_inference.validator.miner_scoreboard import (
     render_miner_scoreboard_prometheus,
 )
 
-
 _DASHBOARD_PATH = (
     Path(__file__).resolve().parent.parent
     / "deploy"

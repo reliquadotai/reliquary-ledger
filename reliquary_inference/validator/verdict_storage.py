@@ -22,14 +22,11 @@ import json
 import logging
 import os
 import tempfile
-import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from ..protocol.constants import LEDGER_PROOF_VERSION
 from .mesh import ValidatorIdentity, VerdictArtifact
-
 
 logger = logging.getLogger(__name__)
 

@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-import hashlib
 from collections import defaultdict
 from typing import Any
 
 from ..protocol.artifacts import make_artifact
 from ..utils.json_io import write_json
-from .cooldown import CooldownMap, DEFAULT_COOLDOWN_WINDOWS, default_cooldown_path
 from .batched_verify import (
     compute_cached_hidden_states,
     group_completions_for_batched_forward,
 )
+from .cooldown import DEFAULT_COOLDOWN_WINDOWS, CooldownMap, default_cooldown_path
 from .copycat import detect_index_copycats
 from .verifier import verify_completion
 from .weights import compute_weights

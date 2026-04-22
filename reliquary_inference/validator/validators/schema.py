@@ -7,11 +7,8 @@ already seen in this window.
 
 from __future__ import annotations
 
-from typing import Any
-
 from ...protocol.constants import LEDGER_PROOF_VERSION
 from .base import RejectReason, StageContext, StageResult, accept, reject
-
 
 REQUIRED_TOP_LEVEL_FIELDS: tuple[str, ...] = ("producer_id", "payload")
 REQUIRED_PAYLOAD_FIELDS: tuple[str, ...] = (

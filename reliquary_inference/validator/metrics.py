@@ -18,7 +18,6 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass, field
 
-
 _STAGE_TOTAL = "reliquary_verifier_stage_total"
 _REJECTIONS_TOTAL = "reliquary_verifier_rejections_total"
 _SOFT_FLAGS_TOTAL = "reliquary_verifier_soft_flags_total"

@@ -8,11 +8,8 @@ from __future__ import annotations
 
 from typing import Callable
 
-import pytest
-
 from reliquary_inference.validator.pipeline import (
     StagePolicy,
-    VerdictResult,
     default_stages,
     run_pipeline,
 )

@@ -1,5 +1,5 @@
-from reliquary_inference.dataset.task_sources import build_task_source
 import reliquary_inference.dataset.task_sources as task_sources_module
+from reliquary_inference.dataset.task_sources import build_task_source
 
 
 def _window_context(source_id: str) -> dict:

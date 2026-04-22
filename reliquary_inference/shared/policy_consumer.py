@@ -37,9 +37,8 @@ from typing import Mapping, Protocol
 
 from reliquary_protocol import (
     BRIDGE_VERSION,
-    BridgeVerifier,
     CHECKPOINT_ATTESTATION_TYPE,
-    POLICY_COMMITMENT_TYPE,
+    BridgeVerifier,
     CheckpointAttestation,
     PolicyCommitment,
     envelope_from_dict,
@@ -48,7 +47,6 @@ from reliquary_protocol import (
 )
 
 from ..validator.verdict_storage import StorageBackend
-
 
 logger = logging.getLogger(__name__)
 

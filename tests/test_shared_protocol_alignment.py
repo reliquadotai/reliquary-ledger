@@ -21,8 +21,9 @@ reliquary_protocol = pytest.importorskip(
 from reliquary_inference import constants as root_constants
 from reliquary_inference.protocol import constants as subnet_constants
 from reliquary_inference.utils.json_io import sha256_json as subnet_sha256_json
-from reliquary_inference.utils.json_io import stable_json_dumps as subnet_stable_json_dumps
-
+from reliquary_inference.utils.json_io import (
+    stable_json_dumps as subnet_stable_json_dumps,
+)
 
 # ---------------------------------------------------------------------------
 # Canonicalization alignment

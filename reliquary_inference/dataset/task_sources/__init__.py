@@ -3,9 +3,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from ..loader import deterministic_indices, get_prompt_by_index, load_dataset_cached, prompt_hash
-from ..reasoning import evaluate_reasoning_trace, generate_reasoning_tasks, render_reasoning_conversation
 from ...shared.modeling import load_tokenizer_for_model
+from ..loader import (
+    deterministic_indices,
+    get_prompt_by_index,
+    load_dataset_cached,
+    prompt_hash,
+)
+from ..reasoning import (
+    evaluate_reasoning_trace,
+    generate_reasoning_tasks,
+    render_reasoning_conversation,
+)
 
 
 class TaskSource(Protocol):

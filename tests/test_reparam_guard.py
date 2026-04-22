@@ -6,13 +6,11 @@ honest-looking deltas and the classic RMSNorm×Linear reparam attack.
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 
 import pytest
 
 from reliquary_inference.shared.reparam_guard import (
-    LAYER_SCALE_RATIO_MAX,
     PROJ_MIN_MEAN_ABS,
     ReparamGuardResult,
     check_layer_scale_ratio,

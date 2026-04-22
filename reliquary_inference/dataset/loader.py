@@ -4,7 +4,11 @@ import hashlib
 import random
 from typing import Any
 
-from ..constants import DEFAULT_DATASET_NAME, DEFAULT_DATASET_SPLIT, DEFAULT_FALLBACK_PROMPTS
+from ..constants import (
+    DEFAULT_DATASET_NAME,
+    DEFAULT_DATASET_SPLIT,
+    DEFAULT_FALLBACK_PROMPTS,
+)
 
 
 def load_dataset_cached(dataset_name: str = DEFAULT_DATASET_NAME, split: str = DEFAULT_DATASET_SPLIT):

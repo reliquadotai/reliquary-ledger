@@ -14,7 +14,6 @@ Spec: private/reliquary-plan/notes/spec-distribution-validator.md.
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
 from ...protocol.constants import LOGPROB_DRIFT_QUORUM, LOGPROB_DRIFT_THRESHOLD

@@ -9,7 +9,6 @@ import pytest
 
 from reliquary_inference.observability import tracing
 
-
 pytestmark = pytest.mark.skipif(
     not tracing.is_otel_available(),
     reason="opentelemetry not installed in this environment",
@@ -146,9 +145,8 @@ def test_nested_spans_share_trace_id(recorder: tracing.InMemorySpanRecorder) -> 
         return _StageResult(result="accept")
 
     with tracer.start_as_current_span("window.process") as parent:
-        parent_trace_id = None
         if hasattr(parent, "get_span_context"):
-            parent_trace_id = parent.get_span_context().trace_id
+            parent.get_span_context().trace_id
         stage({})
 
     _flush()

@@ -14,8 +14,6 @@ torch = pytest.importorskip("torch")
 
 from reliquary_inference.audit_harness import (
     ADVERSARIAL_CLASSES,
-    AuditReport,
-    ClassReport,
     run_audit_campaign,
 )
 

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from reliquary_inference.protocol.constants import LEDGER_PROOF_VERSION
 from reliquary_inference.validator.validators.base import RejectReason, StageContext
 from reliquary_inference.validator.validators.schema import SchemaStage

@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 
-import pytest
+from reliquary_protocol import (
+    RolloutBundle,
+    envelope_from_dict,
+    verify_envelope,
+)
 
 from reliquary_inference.validator.mesh import (
     MedianVerdict,
@@ -27,13 +30,6 @@ from reliquary_inference.validator.verdict_storage import (
     LocalFilesystemBackend,
     StorageBackend,
 )
-from reliquary_protocol import (
-    BridgeEnvelope,
-    RolloutBundle,
-    envelope_from_dict,
-    verify_envelope,
-)
-
 
 PRODUCER_HOTKEY = "val_a"
 PRODUCER_SECRET = "hotkey-a-secret"

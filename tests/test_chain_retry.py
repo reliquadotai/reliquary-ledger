@@ -10,7 +10,11 @@ import random
 
 import pytest
 
-from reliquary_inference.chain.retry import RetryPolicy, compute_delay_seconds, retry_with_backoff
+from reliquary_inference.chain.retry import (
+    RetryPolicy,
+    compute_delay_seconds,
+    retry_with_backoff,
+)
 
 
 def test_policy_rejects_invalid_max_attempts() -> None:

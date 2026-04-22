@@ -22,7 +22,6 @@ from typing import Deque
 
 from reliquary_inference.validator.mesh import VerdictArtifact
 
-
 MINER_ACCEPTANCE_WINDOW = 32
 
 

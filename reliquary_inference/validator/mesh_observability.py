@@ -15,7 +15,6 @@ from dataclasses import dataclass, field
 
 from reliquary_inference.validator.mesh import MeshAggregationReport
 
-
 _COMPLETIONS_TOTAL = "reliquary_mesh_completions_total"
 _DISAGREEMENT_RATE = "reliquary_mesh_validator_disagreement_rate"
 _GATED_TOTAL = "reliquary_mesh_validators_gated_total"

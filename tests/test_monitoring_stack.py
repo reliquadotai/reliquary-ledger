@@ -12,9 +12,6 @@ import os
 import re
 from pathlib import Path
 
-import pytest
-
-
 _DEPLOY_ROOT = Path(__file__).resolve().parent.parent / "deploy" / "monitoring"
 _COMPOSE_PATH = _DEPLOY_ROOT / "docker-compose.monitoring.yml"
 _SMOKE_PATH = _DEPLOY_ROOT / "bin" / "monitoring-smoke.sh"

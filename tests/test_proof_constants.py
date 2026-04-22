@@ -12,7 +12,6 @@ import pytest
 from reliquary_inference import constants as root_constants
 from reliquary_inference.protocol import constants as protocol_constants
 
-
 _PROTOCOL_CONSTANTS_PATH = Path(protocol_constants.__file__).resolve()
 
 

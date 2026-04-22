@@ -18,7 +18,6 @@ torch = pytest.importorskip("torch")
 from reliquary_inference.protocol.constants import LEDGER_PROOF_VERSION
 from reliquary_inference.protocol.sketch_verifier import SketchProofVerifier
 
-
 HIDDEN_DIM = 128
 RANDOMNESS_HEX = "00000000000000000000000000000000000000000000000000000000deadbeef"
 

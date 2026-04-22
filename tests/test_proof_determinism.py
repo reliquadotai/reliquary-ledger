@@ -15,7 +15,6 @@ from reliquary_inference.protocol.sketch_verifier import (
     log_magnitude_bucket_vectorized,
 )
 
-
 HIDDEN_DIM = 256
 SEED_RANDOMNESS = "00000000000000000000000000000000000000000000000000000000deadbeef"
 

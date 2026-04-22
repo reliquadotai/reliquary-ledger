@@ -4,14 +4,20 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
 
-import pytest
+from reliquary_protocol import (
+    CHECKPOINT_ATTESTATION_TYPE,
+    CheckpointAttestation,
+    PolicyCommitment,
+    build_checkpoint_attestation,
+    build_policy_commitment,
+    sign_envelope,
+)
 
 from reliquary_inference.shared.policy_consumer import (
-    LoadedDelta,
     POLICY_SWAP_METRIC_OK,
     POLICY_SWAP_METRIC_REJECTED,
+    LoadedDelta,
     PolicyConsumer,
     default_smoke_runner,
 )
@@ -20,19 +26,6 @@ from reliquary_inference.validator.rollout_bundle import (
     make_hmac_verifier,
 )
 from reliquary_inference.validator.verdict_storage import LocalFilesystemBackend
-from reliquary_protocol import (
-    BRIDGE_VERSION,
-    CHECKPOINT_ATTESTATION_TYPE,
-    POLICY_COMMITMENT_TYPE,
-    CheckpointAttestation,
-    HmacBridgeSigner,
-    PolicyCommitment,
-    build_checkpoint_attestation,
-    build_policy_commitment,
-    envelope_from_dict,
-    sign_envelope,
-)
-
 
 AUTHORITY = "authority_fleet"
 SECRET = "authority-fleet-secret"
@@ -441,7 +434,7 @@ def test_reject_on_netuid_mismatch(tmp_path):
     # Fake the commitment storage key to the proper inference netuid so
     # the consumer sees it. (In practice the signer would set this key,
     # but we bypass to exercise the mismatch path.)
-    fake_key = f"commitments/81/policy/100.json"
+    fake_key = "commitments/81/policy/100.json"
     backend.put(
         fake_key,
         json.dumps(bad_commitment.to_dict(), sort_keys=True).encode("utf-8"),

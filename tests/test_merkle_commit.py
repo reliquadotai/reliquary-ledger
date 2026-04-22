@@ -6,7 +6,6 @@ Uses an in-memory FakeCommitCallable to avoid any subtensor dep.
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -16,7 +15,6 @@ from reliquary_inference.chain.merkle_commit import (
     COMMITMENT_KEY_CHECKPOINT,
     COMMITMENT_KEY_VERDICT_MEDIAN,
     CommitContext,
-    CommitResult,
     OnchainMerkleCommit,
     _compute_verdicts_merkle_root,
     commit_delta_checkpoint_merkle,

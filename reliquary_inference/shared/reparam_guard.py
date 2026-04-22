@@ -49,7 +49,6 @@ import re
 from dataclasses import dataclass
 from typing import Any, Iterable
 
-
 # Defaults match the Teutonic values that caught live adversarial models
 # in their mainnet deployment; can be overridden via env for tuning.
 PROJ_MIN_MEAN_ABS = float(

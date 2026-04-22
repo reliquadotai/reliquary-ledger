@@ -16,13 +16,10 @@ from __future__ import annotations
 import hashlib
 import json
 import socket
-import time
 from dataclasses import asdict, dataclass, field
 from typing import Iterable
 
-from .protocol.constants import CHALLENGE_K
 from .protocol.sketch_verifier import SketchProofVerifier
-
 
 DEFAULT_SEEDS = (0, 1, 7, 42, 100, 256, 1024, 2048, 4096, 9999)
 DEFAULT_SCALES = (1.0, 2.5, 8.0)
@@ -124,8 +121,9 @@ def run_cross_gpu_campaign(
     Default behavior uses the active torch device; tensor seed state is on
     CPU for cross-device reproducibility.
     """
-    import torch
     from datetime import datetime, timezone
+
+    import torch
 
     if device is not None:
         torch.set_default_device(device)

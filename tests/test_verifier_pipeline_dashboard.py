@@ -15,7 +15,6 @@ import json
 import re
 from pathlib import Path
 
-
 _DASHBOARD_PATH = (
     Path(__file__).resolve().parent.parent
     / "deploy"

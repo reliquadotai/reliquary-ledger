@@ -20,14 +20,11 @@ not a release gate on the Ledger repo.
 
 from __future__ import annotations
 
-import hashlib
 import json
-import os
 import sys
 from pathlib import Path
 
 import pytest
-
 
 _FORGE_REPO = Path(__file__).resolve().parents[2] / "reliquary"
 if _FORGE_REPO.is_dir():
@@ -54,6 +51,8 @@ torch = pytest.importorskip("torch")
 
 from reliquary.training.checkpoint_storage import (  # noqa: E402
     LocalFilesystemBackend as ForgeBackend,
+)
+from reliquary.training.checkpoint_storage import (
     publish_bundle,
 )
 from reliquary.training.delta_checkpoints import compute_delta  # noqa: E402
@@ -82,7 +81,6 @@ from reliquary_inference.validator.rollout_bundle import (  # noqa: E402
 from reliquary_inference.validator.verdict_storage import (  # noqa: E402
     LocalFilesystemBackend as LedgerBackend,
 )
-
 
 AUTHORITY = "forge-authority"
 AUTHORITY_SECRET = "forge-authority-secret"
@@ -298,7 +296,7 @@ def test_full_loop_reject_corrupted_bundle(tmp_path):
     """Corruption in transit: tamper the manifest sha → Ledger rejects."""
     shared_root = tmp_path / "bus"
     forge_backend = ForgeBackend(shared_root)
-    ledger_backend = LedgerBackend(shared_root)
+    LedgerBackend(shared_root)
 
     bundle = _build_synthetic_delta()
     manifest = publish_bundle(

@@ -20,7 +20,6 @@ import tempfile
 from pathlib import Path
 from typing import Iterable
 
-
 # Default horizon: 50 windows. With 6-min windows this is ~5h — long enough
 # for the policy to actually shift before revisiting a prompt.
 DEFAULT_COOLDOWN_WINDOWS = 50

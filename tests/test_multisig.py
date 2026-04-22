@@ -7,8 +7,6 @@ import pytest
 from reliquary_inference.chain.multisig import (
     MultiSigOwner,
     MultiSigProposal,
-    PlannedCommand,
-    ProposalPlan,
     ProposalStatus,
     plan_proposal,
     render_plan,

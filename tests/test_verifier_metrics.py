@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from reliquary_inference.validator.metrics import StageMetrics, render_prometheus
-from reliquary_inference.validator.pipeline import StagePolicy, run_pipeline
+from reliquary_inference.validator.pipeline import run_pipeline
 from reliquary_inference.validator.validators.base import (
     RejectReason,
     StageContext,
-    StageResult,
     accept,
     reject,
     soft_flag,

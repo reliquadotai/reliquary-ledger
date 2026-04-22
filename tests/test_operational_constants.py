@@ -12,7 +12,6 @@ from __future__ import annotations
 from reliquary_inference import constants as root_constants
 from reliquary_inference.protocol import constants as protocol_constants
 
-
 # ---------------------------------------------------------------------------
 # Mesh consensus
 # ---------------------------------------------------------------------------

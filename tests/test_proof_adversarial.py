@@ -27,7 +27,6 @@ torch = pytest.importorskip("torch")
 from reliquary_inference.protocol.constants import CHALLENGE_K
 from reliquary_inference.protocol.sketch_verifier import SketchProofVerifier
 
-
 HIDDEN_DIM = 256
 SEED_RANDOMNESS = "00000000000000000000000000000000000000000000000000000000deadbeef"
 

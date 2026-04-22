@@ -23,7 +23,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterable, Mapping
 
-
 # Steady-state minimum σ. For binary rewards, σ of Bernoulli(k/8) where
 # k ∈ [2, 6] is ≈ 0.433. Below that, rollouts cluster too tight for
 # meaningful GRPO gradient.

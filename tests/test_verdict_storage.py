@@ -19,10 +19,7 @@ from reliquary_inference.validator.mesh import (
     aggregate_verdicts,
 )
 from reliquary_inference.validator.verdict_storage import (
-    FetchResult,
-    InvalidArtifactReport,
     LocalFilesystemBackend,
-    PublishOutcome,
     StorageBackend,
     VerdictFetcher,
     VerdictPublisher,
@@ -31,7 +28,6 @@ from reliquary_inference.validator.verdict_storage import (
     _canonicalize,
     verdict_key,
 )
-
 
 HMAC_KEYS: dict[str, bytes] = {
     "mesh-A": b"key-A-super-secret",

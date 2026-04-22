@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import time
 from typing import Annotated
 
@@ -18,8 +17,16 @@ from .protocol.artifacts import make_artifact
 from .status import status_summary
 from .storage.registry import LocalRegistry, R2Registry, RestR2Registry
 from .utils.json_io import write_json
-from .validator.cooldown import CooldownMap, DEFAULT_COOLDOWN_WINDOWS, default_cooldown_path
-from .validator.service import finalize_window_manifest, validate_window, write_run_manifest
+from .validator.cooldown import (
+    DEFAULT_COOLDOWN_WINDOWS,
+    CooldownMap,
+    default_cooldown_path,
+)
+from .validator.service import (
+    finalize_window_manifest,
+    validate_window,
+    write_run_manifest,
+)
 
 app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -476,7 +483,7 @@ def _build_miner_policy_consumer_hook(cfg: dict):
     """
     import os
 
-    if not os.environ.get("RELIQUARY_INFERENCE_POLICY_CONSUMER_ENABLED", "").lower() in {
+    if os.environ.get("RELIQUARY_INFERENCE_POLICY_CONSUMER_ENABLED", "").lower() not in {
         "1",
         "true",
         "yes",
@@ -670,7 +677,7 @@ def _build_validator_policy_consumer_hook(cfg: dict):
     """
     import os
 
-    if not os.environ.get("RELIQUARY_INFERENCE_POLICY_CONSUMER_ENABLED", "").lower() in {
+    if os.environ.get("RELIQUARY_INFERENCE_POLICY_CONSUMER_ENABLED", "").lower() not in {
         "1",
         "true",
         "yes",
@@ -679,7 +686,11 @@ def _build_validator_policy_consumer_hook(cfg: dict):
         return None
 
     from .shared import modeling as _modeling  # for apply_delta_to_cached_bundles
-    from .shared.policy_consumer import LoadedDelta, PolicyConsumer, default_smoke_runner
+    from .shared.policy_consumer import (
+        LoadedDelta,
+        PolicyConsumer,
+        default_smoke_runner,
+    )
     from .validator.rollout_bundle import make_hmac_verifier
 
     try:

@@ -27,11 +27,11 @@ from typing import Any, Mapping, Sequence
 
 from reliquary_protocol import (
     BRIDGE_VERSION,
+    ROLLOUT_BUNDLE_TYPE,
     BridgeSigner,
     BridgeVerifier,
     HmacBridgeSigner,
     HmacBridgeVerifier,
-    ROLLOUT_BUNDLE_TYPE,
     RolloutBundle,
     build_rollout_bundle,
     envelope_from_dict,
@@ -41,7 +41,6 @@ from reliquary_protocol import (
 
 from .mesh import MeshAggregationReport, VerdictArtifact
 from .verdict_storage import StorageBackend
-
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +236,7 @@ class RolloutBundlePublisher:
                 continue
             data = entry.read_bytes()
             try:
-                envelope_dict = json.loads(data.decode("utf-8"))
+                json.loads(data.decode("utf-8"))
             except Exception as exc:
                 logger.error("spool entry %s is corrupt: %s", entry, exc)
                 continue

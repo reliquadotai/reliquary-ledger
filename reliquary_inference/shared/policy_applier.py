@@ -32,10 +32,9 @@ Failure handling:
 from __future__ import annotations
 
 import logging
-from typing import Any, Mapping
+from typing import Any
 
 from .policy_consumer import LoadedDelta
-
 
 logger = logging.getLogger(__name__)
 
