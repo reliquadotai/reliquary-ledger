@@ -116,5 +116,10 @@ def load_config() -> dict[str, object]:
         "r2_rest_public_url": _env_str("RELIQUARY_INFERENCE_R2_PUBLIC_URL", ""),
         "dataset_name": _env_str("RELIQUARY_INFERENCE_DATASET_NAME", "karpathy/climbmix-400b-shuffle"),
         "dataset_split": _env_str("RELIQUARY_INFERENCE_DATASET_SPLIT", "train"),
+        # DAPO zone filter — σ_min threshold relaxed to 0.33 during bootstrap
+        # so a new fleet with a weak base model can still collect enough
+        # training signal to start the learning loop.
+        "zone_filter_bootstrap": _env_bool("RELIQUARY_INFERENCE_ZONE_FILTER_BOOTSTRAP", False),
+        "cooldown_windows": _env_int("RELIQUARY_INFERENCE_COOLDOWN_WINDOWS", 50),
         "git_sha": _git_sha(),
     }
