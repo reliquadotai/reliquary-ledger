@@ -498,26 +498,76 @@ class MetricsCache:
         return snapshot
 
 
+DASHBOARD_DIR: Path = Path(__file__).resolve().parent.parent / "dashboard"
+
+
 def serve_metrics(*, bind: str, port: int, cache: MetricsCache) -> None:
     class Handler(BaseHTTPRequestHandler):
-        def do_GET(self) -> None:  # noqa: N802
-            if self.path in {"/metrics", "/metrics/"}:
-                payload = render_metrics(cache.current()).encode("utf-8")
-                ct = PROMETHEUS_CONTENT_TYPE
-            elif self.path in {"/healthz", "/healthz/"}:
-                payload = _render_healthz(cache.current()).encode("utf-8")
-                ct = "application/json; charset=utf-8"
-            elif self.path in {"/", "/status", "/status/"}:
-                payload = _render_status_json(cache.current()).encode("utf-8")
-                ct = "application/json; charset=utf-8"
-            else:
-                self.send_error(HTTPStatus.NOT_FOUND)
-                return
+        def do_OPTIONS(self) -> None:  # noqa: N802
+            # CORS pre-flight so the dashboard can load from a different
+            # origin (e.g. a static site) and still hit /status + /healthz.
+            self.send_response(HTTPStatus.NO_CONTENT)
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.end_headers()
+
+        def _send(self, payload: bytes, ct: str) -> None:
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", ct)
             self.send_header("Content-Length", str(len(payload)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "no-store")
             self.end_headers()
             self.wfile.write(payload)
+
+        def do_GET(self) -> None:  # noqa: N802
+            if self.path in {"/metrics", "/metrics/"}:
+                self._send(
+                    render_metrics(cache.current()).encode("utf-8"),
+                    PROMETHEUS_CONTENT_TYPE,
+                )
+                return
+            if self.path in {"/healthz", "/healthz/"}:
+                self._send(
+                    _render_healthz(cache.current()).encode("utf-8"),
+                    "application/json; charset=utf-8",
+                )
+                return
+            if self.path in {"/status", "/status/"}:
+                self._send(
+                    _render_status_json(cache.current()).encode("utf-8"),
+                    "application/json; charset=utf-8",
+                )
+                return
+            # Dashboard static routes: /  →  dashboard/index.html
+            # Only allow files that exist under DASHBOARD_DIR. This is a
+            # trivial static file server with no path traversal: any ".."
+            # or absolute path is rejected up front.
+            if self.path in {"/", "/dashboard", "/dashboard/"}:
+                self._serve_file(DASHBOARD_DIR / "index.html", "text/html; charset=utf-8")
+                return
+            if self.path.startswith("/dashboard/"):
+                rel = self.path[len("/dashboard/"):]
+                if ".." in rel or rel.startswith("/"):
+                    self.send_error(HTTPStatus.FORBIDDEN)
+                    return
+                target = DASHBOARD_DIR / rel
+                ct = "text/html; charset=utf-8" if rel.endswith(".html") \
+                    else "application/javascript" if rel.endswith(".js") \
+                    else "text/css" if rel.endswith(".css") \
+                    else "application/octet-stream"
+                self._serve_file(target, ct)
+                return
+            self.send_error(HTTPStatus.NOT_FOUND)
+
+        def _serve_file(self, path: Path, ct: str) -> None:
+            try:
+                data = path.read_bytes()
+            except (FileNotFoundError, PermissionError, IsADirectoryError):
+                self.send_error(HTTPStatus.NOT_FOUND)
+                return
+            self._send(data, ct)
 
         def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
             return

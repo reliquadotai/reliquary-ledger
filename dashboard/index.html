@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reliquary Ledger — Live Mesh Status</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --bg: #0c0f14;
+    --panel: #141922;
+    --muted: #667085;
+    --text: #e4e8ef;
+    --accent: #36d399;
+    --warn: #fbbd23;
+    --bad: #f87272;
+    --divider: #1f2530;
+    --mono: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                            Roboto, Helvetica, Arial, sans-serif;
+               font-size: 14px; line-height: 1.5; }
+  header { display: flex; align-items: center; justify-content: space-between;
+           padding: 16px 24px; border-bottom: 1px solid var(--divider); }
+  header h1 { font-size: 16px; font-weight: 600; margin: 0;
+              letter-spacing: 0.5px; text-transform: uppercase; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  header .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+                vertical-align: middle; margin-right: 6px; background: var(--muted); }
+  header .dot.ok { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  header .dot.warn { background: var(--warn); }
+  header .dot.bad { background: var(--bad); }
+  main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+          margin-bottom: 24px; }
+  .grid.two { grid-template-columns: repeat(2, 1fr); }
+  .card { background: var(--panel); border: 1px solid var(--divider);
+          border-radius: 6px; padding: 16px; }
+  .card h2 { margin: 0 0 6px 0; font-size: 11px; font-weight: 500;
+             letter-spacing: 0.8px; text-transform: uppercase;
+             color: var(--muted); }
+  .card .v { font-size: 24px; font-weight: 600; font-family: var(--mono); }
+  .card .v.small { font-size: 16px; }
+  .card .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .section { margin-bottom: 24px; }
+  .section h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px;
+                color: var(--muted); margin: 0 0 8px 0; font-weight: 500; }
+  .ok  { color: var(--accent); }
+  .warn { color: var(--warn); }
+  .bad  { color: var(--bad); }
+  .mono { font-family: var(--mono); }
+  table { width: 100%; border-collapse: collapse; font-family: var(--mono);
+          font-size: 12px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--divider); }
+  th { color: var(--muted); font-weight: 500; text-transform: uppercase;
+       letter-spacing: 0.6px; font-size: 10px; }
+  tr:last-child td { border-bottom: none; }
+  footer { padding: 16px 24px; color: var(--muted); font-size: 12px;
+           border-top: 1px solid var(--divider); text-align: center; }
+  .net-badge { display: inline-block; padding: 2px 8px; border: 1px solid var(--divider);
+               border-radius: 3px; font-size: 11px; color: var(--muted);
+               font-family: var(--mono); }
+  .err { padding: 12px; background: rgba(248, 114, 114, 0.08);
+         border: 1px solid rgba(248, 114, 114, 0.3); border-radius: 6px;
+         color: var(--bad); font-family: var(--mono); font-size: 12px; }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Reliquary Ledger</h1>
+      <div class="sub">
+        <span id="dot" class="dot"></span>
+        <span id="health">—</span>
+        <span class="net-badge" id="netuid">netuid —</span>
+        <span class="net-badge" id="network">—</span>
+      </div>
+    </div>
+    <div class="sub mono" id="updated">never</div>
+  </header>
+
+  <main>
+    <div id="err" class="err" style="display:none"></div>
+
+    <div class="section">
+      <h3>Chain</h3>
+      <div class="grid">
+        <div class="card"><h2>Current block</h2>
+          <div class="v" id="block">—</div>
+          <div class="hint" id="blockHint">scrape age —</div></div>
+        <div class="card"><h2>Chain window</h2>
+          <div class="v" id="winChain">—</div>
+          <div class="hint">window size: 30 blocks</div></div>
+        <div class="card"><h2>Latest mined window</h2>
+          <div class="v" id="winMined">—</div>
+          <div class="hint" id="lagHint">import lag —</div></div>
+        <div class="card"><h2>Metagraph size</h2>
+          <div class="v" id="metagraph">—</div>
+          <div class="hint" id="subnetVisible">visibility —</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Mining / Validation (rolling audit window)</h3>
+      <div class="grid">
+        <div class="card"><h2>Submitted</h2>
+          <div class="v" id="submitted">—</div></div>
+        <div class="card"><h2>Accepted</h2>
+          <div class="v" id="accepted">—</div>
+          <div class="hint" id="acceptRate">rate —</div></div>
+        <div class="card"><h2>Hard failed</h2>
+          <div class="v warn" id="hard">—</div></div>
+        <div class="card"><h2>Soft failed</h2>
+          <div class="v warn" id="soft">—</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>DAPO Zone Filter (training-signal density)</h3>
+      <div class="grid">
+        <div class="card"><h2>Groups observed</h2>
+          <div class="v" id="zoneTotal">—</div>
+          <div class="hint" id="zoneWindowHint">across N windows</div></div>
+        <div class="card"><h2>In-zone groups</h2>
+          <div class="v ok" id="zoneIn">—</div>
+          <div class="hint" id="zoneRateHint">rate —</div></div>
+        <div class="card"><h2>Mean σ</h2>
+          <div class="v" id="zoneSigma">—</div>
+          <div class="hint">σ≥0.33 bootstrap threshold</div></div>
+        <div class="card"><h2>Mean reward</h2>
+          <div class="v" id="zoneReward">—</div>
+          <div class="hint">proxy for miner correctness</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Reasoning (MATH)</h3>
+      <div class="grid">
+        <div class="card"><h2>Correct rate</h2>
+          <div class="v" id="rCorrect">—</div></div>
+        <div class="card"><h2>Format-OK rate</h2>
+          <div class="v" id="rFormat">—</div>
+          <div class="hint">\boxed{…} present</div></div>
+        <div class="card"><h2>Policy compliance</h2>
+          <div class="v" id="rCompliance">—</div></div>
+        <div class="card"><h2>Task source</h2>
+          <div class="v small mono" id="taskSrc">—</div>
+          <div class="hint mono" id="modelRef">—</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Runtime</h3>
+      <table id="runtimeTable">
+        <thead><tr><th>Key</th><th>Value</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h3>Per task-source totals</h3>
+      <table id="srcTable">
+        <thead><tr><th>Source</th><th>Submitted</th><th>Accepted</th>
+          <th>Correct</th><th>Format ok</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    Reliquary Ledger live mesh status ·
+    pulled from <code>/status</code> + <code>/healthz</code> on the metrics
+    exporter · refresh every <span id="refresh">10</span>s
+  </footer>
+
+<script>
+const ENDPOINT = (location.search.match(/[?&]endpoint=([^&]+)/) || [])[1]
+              || "/status";
+const HEALTH   = ENDPOINT.replace(/\/status\/?$/, "/healthz");
+const REFRESH_MS = 10000;
+document.getElementById("refresh").textContent = (REFRESH_MS/1000).toFixed(0);
+
+const fmt = {
+  num: v => v == null ? "—" : Number(v).toLocaleString(undefined, {maximumFractionDigits: 0}),
+  pct: v => v == null ? "—" : (Number(v) * 100).toFixed(1) + "%",
+  dec: (v, n=3) => v == null ? "—" : Number(v).toFixed(n),
+  sec: v => v == null ? "—" : Number(v).toFixed(1) + "s",
+};
+
+function colorForHealth(ok, scrapeAge) {
+  if (ok) return "ok";
+  if (scrapeAge != null && scrapeAge < 180) return "warn";
+  return "bad";
+}
+
+async function fetchJson(url) {
+  const r = await fetch(url, {cache: "no-store"});
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+async function tick() {
+  try {
+    const [status, health] = await Promise.all([
+      fetchJson(ENDPOINT),
+      fetchJson(HEALTH).catch(() => null),
+    ]);
+    document.getElementById("err").style.display = "none";
+    render(status, health);
+  } catch (e) {
+    const err = document.getElementById("err");
+    err.style.display = "block";
+    err.textContent = `fetch failed: ${e.message} — is the validator metrics exporter (:9108) reachable?`;
+  }
+}
+
+function render(s, h) {
+  const now = new Date();
+  document.getElementById("updated").textContent = now.toISOString();
+
+  const rt = s.runtime || {};
+  document.getElementById("netuid").textContent = `netuid ${rt.netuid || "—"}`;
+  document.getElementById("network").textContent = rt.network || "—";
+
+  const ok = h && h.ok;
+  const scrapeAge = h ? h.chain_scrape_age_seconds : null;
+  const color = colorForHealth(ok, scrapeAge);
+  document.getElementById("dot").className = `dot ${color}`;
+  document.getElementById("health").textContent =
+      ok ? "live" : (scrapeAge != null && scrapeAge < 180 ? "recovering" : "unhealthy");
+  document.getElementById("health").className = color;
+
+  document.getElementById("block").textContent = fmt.num(s.chain_current_block);
+  document.getElementById("blockHint").textContent =
+      `scrape age ${fmt.sec(scrapeAge)}`;
+  document.getElementById("winChain").textContent = fmt.num(s.chain_window_id);
+  document.getElementById("winMined").textContent = fmt.num(s.latest_window_mined);
+  document.getElementById("lagHint").textContent =
+      `import lag ${s.import_lag_windows == null ? "—" : s.import_lag_windows + " windows"}`;
+  document.getElementById("metagraph").textContent = fmt.num(s.metagraph_size);
+  document.getElementById("subnetVisible").textContent =
+      s.subnet_visible ? "subnet visible" : "not visible";
+
+  document.getElementById("submitted").textContent = fmt.num(s.rolling_submitted_total);
+  document.getElementById("accepted").textContent = fmt.num(s.rolling_accepted_total);
+  document.getElementById("acceptRate").textContent =
+      `rate ${fmt.pct(s.rolling_acceptance_rate)}`;
+  document.getElementById("hard").textContent = fmt.num(s.rolling_hard_failed_total);
+  document.getElementById("soft").textContent = fmt.num(s.rolling_soft_failed_total);
+
+  document.getElementById("zoneTotal").textContent = fmt.num(s.rolling_zone_total_groups);
+  document.getElementById("zoneWindowHint").textContent =
+      `across ${fmt.num(s.rolling_zone_windows_observed)} windows`;
+  document.getElementById("zoneIn").textContent = fmt.num(s.rolling_zone_in_zone_groups);
+  document.getElementById("zoneRateHint").textContent =
+      `rate ${fmt.pct(s.rolling_zone_in_zone_rate)}`;
+  document.getElementById("zoneSigma").textContent = fmt.dec(s.rolling_zone_mean_sigma);
+  document.getElementById("zoneReward").textContent = fmt.dec(s.rolling_zone_mean_reward);
+
+  document.getElementById("rCorrect").textContent = fmt.pct(s.rolling_reasoning_correct_rate);
+  document.getElementById("rFormat").textContent = fmt.pct(s.rolling_reasoning_format_rate);
+  document.getElementById("rCompliance").textContent = fmt.dec(s.rolling_reasoning_policy_compliance);
+  document.getElementById("taskSrc").textContent = rt.task_source || "—";
+  document.getElementById("modelRef").textContent = rt.model_ref || "—";
+
+  const rtTableRows = [
+    ["Git SHA", (rt.git_sha || "—").slice(0, 12)],
+    ["Model ref", rt.model_ref || "—"],
+    ["Task source", rt.task_source || "—"],
+    ["Storage backend", rt.storage_backend || "—"],
+    ["Chain endpoint mode", rt.chain_endpoint_mode || "—"],
+    ["Bucket mode", rt.bucket_mode || "—"],
+    ["Audit windows", fmt.num(s.audit_window_count)],
+    ["Publish success", fmt.num(s.publish_success_total)],
+    ["Publish failure", fmt.num(s.publish_failure_total)],
+  ];
+  const rtBody = document.querySelector("#runtimeTable tbody");
+  rtBody.innerHTML = "";
+  for (const [k, v] of rtTableRows) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${k}</td><td>${v}</td>`;
+    rtBody.appendChild(tr);
+  }
+
+  const srcBody = document.querySelector("#srcTable tbody");
+  srcBody.innerHTML = "";
+  const srcs = s.task_source_totals || {};
+  for (const [name, t] of Object.entries(srcs)) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${name}</td>
+      <td>${fmt.num(t.submitted)}</td>
+      <td>${fmt.num(t.accepted)}</td>
+      <td>${fmt.num(t.correct_total)}</td>
+      <td>${fmt.num(t.format_ok_total)}</td>`;
+    srcBody.appendChild(tr);
+  }
+  if (!Object.keys(srcs).length) {
+    srcBody.innerHTML = `<tr><td colspan=5 class="mono" style="color:var(--muted)">no task-source data yet</td></tr>`;
+  }
+}
+
+tick();
+setInterval(tick, REFRESH_MS);
+</script>
+</body>
+</html>
