@@ -501,12 +501,20 @@ class MetricsCache:
 def serve_metrics(*, bind: str, port: int, cache: MetricsCache) -> None:
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802
-            if self.path not in {"/metrics", "/metrics/"}:
+            if self.path in {"/metrics", "/metrics/"}:
+                payload = render_metrics(cache.current()).encode("utf-8")
+                ct = PROMETHEUS_CONTENT_TYPE
+            elif self.path in {"/healthz", "/healthz/"}:
+                payload = _render_healthz(cache.current()).encode("utf-8")
+                ct = "application/json; charset=utf-8"
+            elif self.path in {"/", "/status", "/status/"}:
+                payload = _render_status_json(cache.current()).encode("utf-8")
+                ct = "application/json; charset=utf-8"
+            else:
                 self.send_error(HTTPStatus.NOT_FOUND)
                 return
-            payload = render_metrics(cache.current()).encode("utf-8")
             self.send_response(HTTPStatus.OK)
-            self.send_header("Content-Type", PROMETHEUS_CONTENT_TYPE)
+            self.send_header("Content-Type", ct)
             self.send_header("Content-Length", str(len(payload)))
             self.end_headers()
             self.wfile.write(payload)
@@ -519,3 +527,61 @@ def serve_metrics(*, bind: str, port: int, cache: MetricsCache) -> None:
         server.serve_forever()
     finally:
         server.server_close()
+
+
+def _render_healthz(snapshot: dict[str, Any]) -> str:
+    """Lightweight liveness + freshness endpoint for ops + frontend.
+
+    Returns 200 + JSON with the last chain scrape age and whether the
+    rolling audit window has non-empty data. Treats stale chain or
+    empty audit as an "unhealthy" signal the dashboard can surface.
+    """
+    scrape_age = float(snapshot.get("chain_scrape_age_seconds") or 0.0)
+    window_mined = float(snapshot.get("latest_window_mined") or -1.0)
+    chain_window = float(snapshot.get("chain_window_id") or -1.0)
+    import_lag = snapshot.get("import_lag_windows")
+    healthy = scrape_age < 180.0 and chain_window > 0
+    return json.dumps(
+        {
+            "ok": healthy,
+            "chain_scrape_age_seconds": scrape_age,
+            "chain_current_block": snapshot.get("chain_current_block"),
+            "chain_window_id": chain_window,
+            "latest_window_mined": window_mined,
+            "import_lag_windows": import_lag,
+            "rolling_zone_in_zone_rate": snapshot.get("rolling_zone_in_zone_rate", 0.0),
+            "rolling_zone_mean_sigma": snapshot.get("rolling_zone_mean_sigma", 0.0),
+            "rolling_zone_windows_observed": snapshot.get("rolling_zone_windows_observed", 0.0),
+            "git_sha": (snapshot.get("runtime") or {}).get("git_sha"),
+            "task_source": (snapshot.get("runtime") or {}).get("task_source"),
+            "model_ref": (snapshot.get("runtime") or {}).get("model_ref"),
+            "generated_at": snapshot.get("generated_at"),
+        },
+        sort_keys=True,
+    )
+
+
+def _render_status_json(snapshot: dict[str, Any]) -> str:
+    """Full status JSON (superset of /healthz) for the operator UI.
+
+    Emits the rolling gauge values the Prometheus exporter already
+    surfaces — callers that don't want to parse Prometheus text format
+    can hit this endpoint instead.
+    """
+    keys = [
+        "rolling_submitted_total", "rolling_accepted_total",
+        "rolling_hard_failed_total", "rolling_soft_failed_total",
+        "rolling_acceptance_rate", "rolling_reasoning_correct_rate",
+        "rolling_reasoning_format_rate", "rolling_zone_total_groups",
+        "rolling_zone_in_zone_groups", "rolling_zone_out_of_zone_groups",
+        "rolling_zone_in_zone_rate", "rolling_zone_mean_sigma",
+        "rolling_zone_mean_reward", "rolling_zone_windows_observed",
+        "latest_window_mined", "latest_importable_window",
+        "import_lag_windows", "publish_success_total", "publish_failure_total",
+        "chain_current_block", "chain_window_id", "metagraph_size",
+        "subnet_visible", "audit_window_count", "generated_at",
+    ]
+    body = {k: snapshot.get(k) for k in keys}
+    body["task_source_totals"] = snapshot.get("task_source_totals") or {}
+    body["runtime"] = snapshot.get("runtime") or {}
+    return json.dumps(body, sort_keys=True)
