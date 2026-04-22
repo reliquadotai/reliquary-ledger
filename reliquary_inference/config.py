@@ -145,5 +145,12 @@ def load_config() -> dict[str, object]:
         "window_stride_blocks": _env_int(
             "RELIQUARY_INFERENCE_WINDOW_STRIDE_BLOCKS", 30,
         ),
+        # Cooldown R2 backup — mirrors /save/state/.../cooldown.json to R2
+        # so a node rebuild doesn't reset the 50-window prompt cooldown.
+        # Empty string disables R2 mirroring (local file still works).
+        "cooldown_r2_key": _env_str(
+            "RELIQUARY_INFERENCE_COOLDOWN_R2_KEY",
+            "cooldown/cooldown.json",
+        ),
         "git_sha": _git_sha(),
     }

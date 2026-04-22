@@ -122,3 +122,65 @@ def test_prune_zero_cooldown_drops_everything():
 def test_default_cooldown_path(tmp_path):
     path = default_cooldown_path(tmp_path)
     assert path == tmp_path / "cooldown.json"
+
+
+class _FakeR2Backend:
+    """In-memory stand-in for R2ObjectBackend covering get/put only."""
+
+    def __init__(self) -> None:
+        self._store: dict[str, bytes] = {}
+        self.raise_on_put = False
+        self.raise_on_get = False
+
+    def put(self, key: str, data: bytes) -> None:
+        if self.raise_on_put:
+            raise RuntimeError("simulated R2 failure")
+        self._store[key] = bytes(data)
+
+    def get(self, key: str) -> bytes | None:
+        if self.raise_on_get:
+            raise RuntimeError("simulated R2 failure")
+        return self._store.get(key)
+
+
+def test_save_r2_roundtrip():
+    src = CooldownMap(cooldown_windows=30)
+    src.record_batched(1, 100)
+    src.record_batched(2, 110)
+    backend = _FakeR2Backend()
+    src.save_r2(backend, r2_key="cooldown/test.json")
+
+    loaded = CooldownMap(cooldown_windows=30)
+    assert loaded.load_r2(backend, r2_key="cooldown/test.json") is True
+    assert loaded.is_in_cooldown(1, current_window=125) is True
+    assert loaded.is_in_cooldown(2, current_window=135) is True
+
+
+def test_save_r2_swallows_errors():
+    """Best-effort backup should never raise — local file is authoritative."""
+    m = CooldownMap(cooldown_windows=10)
+    m.record_batched(1, 10)
+    backend = _FakeR2Backend()
+    backend.raise_on_put = True
+    m.save_r2(backend, r2_key="any")  # must not raise
+
+
+def test_load_r2_returns_false_when_missing():
+    m = CooldownMap(cooldown_windows=10)
+    backend = _FakeR2Backend()  # empty
+    assert m.load_r2(backend, r2_key="missing") is False
+
+
+def test_load_r2_swallows_get_errors():
+    m = CooldownMap(cooldown_windows=10)
+    backend = _FakeR2Backend()
+    backend.raise_on_get = True
+    assert m.load_r2(backend, r2_key="any") is False
+
+
+def test_as_dict_shape():
+    m = CooldownMap(cooldown_windows=5)
+    m.record_batched(7, 21)
+    d = m.as_dict()
+    assert d["cooldown_windows"] == 5
+    assert d["last_batched"] == {7: 21}

@@ -114,12 +114,49 @@ class CooldownMap:
             return
         with open(path) as f:
             data = json.load(f)
+        self._load_dict(data)
+
+    def _load_dict(self, data: dict) -> None:
         # JSON object keys are strings — coerce back to int.
         self._last_batched = {
             int(k): int(v) for k, v in data.get("last_batched", {}).items()
         }
         if "cooldown_windows" in data:
             self._cooldown_windows = int(data["cooldown_windows"])
+
+    def as_dict(self) -> dict:
+        return {
+            "cooldown_windows": self._cooldown_windows,
+            "last_batched": self._last_batched,
+        }
+
+    # ---------- R2 disaster-recovery mirror ----------
+    #
+    # Cooldown is a load-bearing curriculum guard — if the map is lost
+    # (node rebuild, disk wipe) the task builder will immediately re-
+    # sample prompts that were supposed to be in the 50-window cooldown,
+    # starving the curriculum of diversity. Best-effort R2 mirroring on
+    # every save ensures we can recover.
+
+    def save_r2(self, backend, *, r2_key: str) -> None:
+        """Best-effort R2 upload of the current map. Swallows failures."""
+        try:
+            backend.put(r2_key, json.dumps(self.as_dict(), sort_keys=True).encode("utf-8"))
+        except Exception:
+            # Local file is authoritative; R2 is disaster recovery only.
+            # A transient R2 error should not fail the validator loop.
+            pass
+
+    def load_r2(self, backend, *, r2_key: str) -> bool:
+        """Pull map state from R2. Returns True if loaded successfully."""
+        try:
+            raw = backend.get(r2_key)
+            if raw is None:
+                return False
+            self._load_dict(json.loads(raw.decode("utf-8")))
+            return True
+        except Exception:
+            return False
 
     # ---------- helpers ----------
 

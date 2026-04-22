@@ -320,10 +320,40 @@ def _persist_cooldown_updates(
         return
     cooldown = CooldownMap(cooldown_windows=horizon)
     path = default_cooldown_path(state_dir)
+    # Prefer the local file as authoritative; if missing, try R2 restore
+    # before starting fresh.  Avoids an empty map right after a node
+    # rebuild re-sampling prompts that were supposed to be parked.
     cooldown.load(path)
+    backend = _cooldown_r2_backend(cfg)
+    r2_key = str(cfg.get("cooldown_r2_key", "") or "")
+    if len(cooldown) == 0 and backend is not None and r2_key:
+        cooldown.load_r2(backend, r2_key=r2_key)
     cooldown.record_batched_many(in_zone_indices, window=window_id)
     cooldown.prune(current_window=window_id)
     cooldown.save(path)
+    if backend is not None and r2_key:
+        cooldown.save_r2(backend, r2_key=r2_key)
+
+
+def _cooldown_r2_backend(cfg: dict[str, Any]):
+    """Construct an R2 backend from cfg for cooldown backup. Returns
+    None if any required piece is missing — caller then skips R2 I/O
+    entirely (local file still works)."""
+    account_id = str(cfg.get("r2_rest_account_id", "") or "")
+    bucket = str(cfg.get("r2_rest_bucket", "") or "")
+    token = str(cfg.get("r2_rest_cf_api_token", "") or "")
+    if not (account_id and bucket and token):
+        return None
+    try:
+        from reliquary_protocol.storage import R2ObjectBackend
+        return R2ObjectBackend(
+            account_id=account_id,
+            bucket=bucket,
+            cf_api_token=token,
+            public_url=str(cfg.get("r2_rest_public_url", "") or "") or None,
+        )
+    except Exception:
+        return None
 
 
 def finalize_window_manifest(
