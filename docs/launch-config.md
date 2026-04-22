@@ -26,7 +26,7 @@ If phase 1 is stable:
 ## Phase 3 — Production (weeks 16+)
 
 - 14 B–30 B model tier; H100 / B200 recommended.
-- Activate distributed training on Reliquary Forge (SN3 successor) — see [02_TIER2_PRD.md](../../private/reliquary-plan/02_TIER2_PRD.md).
+- Activate distributed training on Reliquary Forge (companion runtime) — see [02_TIER2_PRD.md](../../private/reliquary-plan/02_TIER2_PRD.md).
 
 ## Benchmarks
 

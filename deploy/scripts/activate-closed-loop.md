@@ -42,7 +42,7 @@ On every Ledger node (devserver + every staging validator):
 RELIQUARY_INFERENCE_POLICY_CONSUMER_ENABLED=true
 RELIQUARY_INFERENCE_POLICY_AUTHORITY_HOTKEY=<policy_authority_hotkey_string>
 RELIQUARY_INFERENCE_POLICY_AUTHORITY_SECRET=<contents of /save/secrets/signing-secret>
-RELIQUARY_INFERENCE_TRAINING_NETUID=<same as INFERENCE_NETUID under SN81-v2 model>
+RELIQUARY_INFERENCE_TRAINING_NETUID=<same as INFERENCE_NETUID under the single-subnet model>
 ```
 
 Then:

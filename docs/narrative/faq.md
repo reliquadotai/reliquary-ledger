@@ -135,14 +135,14 @@ external delegation, no single-key authority.
 
 No. Upgrades require:
 1. `reliquary-protocol` version bump (committed to source).
-2. Matching pin bumps in BOTH subnets' pyproject.
+2. Matching pin bumps in BOTH runtimes' pyproject.
 3. 24h testnet bake.
 4. Mainnet rollout at a pre-announced block height.
 5. Validators commit upgrade intent onchain BEFORE the cutover.
 
-A majority in one subnet cannot force a change that breaks the other
-subnet because the two subnets' canonical bytes must match — a forked
-subnet produces orphan verdicts that the other side rejects.
+A majority in one runtime cannot force a change that breaks the other
+because both runtimes' canonical bytes must match — a forked runtime
+produces orphan verdicts that the other side rejects.
 
 ## Road ahead
 
@@ -153,12 +153,15 @@ Full 100K empirical audit on Blackwell fleet. Mainnet Ledger cutover
 after the continuous-operation track record on testnet netuid 462
 crosses 4 weeks of uninterrupted mesh consensus.
 
-### When will SN3 Forge launch?
+### When will Forge come online at full scale?
 
-SN3 Forge requires SN81 Ledger to stabilize first. Once SN81 has
-demonstrated a ~4-week continuous-operation track record on mainnet,
-we activate the second subnet with shared protocol + divergent
-learner configuration. Target window: Tier 3 Epic 5.
+Forge runs as a companion protocol on the same subnet as Ledger; the
+closed-loop bridge is already live on testnet. Full-scale activation
+(mainnet, production GRPO cadence, distillation lane fully wired)
+tracks Ledger stability — once Ledger has demonstrated a ~4-week
+continuous-operation record on mainnet, Forge ramps to production
+cadence with shared protocol + divergent learner configuration.
+Target window: Tier 3 Epic 5.
 
 ### What are the open research questions?
 

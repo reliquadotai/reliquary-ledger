@@ -2,10 +2,11 @@
 
 ## What is Reliquary Ledger?
 
-The inference runtime for Reliquary, a two-subnet Bittensor platform for
-proof-carrying AI training. Ledger produces verifiable completions that a
-sibling trainer (Forge) turns into policy checkpoints. The two subnets share
-a [protocol package](https://github.com/0xgrizz/reliquary-protocol) so their
+The inference runtime for Reliquary, a proof-carrying Bittensor subnet that
+runs two companion protocols under a single netuid. Ledger produces verifiable
+completions that a companion trainer (Forge) turns into policy checkpoints.
+Both runtimes share a
+[protocol package](https://github.com/0xgrizz/reliquary-protocol) so their
 bytes cross-verify deterministically.
 
 Ledger is live on testnet netuid 462. Mainnet cutover is gated on 4 weeks
@@ -107,18 +108,18 @@ delegation, no single-key authority.
 No. Upgrades require:
 
 1. `reliquary-protocol` version bump (committed to source).
-2. Matching pin bumps in both subnets' `pyproject.toml`.
+2. Matching pin bumps in both runtimes' `pyproject.toml`.
 3. 24h testnet bake.
 4. Mainnet rollout at a pre-announced block height.
 5. Validators commit upgrade intent on-chain BEFORE the cutover.
 
-A majority in one subnet cannot force a change that breaks the other
-subnet because the two subnets' canonical bytes must match — a forked
-subnet produces orphan verdicts that the other side rejects.
+A majority in one runtime cannot force a change that breaks the other
+because both runtimes' canonical bytes must match — a forked runtime
+produces orphan verdicts that the other side rejects.
 
 ## Why is the repository named `reliquary-inference` if the product name is Reliquary Ledger?
 
-Historical — the repo was created before the two-subnet split was
+Historical — the repo was created before the Ledger / Forge split was
 finalised. The package inside it is `reliquary_inference`; the product-
-facing name is **Reliquary Ledger**. The sibling repo
+facing name is **Reliquary Ledger**. The companion repo
 [`reliquary`](https://github.com/0xgrizz/reliquary) is **Reliquary Forge**.

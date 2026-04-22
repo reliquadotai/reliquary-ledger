@@ -32,21 +32,21 @@ Reliquary's proof-carrying inference changes the trust model:
 
 ## What's on the subnet
 
-**Ledger (SN81)** — the inference subnet. Miners generate completions
+**Ledger** — the inference runtime. Miners generate completions
 from the authoritative policy model; validators verify through a
 nine-stage pipeline (schema / tokens / prompt / proof / termination /
 environment / reward / logprob / distribution) with explicit stake-
 weighted median consensus across a mesh of validators.
 
-**Forge (SN3, target)** — the training subnet. Policy-authority
+**Forge** — the training runtime. Policy-authority
 committee publishes candidate checkpoints; miners propose training
 improvements; validators verify via shared proof primitives and the
 same artifact-canonicalization rules. Distributed training uses FSDP2
 sharding + DiLoCo outer-loop aggregation.
 
-Both subnets share a single `reliquary-protocol` package, version-
-pinned to the same bytes, so cross-subnet artifacts hash identically
-wherever they're produced.
+Both runtimes share a single `reliquary-protocol` package, version-
+pinned to the same bytes, so artifacts hash identically wherever they're
+produced.
 
 ## Permissionless at every layer
 
@@ -120,8 +120,8 @@ runs in shadow mode before promotion.
   sig ownership (shipped on code; 100K campaign + external review
   pending).
 - **Tier 3** 🟡 — permissionless env registry + closed-loop
-  runtime + shared protocol package + SN3 Forge takeover (schema
-  + sandbox shipped; onchain submission + SN3 launch pending).
+  runtime + shared protocol package + Forge runtime activation (schema
+  + sandbox shipped; onchain submission + Forge runtime launch pending).
 - **Tier 4** ⏳ — governance charter + protocol paper review +
   validator recruitment + public comms + tokenomics (this doc
   is Epic 4; paper is Epic 2).

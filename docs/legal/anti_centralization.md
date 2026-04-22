@@ -76,15 +76,15 @@ The protocol does NOT rely on any trusted validator to mirror artifacts.
 
 Upgrades require:
 1. `reliquary_protocol.VERSION` bump in the shared package.
-2. Matching `pyproject.toml` pin bumps on BOTH subnets in a single PR
+2. Matching `pyproject.toml` pin bumps on BOTH runtimes in a single PR
    each.
-3. 24h testnet bake where both subnets run the new protocol version.
+3. 24h testnet bake where both runtimes run the new protocol version.
 4. Mainnet rollout at a pre-announced block height.
 5. Validators commit upgrade intent onchain BEFORE the cutover.
 
 Any validator still running the old protocol version after the cutover
 is slash-eligible under the governance charter. The mechanical check
-is automatic: canonical bytes that don't match across subnets produce
+is automatic: canonical bytes that don't match across runtimes produce
 orphan verdicts the other side rejects.
 
 ### 5. Opt-out always possible
@@ -185,13 +185,14 @@ open a GH issue tagged `governance-gap` — we treat those as P0 bugs.
 - **Now (2026-04-18)**: this document; multi-sig drill tested;
   protocol paper draft; content-addressable artifact trail working;
   permissionless env registry schema + sandbox shipped.
-- **After SN81 activation**: onchain governance charter published;
+- **After mainnet activation**: onchain governance charter published;
   upgrade-intent commitment mechanism wired; validator recruitment
   plan public.
 - **After 100K audit + external review**: findings published;
   mitigations merged; protocol version bumped.
-- **SN3 launch**: both subnets running, shared protocol package at
-  a stable version, two-subnet audit artifacts published.
+- **Forge activation**: both runtimes running at production cadence,
+  shared protocol package at a stable version, end-to-end audit
+  artifacts published.
 
 ---
 

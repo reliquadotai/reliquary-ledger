@@ -6,14 +6,15 @@
 # Reliquary Ledger
 
 **Reliquary Ledger** is the inference runtime for [Reliquary](https://github.com/0xgrizz/reliquary),
-a two-subnet Bittensor platform for proof-carrying AI training. Ledger produces
+a proof-carrying Bittensor subnet that runs two companion protocols under a
+single netuid: **Ledger** (inference) and **Forge** (training). Ledger produces
 **verifiable completions**: miners generate solutions to deterministic tasks,
 validators replay hidden-state sketch commitments, and a 4-validator mesh
 publishes on-chain verdicts that gate weights and feed the Forge trainer.
 
-Ledger and its sibling [Reliquary Forge](https://github.com/0xgrizz/reliquary)
+Ledger and its companion [Reliquary Forge](https://github.com/0xgrizz/reliquary)
 share a [protocol package](https://github.com/0xgrizz/reliquary-protocol) so the
-two subnets cross-verify deterministically.
+two runtimes cross-verify deterministically inside the same subnet.
 
 ![Reliquary audit preview](docs/assets/audit-index-preview.svg)
 

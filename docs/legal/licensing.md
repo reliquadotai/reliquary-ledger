@@ -6,7 +6,7 @@
   modify, and redistribute without permission.
 - All protocol design documents + spec files are **CC-BY-4.0**.
 - The name "Reliquary" and associated marks are reserved for the
-  canonical subnets (SN81 Ledger, SN3 Forge target). Forks should
+  canonical subnet and its Ledger + Forge runtimes. Forks should
   pick a different name to avoid user confusion.
 - **No patents, no patent claims, no patent rights reserved**. The
   protocol is open prior art.
@@ -24,8 +24,8 @@ verifier.
 
 | Repo | Purpose | License |
 |---|---|---|
-| `reliquary-inference` | Ledger (SN81) validator + miner code | MIT |
-| `reliquary` | Forge (SN3 target) trainer + distillation code | MIT |
+| `reliquary-inference` | Ledger runtime (validator + miner code) | MIT |
+| `reliquary` | Forge runtime (trainer + distillation code) | MIT |
 | `reliquary-protocol` | Shared protocol types + canonicalization + crypto | MIT |
 
 Each repo carries its own `LICENSE` file with the MIT text verbatim.
@@ -84,8 +84,8 @@ pseudonymous bittensor hotkeys.
 
 ## Trademark
 
-The word "Reliquary" as applied to the canonical Bittensor subnets
-SN81 + SN3 is a protected mark. Forks of the protocol are welcome
+The word "Reliquary" as applied to the canonical Bittensor subnet
+(running the Ledger + Forge runtimes) is a protected mark. Forks of the protocol are welcome
 (see MIT terms) but MUST NOT use "Reliquary" in a way that implies
 authorization from or association with the canonical subnets.
 Recommended patterns for forks:

@@ -45,7 +45,7 @@ external review called for by Tier 2 Epic 6.
   state from a block-height snapshot + R2 reads against the committed
   hashes.
 - **Lazy upgradeability**: a shared protocol package pins version; both
-  subnets coordinate upgrades via a single semver bump.
+  runtimes coordinate upgrades via a single semver bump.
 
 ## 2. System model
 
@@ -452,15 +452,15 @@ at every CI run:
 
 Protocol constants + canonicalization + signature primitives live in
 the shared `reliquary-protocol` PyPI-shaped package (Tier 3 Epic 4).
-Both subnets pin an exact version. A protocol bump requires:
+Both runtimes pin an exact version. A protocol bump requires:
 
 1. Bump `reliquary_protocol.VERSION`.
-2. Land matching `pyproject.toml` pin bumps on both subnets.
-3. 24h testnet bake where both subnets run the new protocol version.
+2. Land matching `pyproject.toml` pin bumps on both runtimes.
+3. 24h testnet bake where both runtimes run the new protocol version.
 4. Mainnet rollout at a pre-announced block height.
 5. Validators commit upgrade intent onchain before the cutover.
 
-Any subnet still on the old version after the cutover is considered
+Any runtime still on the old version after the cutover is considered
 slash-eligible (policy to be wired into the Tier 4 Epic 1 governance
 charter).
 
@@ -502,8 +502,8 @@ charter).
 
 ## References
 
-- Source: `reliquary-inference` (Ledger, SN81), `reliquary` (Forge,
-  SN3 target), `reliquary-protocol` (shared).
+- Source: `reliquary-inference` (Ledger runtime), `reliquary` (Forge
+  runtime), `reliquary-protocol` (shared).
 - Tier PRDs: `private/reliquary-plan/{00_STRATEGY,01_TIER1_PRD,
   02_TIER2_PRD,03_TIER3_PRD,04_TIER4_PRD}.md`.
 - Clean-room spec docs: `private/reliquary-plan/notes/spec-*.md`.

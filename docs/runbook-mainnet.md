@@ -1,6 +1,6 @@
-# Reliquary Ledger — SN81 Mainnet Runbook
+# Reliquary Ledger — Mainnet Runbook
 
-Incident response for Reliquary Ledger on Bittensor finney SN81. Use alongside `docs/deployment.md` (environment setup) and `docs/protocol.md` (what the subnet does).
+Incident response for Reliquary Ledger on Bittensor finney. Use alongside `docs/deployment.md` (environment setup) and `docs/protocol.md` (what the subnet does).
 
 ## Health states
 
@@ -41,7 +41,7 @@ Symptom: validator's window closes but weights don't land onchain. `reliquary_ch
    - `no_matching_hotkeys` — metagraph doesn't see expected miner hotkeys; check hotkey registration.
    - `txpool full` — rate-limited; retry already applied; widen `RetryPolicy.max_attempts` to 5 temporarily.
    - `substrate.InvalidTransaction` — inspect the rejection reason string (usually under `last_error`).
-3. Manual last-resort: `btcli subnet metagraph --netuid 81 --network finney` to confirm validator is registered and active; `btcli stake add` if stake has dropped below threshold.
+3. Manual last-resort: `btcli subnet metagraph --netuid $RELIQUARY_NETUID --network finney` to confirm validator is registered and active; `btcli stake add` if stake has dropped below threshold.
 
 ## Scenario: wallet compromise
 
@@ -87,7 +87,7 @@ journalctl --user -u reliquary-ledger-validator-mainnet -f
 curl -s http://127.0.0.1:9180/health | jq .
 
 # Onchain cross-checks
-btcli subnet metagraph --netuid 81 --network finney
+btcli subnet metagraph --netuid $RELIQUARY_NETUID --network finney
 btcli wallet overview --wallet.name reliquary-ledger --wallet.path /home/OPERATOR/.bittensor/wallets
 
 # Force a window re-verify (dry run — does not mutate chain)
