@@ -6,9 +6,11 @@ from typing import Any
 
 from ..protocol.artifacts import make_artifact
 from ..utils.json_io import write_json
+from .cooldown import CooldownMap, DEFAULT_COOLDOWN_WINDOWS, default_cooldown_path
 from .copycat import detect_index_copycats
 from .verifier import verify_completion
 from .weights import compute_weights
+from .zone_filter import filter_groups, zone_summary
 
 
 def validate_window(
@@ -110,7 +112,10 @@ def validate_window(
         if report["accepted"]:
             task_source_totals["accepted"] += 1
         semantic_evaluation = report.get("semantic_evaluation", {})
-        if task_source == "reasoning_tasks":
+        # The MATH task source's evaluate_math_trace returns the same
+        # correctness_or_judge / format_ok / policy_compliance / final_answer
+        # shape as reasoning_tasks, so the aggregate counters apply uniformly.
+        if task_source in {"reasoning_tasks", "math"}:
             window_metrics["reasoning_eval_count"] += 1
             window_metrics["reasoning_correct_total"] += float(semantic_evaluation.get("correctness_or_judge", 0.0))
             window_metrics["reasoning_format_ok_total"] += 1.0 if semantic_evaluation.get("format_ok") else 0.0
@@ -166,6 +171,26 @@ def validate_window(
     )
     for verdict in verdicts:
         registry.put_artifact(verdict)
+
+    # DAPO zone filter: for binary MATH rewards, group rollouts by
+    # (miner_id, task_id) and keep only groups whose reward-std passes
+    # σ ≥ 0.43 (bootstrap: 0.33). Out-of-zone groups carry no GRPO
+    # gradient signal and would add pure noise to the trainer.
+    bootstrap = bool(cfg.get("zone_filter_bootstrap", False))
+    group_verdicts = filter_groups(verdicts, bootstrap=bootstrap)
+    zone_info = zone_summary(group_verdicts, bootstrap=bootstrap)
+    window_metrics["zone_filter"] = zone_info
+
+    # DAPO cooldown: prompts that just contributed an in-zone group are
+    # parked in the per-prompt cooldown map so the task builder skips
+    # them for the next COOLDOWN_WINDOWS windows (forces curriculum rotation).
+    _persist_cooldown_updates(
+        cfg=cfg,
+        window_id=int(window_context["window_id"]),
+        task_batch_artifact=task_batch_artifact,
+        group_verdicts=group_verdicts,
+    )
+
     scorecard = score_window(
         cfg=cfg,
         registry=registry,
@@ -233,6 +258,56 @@ def score_window(
             "verdict_bundle_ref": verdict_bundle_ref,
         },
     )
+
+
+def _persist_cooldown_updates(
+    *,
+    cfg: dict[str, Any],
+    window_id: int,
+    task_batch_artifact: dict[str, Any],
+    group_verdicts,
+) -> None:
+    """Park in-zone dataset_indices in the cooldown map so the next task
+    batch skips them.
+
+    We look up each in-zone group's ``task_id`` in the task batch to
+    recover its ``dataset_index``; that integer is the key the task
+    source uses when sampling. Unknown task_ids (shouldn't happen) are
+    silently skipped.
+
+    Cooldown file lives at ``{state_dir}/cooldown.json``. On first
+    boot the file doesn't exist and ``load()`` is a no-op, so this is
+    safe to call unconditionally.
+    """
+    state_dir = cfg.get("state_dir") or cfg.get("local_root")
+    if not state_dir:
+        return
+    horizon = int(cfg.get("cooldown_windows", DEFAULT_COOLDOWN_WINDOWS))
+    if horizon <= 0:
+        return
+    task_by_id = {
+        task["task_id"]: task
+        for task in task_batch_artifact["payload"].get("tasks", [])
+    }
+    in_zone_indices: set[int] = set()
+    for group in group_verdicts.values():
+        if not group.in_zone:
+            continue
+        task = task_by_id.get(group.task_id)
+        if not task:
+            continue
+        idx = task.get("dataset_index")
+        if idx is None:
+            continue
+        in_zone_indices.add(int(idx))
+    if not in_zone_indices:
+        return
+    cooldown = CooldownMap(cooldown_windows=horizon)
+    path = default_cooldown_path(state_dir)
+    cooldown.load(path)
+    cooldown.record_batched_many(in_zone_indices, window=window_id)
+    cooldown.prune(current_window=window_id)
+    cooldown.save(path)
 
 
 def finalize_window_manifest(

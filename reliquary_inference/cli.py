@@ -18,6 +18,7 @@ from .protocol.artifacts import make_artifact
 from .status import status_summary
 from .storage.registry import LocalRegistry, R2Registry, RestR2Registry
 from .utils.json_io import write_json
+from .validator.cooldown import CooldownMap, DEFAULT_COOLDOWN_WINDOWS, default_cooldown_path
 from .validator.service import finalize_window_manifest, validate_window, write_run_manifest
 
 app = typer.Typer(no_args_is_help=True)
@@ -107,14 +108,39 @@ def _chain(cfg: dict):
     )
 
 
+def _load_cooldown_map(cfg: dict) -> CooldownMap:
+    """Load the persistent per-prompt cooldown map from the validator state dir.
+
+    Falls back to a fresh empty map if no file exists — that's the correct
+    behaviour on first boot. Horizon comes from ``cfg['cooldown_windows']``
+    (env: ``RELIQUARY_INFERENCE_COOLDOWN_WINDOWS``) and defaults to 50.
+    """
+    horizon = int(cfg.get("cooldown_windows", DEFAULT_COOLDOWN_WINDOWS))
+    cooldown = CooldownMap(cooldown_windows=horizon)
+    state_dir = cfg.get("state_dir") or cfg.get("local_root")
+    if state_dir:
+        cooldown.load(default_cooldown_path(state_dir))
+    return cooldown
+
+
 def _task_batch_artifact(cfg: dict, window_context: dict, count: int) -> dict:
-    source = build_task_source(window_context["task_source"])
-    payload = source.build_window_batch(window_context, count=count)
+    # Inject the current per-prompt cooldown set so deterministic task sources
+    # (e.g. MathTasksSource) can skip prompts that were recently batched — DAPO
+    # curriculum-diversity guard. Sources that don't honour the key are fine;
+    # they just ignore it.
+    current_window = int(window_context["window_id"])
+    cooldown = _load_cooldown_map(cfg)
+    enriched = dict(window_context)
+    enriched.setdefault(
+        "cooldown_indices", sorted(cooldown.current_cooldown_set(current_window))
+    )
+    source = build_task_source(enriched["task_source"])
+    payload = source.build_window_batch(enriched, count=count)
     return make_artifact(
         artifact_type="task_batch",
         producer_id=str(cfg["validator_id"]),
         producer_role="task_source",
-        window_id=int(window_context["window_id"]),
+        window_id=current_window,
         payload=payload,
     )
 
