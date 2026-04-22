@@ -8,6 +8,16 @@ so both runtimes bump in lockstep.
 ## [Unreleased]
 
 ### Added
+- Deterministic MATH holdout module (`dataset/math_holdout.py`). 500
+  problems reserved for the Forge eval harness, derived via
+  `reliquary_protocol.derive_eval_holdout_indices` so Ledger and
+  Forge pick identical slices without shared state. Exposes
+  `holdout_indices`, `holdout_task_ids`, `load_holdout_problems`.
+- Miner sampling guard in `MathTasksSource.build_window_batch` — the
+  holdout dataset indices are now excluded from every window batch
+  so the policy never trains on problems it's benchmarked against.
+  Opt-out via `exclude_holdout=False` for unit tests that need full
+  range sampling.
 - DAPO zone filter module (`validator/zone_filter.py`) with `rewards_std`,
   `is_in_zone`, `filter_groups`, `zone_summary`. σ ≥ 0.43 steady / 0.33
   bootstrap threshold. Environment-hard-fail rollouts count toward σ

@@ -219,12 +219,19 @@ class MathTasksSource:
     independently. Optional ``cooldown_indices`` arg lets the caller
     exclude recently-trained prompts (curriculum diversity).
 
+    Dataset indices reserved for the eval holdout (see
+    :mod:`reliquary_inference.dataset.math_holdout`) are always
+    excluded from the sampling pool — training on the holdout would
+    invalidate every published :class:`EvalBundle`. The guard can be
+    disabled for local tests via ``exclude_holdout=False``.
+
     Reward verification uses ``evaluate_math_trace`` — boxed-answer
     extraction + LaTeX-normalized exact match, no LLM judge.
     """
 
     source_id: str = "math"
     max_level: int | None = None
+    exclude_holdout: bool = True
     _env: Any = None  # lazy-loaded MATHEnvironment
 
     def _environment(self):
@@ -232,6 +239,32 @@ class MathTasksSource:
             from .math_env import MATHEnvironment
             self._env = MATHEnvironment(max_level=self.max_level)
         return self._env
+
+    def _holdout_indices(self) -> frozenset[int]:
+        """Deterministic dataset-index set reserved for eval.
+
+        Cached on the instance after the first call. Returns an empty
+        frozenset when ``exclude_holdout=False`` so miner sampling
+        retains pre-eval behavior for unit tests that don't care
+        about evaluation provenance.
+        """
+        if not self.exclude_holdout:
+            return frozenset()
+        cached = getattr(self, "_holdout_cache", None)
+        if cached is not None:
+            return cached
+        try:
+            from ..math_holdout import holdout_indices as _holdout_indices_fn
+
+            result = _holdout_indices_fn()
+        except Exception:
+            # Fail-open: if the holdout module can't load (e.g. an
+            # installation without ``datasets``), we prefer to keep
+            # mining rather than to brick the window. The eval
+            # publisher still guards on its side via the seed.
+            result = frozenset()
+        self._holdout_cache = result
+        return result
 
     def build_window_batch(self, window_context: dict[str, Any], count: int) -> dict[str, Any]:
         import random
@@ -248,6 +281,7 @@ class MathTasksSource:
                 tokenizer = None
 
         cooldown: set[int] = set(window_context.get("cooldown_indices") or [])
+        holdout = self._holdout_indices()
         n_problems = len(env)
         picked: set[int] = set()
         tasks: list[dict[str, Any]] = []
@@ -257,6 +291,17 @@ class MathTasksSource:
             idx = rng.randrange(n_problems)
             if idx in picked or idx in cooldown:
                 continue
+            # ``idx`` may be in the filtered-index space (when max_level
+            # is set); the holdout is defined against the RAW dataset
+            # index, so resolve before checking when the env exposes a
+            # filter mapping. Fakes / unfiltered envs fall through with
+            # the raw index.
+            if holdout:
+                raw_dataset_idx = (
+                    env._resolve(idx) if hasattr(env, "_resolve") else idx
+                )
+                if raw_dataset_idx in holdout:
+                    continue
             picked.add(idx)
             problem = env.get_problem(idx)
             rendered = _render_math_conversation(problem["prompt"], tokenizer)
