@@ -55,8 +55,8 @@ external review called for by Tier 2 Epic 6.
   back to the validator mesh.
 - **Validators** verify submissions through the nine-stage pipeline
   and publish per-completion verdicts signed under their hotkey.
-- **Policy authority** (quorum of trainers in the first iteration;
-  OTF-delegated conviction governance later) publishes the authoritative
+- **Policy authority** (HMAC-signed quorum of trainers, rotated via
+  the subnet identity commit interface) publishes the authoritative
   policy checkpoint each training window. Miners download the policy
   and lock to it for that window; validators use the same policy to
   re-derive the proof material.
@@ -313,7 +313,88 @@ Tier 2 Epic 3 ships:
   advantage computation against validator-produced verdict rewards;
   KL penalty against the reference policy.
 
-Training metrics (`reliquary/training/metrics.py`) emit to Prometheus
+### 9.1 DAPO zone filter
+
+A rollout group is `(miner_id, task_id)` — M samples of one miner on one
+prompt. Let `r₁, …, r_M ∈ [0,1]` be the correctness rewards for the M
+rollouts (boxed-answer exact match on MATH, so r ∈ {0, 1} in the binary
+case). Define the group's within-group reward standard deviation
+
+$$\sigma = \sqrt{\tfrac{1}{M} \sum_{i=1}^{M} (r_i - \mu)^2}$$
+
+where μ = mean(r). The zone filter accepts groups with σ ≥ σ_min and
+rejects the rest. For binary rewards σ_min = 0.43 corresponds to
+Bernoulli k ∈ [2, 6] out of 8 — the canonical DAPO / GRPO-OOA zone
+where within-group contrast is informative. A bootstrap threshold
+σ_min = 0.33 (k ∈ [1, 7]) admits weaker signal while the base model
+is still learning.
+
+Groups outside the zone carry no usable GRPO gradient (the normalized
+advantage `a_i = (r_i − μ)/σ` collapses to zero or to numerical noise
+when σ is tiny), so dropping them upstream saves Forge compute without
+any information loss.
+
+### 9.2 GRPO update
+
+Forge's inner loop runs one optimizer step per B_BATCH = 8 in-zone
+groups. Within each group the advantage is
+
+$$a_i = \frac{r_i - \mu}{\sigma + \varepsilon}$$
+
+The PPO-clipped surrogate is
+
+$$\mathcal{L}_{\text{PPO}} = -\mathbb{E}_i\left[\min\left(\rho_i \cdot a_i,\; \mathrm{clip}(\rho_i, 1-\epsilon, 1+\epsilon) \cdot a_i\right)\right]$$
+
+with $\rho_i = \exp(\log\pi_\text{new}(a_i|s_i) - \log\pi_\text{old}(a_i|s_i))$.
+`π_old` log-probabilities come from the miner's GRAIL commit payload so
+Forge saves one forward pass per rollout. `π_new` is the current
+Forge policy.
+
+A KL penalty against a frozen reference policy π_ref is added via
+Schulman's k3 unbiased estimator:
+
+$$\mathrm{KL}(\pi_\text{new} \| \pi_\text{ref}) \approx \exp(\log\pi_\text{ref} - \log\pi_\text{new}) - 1 - (\log\pi_\text{ref} - \log\pi_\text{new})$$
+
+$$\mathcal{L} = \mathcal{L}_{\text{PPO}} + \beta \cdot \mathrm{KL}$$
+
+Defaults: clip ε = 0.2, KL β = 0.04, learning rate 5e-7 (AdamW),
+gradient clip at 1.0. Only a small subset of target tensors (attention
+q/k/v projections in the first four layers) require gradient — the
+rest of the 3B parameter surface is frozen for every training cycle
+so the published delta stays compact (~20 MB).
+
+### 9.3 Per-prompt cooldown
+
+Once a prompt's rollout group enters a training batch, its
+`dataset_index` is parked in a per-validator `CooldownMap` for 50
+windows. The next task batch skips those indices via the
+`window_context["cooldown_indices"]` hook. The cooldown map persists
+atomically to local disk and mirrors to R2 so a validator rebuild
+doesn't reset the curriculum-diversity guard.
+
+### 9.4 Reparameterization-trick sanity guard
+
+Before any delta applies to the cached model, every target tensor is
+checked for:
+
+- **Finiteness**: NaN or ∞ in any shard → reject.
+- **Projection magnitude floor**: `mean(|w|) ≥ PROJ_MIN_MEAN_ABS`
+  (default 1e-4) → catches the RMSNorm × Linear rescaling exploit that
+  leaves one tensor scaled to ~0.
+- **Per-layer scale-ratio bound**: within any `model.layers.N.*` prefix,
+  `max(mean|w|) / min(mean|w|) ≤ LAYER_SCALE_RATIO_MAX` (default 1e5)
+  → catches the paired half where the other tensor blew up.
+
+Our attack surface is narrower than checkpoint-upload subnets because
+Ledger only consumes HMAC-signed deltas from a trusted Forge trainer
+(`BridgeVerifier` rejects commitments not on the policy-authority
+allowlist). The reparam guard is defense-in-depth against compromised
+trainer auth or malformed delta bundles that pass the signature +
+smoke-hash gates.
+
+### 9.5 Training metrics
+
+`reliquary/training/metrics.py` emits Prometheus
 (`reliquary_training_loss_last`, `reliquary_training_kl_last`,
 `reliquary_training_grad_norm_last`, …) and optionally to W&B via the
 `WandbSink` adapter. OpenTelemetry tracing wraps each step via

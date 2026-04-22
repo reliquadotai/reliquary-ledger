@@ -127,16 +127,9 @@ governance charter.
 No single entity. The coldkey is a multi-sig (3-of-5; signers listed
 in the governance charter). Protocol upgrades require a coordinated
 package version bump with testnet bake + onchain commit of upgrade
-intent. OTF's conviction-delegation mechanism is the bootstrap path
-for SN81 ownership; after activation, governance operates via the
-onchain charter alone.
-
-### What if OTF delegation never activates?
-
-Reliquary ships with or without the OTF conviction mechanism. If
-conviction activation slips, we continue with testnet + local deploys,
-and any future ownership claim uses whatever onchain path Bittensor
-governance makes available.
+intent. Governance operates entirely via the on-chain charter
+committed per-window through the subnet identity interface — no
+external delegation, no single-key authority.
 
 ### Can a validator-mesh majority push a bad upgrade?
 
@@ -156,8 +149,9 @@ subnet produces orphan verdicts that the other side rejects.
 ### What's the next major milestone?
 
 External cryptographer review of the protocol paper (Tier 2 Epic 6).
-Full 100K empirical audit on Blackwell fleet. SN81 ownership activation
-once OTF conviction delegation goes live.
+Full 100K empirical audit on Blackwell fleet. Mainnet Ledger cutover
+after the continuous-operation track record on testnet netuid 462
+crosses 4 weeks of uninterrupted mesh consensus.
 
 ### When will SN3 Forge launch?
 

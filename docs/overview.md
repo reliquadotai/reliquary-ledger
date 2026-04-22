@@ -80,11 +80,21 @@ flowchart TD
 The current repository includes:
 
 - local proof-complete demo paths
-- live Bittensor `test` reads and writes
-- single-GPU Hugging Face miner and validator paths on a real RTX staging box
-- R2-backed artifacts
-- public audit index
-- private-first Prometheus and Grafana monitoring
-- deterministic `dataset_prompts` and `reasoning_tasks`
+- live Bittensor `test` reads and writes on **netuid 462**
+- single-GPU HF miner with M-batch generate (5-7× faster than serial)
+  on a real RTX 6000 Blackwell staging box
+- 4-validator mesh on testnet with batched proof verify
+- R2-backed artifacts with retry + exponential backoff
+- public audit index rebuilt every 10 minutes
+- Prometheus `/metrics` + JSON `/healthz` + `/status` + static `/dashboard`
+- **live task source**: `math` (Hendrycks MATH via `qwedsacf/competition_math`);
+  legacy `reasoning_tasks` + `dataset_prompts` retained as low-resource
+  fallbacks
+- DAPO zone filter (σ ≥ 0.33 bootstrap threshold) + 50-window per-prompt
+  cooldown for curriculum diversity
+- closed-loop bridge to Forge: `CheckpointAttestation + PolicyCommitment`
+  consumed by `policy_consumer` at `effective_at_ledger_window`
+- reparam-trick sanity guard on delta apply (finite / magnitude /
+  layer-scale ratio checks)
 
 See [status.md](status.md) for the current live snapshot.

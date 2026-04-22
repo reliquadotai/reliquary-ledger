@@ -128,11 +128,12 @@ runs in shadow mode before promotion.
 
 ## The policy on governance
 
-No one founder, not one team, not one committee has unilateral
-control. Multi-sig coldkey drilled and tested on testnet. Upgrade
-path version-pinned. OTF's conviction delegation is the bootstrap
-mechanism for SN81 ownership; after activation, governance reverts
-to the onchain charter committed per-window.
+No one founder, no one team, no one committee has unilateral control.
+Multi-sig coldkey drilled and tested on testnet. Upgrade path
+version-pinned. The authoritative on-chain charter is committed
+per-window via the subnet identity commit interface and enforced by
+the validator mesh; every policy publication carries an HMAC-signed
+attestation under the rotating policy-authority hotkey.
 
 Anti-centralization is not a marketing claim; it's a protocol
 invariant. See `docs/legal/anti_centralization.md`.

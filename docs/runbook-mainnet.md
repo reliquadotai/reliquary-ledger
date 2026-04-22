@@ -19,7 +19,7 @@ Health state is rolled up from individual checks: `model`, `chain`, `last_window
 Symptom: `chain` check age climbs; `set_weights_with_retry` returns `success=False` with `ConnectionError` in `last_error`.
 
 1. Check cloudflare-fronted endpoint reachability: `curl -I https://entrypoint-finney.opentensor.ai:443` — expect 426.
-2. Fail over to an archive node. Edit `/etc/reliquary-ledger/sn81.env` and set `RELIQUARY_INFERENCE_CHAIN_ENDPOINT` to a known-good endpoint (OTF-provided preferred; document fallbacks as they are published by the team).
+2. Fail over to an archive node. Edit `/etc/reliquary-ledger/sn81.env` and set `RELIQUARY_INFERENCE_CHAIN_ENDPOINT` to a known-good endpoint (mainnet archive-finney preferred; document fallbacks as they are published by the team).
 3. Restart: `systemctl --user restart reliquary-ledger-validator-mainnet`.
 4. Confirm `chain` check returns to `ok` within 120 seconds.
 

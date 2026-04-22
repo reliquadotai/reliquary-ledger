@@ -58,11 +58,11 @@ sudo RESTART_SERVICES=true bash deploy/apply-rtx-real-model-profile.sh
 
 This applies the current recommended baseline:
 
-- `Qwen/Qwen2.5-1.5B-Instruct`
+- `Qwen/Qwen2.5-3B-Instruct`
 - `cuda`
 - `bf16`
-- `reasoning_tasks`
-- `15` second poll interval
+- `math` task source (live; `RELIQUARY_INFERENCE_MATH_MAX_LEVEL=2` for bootstrap)
+- `10` second poll interval
 
 ### Dedicated chain endpoint
 
