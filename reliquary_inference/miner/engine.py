@@ -36,6 +36,116 @@ class MiningEngine:
         self.model_name = getattr(self.model, "name_or_path", str(cfg["model_ref"]))
         self.wallet = self._load_wallet()
 
+    def generate_m_completions(
+        self,
+        *,
+        task: dict[str, Any],
+        window_context: dict[str, Any],
+        registry,
+        miner_id: str,
+        num_samples: int,
+    ) -> list[dict[str, Any]]:
+        """Generate ``num_samples`` completions in ONE batched ``model.generate()``.
+
+        Serial generation of M=8 rollouts leaves the GPU ~15% utilised —
+        matmul tiling is far more efficient when M sequences share a
+        single forward pass. We tile the prompt to shape ``(M, L)`` and
+        slice each output row, truncating at the first post-prompt EOS
+        so HF's batch padding (pad_token_id) never leaks into downstream
+        GRAIL verification.
+
+        Per-sample determinism is preserved by seeding the batch with a
+        hash over (window_id, task_id, miner_id) — the M sampled rows
+        diverge via independent sampling within the batch. A validator
+        does NOT need to re-sample; it only verifies the miner-supplied
+        tokens via GRAIL commitments.
+
+        Falls back to the single-sample path for num_samples==1 and for
+        the dual-engine vLLM path (which already batches server-side).
+
+        Expected speedup on H100-class GPUs: 5-7× vs serial, based on
+        upstream observations (Romain13190/reliquary@f7510fb).
+        """
+        if num_samples == 1 or (
+            str(self.cfg["miner_mode"]) == "dual_engine" and self.cfg.get("vllm_base_url")
+        ):
+            return [
+                self.generate_completion(
+                    task=task,
+                    window_context=window_context,
+                    registry=registry,
+                    miner_id=miner_id,
+                    sample_index=i,
+                )
+                for i in range(num_samples)
+            ]
+
+        prompt_text = task["prompt"]
+        if hasattr(self.tokenizer, "__call__") and not str(self.cfg["model_ref"]).startswith("toy://"):
+            encoded = self.tokenizer(prompt_text, return_tensors="pt", add_special_tokens=False)
+            prompt_ids_single = encoded["input_ids"].to(next(self.model.parameters()).device)
+        else:
+            prompt_ids_single = self.tokenizer.encode(prompt_text, return_tensors="pt").to(
+                next(self.model.parameters()).device
+            )
+        prompt_length = int(prompt_ids_single.shape[1])
+        # Tile prompt to (M, L) for batched generation.
+        prompt_ids_batch = prompt_ids_single.expand(num_samples, -1).contiguous()
+        attention_mask = torch.ones_like(prompt_ids_batch, device=prompt_ids_batch.device)
+
+        # Seed once per batch — individual rows diverge through independent
+        # sampling, so the batch as a whole is deterministic given the
+        # same (window, task, miner) triple.
+        batch_seed_material = (
+            f"{window_context['window_id']}|{task['task_id']}|{miner_id}|batch"
+        ).encode("utf-8")
+        batch_seed = int(hashlib.sha256(batch_seed_material).hexdigest()[:8], 16)
+        torch.manual_seed(batch_seed)
+
+        with torch.no_grad():
+            generate_kwargs = {
+                "attention_mask": attention_mask,
+                "max_new_tokens": int(self.cfg["max_new_tokens"]),
+                "pad_token_id": self.tokenizer.pad_token_id,
+                "do_sample": True,
+                "temperature": float(self.cfg.get("generation_temperature", 0.9)),
+                "top_p": float(self.cfg.get("generation_top_p", 1.0)),
+            }
+            try:
+                outputs = self.model.generate(prompt_ids_batch, **generate_kwargs)
+            except TypeError:
+                generate_kwargs.pop("attention_mask", None)
+                outputs = self.model.generate(prompt_ids_batch, **generate_kwargs)
+
+        eos = self.tokenizer.eos_token_id
+        pad = self.tokenizer.pad_token_id
+        # Slice each row and trim at first post-prompt EOS so HF's padding
+        # doesn't trail into the tokens the validator GRAIL-verifies.
+        completions: list[dict[str, Any]] = []
+        for sample_index in range(num_samples):
+            seq = outputs[sample_index].tolist()
+            gen = seq[prompt_length:]
+            for idx, tok in enumerate(gen):
+                if tok == eos:
+                    gen = gen[: idx + 1]
+                    break
+                if pad is not None and tok == pad and eos != pad:
+                    gen = gen[:idx]
+                    break
+            full_tokens = seq[:prompt_length] + gen
+            completions.append(
+                self._finalize_completion(
+                    task=task,
+                    window_context=window_context,
+                    registry=registry,
+                    miner_id=miner_id,
+                    sample_index=sample_index,
+                    full_tokens=full_tokens,
+                    prompt_length=prompt_length,
+                )
+            )
+        return completions
+
     def generate_completion(
         self,
         *,
@@ -101,7 +211,37 @@ class MiningEngine:
                         **generate_kwargs,
                     )
             full_tokens = outputs[0].tolist()
-        proof_input = torch.tensor([full_tokens], device=next(self.model.parameters()).device)
+        prompt_length = int(prompt_ids.shape[1])
+        return self._finalize_completion(
+            task=task,
+            window_context=window_context,
+            registry=registry,
+            miner_id=miner_id,
+            sample_index=sample_index,
+            full_tokens=full_tokens,
+            prompt_length=prompt_length,
+        )
+
+    def _finalize_completion(
+        self,
+        *,
+        task: dict[str, Any],
+        window_context: dict[str, Any],
+        registry,
+        miner_id: str,
+        sample_index: int,
+        full_tokens: list[int],
+        prompt_length: int,
+    ) -> dict[str, Any]:
+        """Post-generation bookkeeping: GRAIL proof, logprobs, artifact.
+
+        Shared by both the single-rollout path (``generate_completion``)
+        and the batched M-rollout path (``generate_m_completions``). The
+        only input is the finished token sequence + how many prompt
+        tokens are on the left.
+        """
+        device = next(self.model.parameters()).device
+        proof_input = torch.tensor([full_tokens], device=device)
         proof_attention_mask = torch.ones_like(proof_input, device=proof_input.device)
         with torch.no_grad():
             hidden_states, _ = forward_single_layer(self.model, proof_input, proof_attention_mask, LAYER_INDEX)
@@ -122,20 +262,19 @@ class MiningEngine:
             secret=str(self.cfg["signing_secret"]),
             wallet=self.wallet,
         )
-        prompt_length = int(prompt_ids.shape[1])
-        prompt_token_ids = prompt_ids[0].detach().cpu().tolist()
+        prompt_token_ids = full_tokens[:prompt_length]
         completion_token_ids = full_tokens[prompt_length:]
         completion_logprobs = compute_completion_logprobs(
             model=self.model,
             full_token_ids=full_tokens,
             prompt_length=prompt_length,
-            device=str(next(self.model.parameters()).device),
+            device=str(device),
         )
         upload_ref = registry.predicted_completion_bundle_ref(
             window_id=int(window_context["window_id"]),
             miner_id=miner_id,
         )
-        artifact = make_artifact(
+        return make_artifact(
             artifact_type="completion",
             producer_id=miner_id,
             producer_role="miner",
@@ -168,7 +307,6 @@ class MiningEngine:
             },
             parent_ids=[],
         )
-        return artifact
 
     def _generate_with_vllm(self, prompt_text: str, prompt_ids: torch.Tensor) -> list[int]:
         # vLLM path: keep temperature configurable so GRPO groups also get

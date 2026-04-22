@@ -160,17 +160,20 @@ def _latest_or_new_task_batch(cfg: dict, registry, window_context: dict, count: 
 def _mine_single_window(cfg: dict, registry, window_context: dict, miner_id: str) -> int:
     task_batch = _latest_or_new_task_batch(cfg, registry, window_context, int(cfg["task_count"]))
     engine = MiningEngine(cfg=cfg)
-    completions = []
+    samples_per_task = int(cfg["samples_per_task"])
+    completions: list[dict] = []
     for task in task_batch["payload"]["tasks"]:
-        for sample_index in range(int(cfg["samples_per_task"])):
-            completion = engine.generate_completion(
+        # Batched path: M rollouts share one GPU forward pass. 5-7x faster
+        # than serial at M=8 on H100-class GPUs (see MiningEngine.generate_m_completions).
+        completions.extend(
+            engine.generate_m_completions(
                 task=task,
                 window_context=window_context,
                 registry=registry,
                 miner_id=miner_id,
-                sample_index=sample_index,
+                num_samples=samples_per_task,
             )
-            completions.append(completion)
+        )
     bundle_ref = registry.write_completion_bundle(
         window_id=int(window_context["window_id"]),
         miner_id=miner_id,
