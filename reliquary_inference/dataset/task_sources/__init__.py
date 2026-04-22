@@ -374,11 +374,286 @@ class MathTasksSource:
         }
 
 
-def build_task_source(source_id: str, *, max_level: int | None = None) -> TaskSource:
+@dataclass
+class GSM8KTasksSource:
+    """GSM8K environment exposed as a Reliquary TaskSource.
+
+    Mirrors :class:`MathTasksSource` — deterministic per-window
+    sampling via the shared public-randomness seed, same rendered
+    prompt (MATH system prompt asks for ``\\boxed{...}`` so GSM8K
+    completions produce the same answer shape as MATH completions),
+    same ``evaluate_math_trace`` scorer. Not Level-filterable (GSM8K
+    has no level column).
+
+    Pair with :class:`MathTasksSource` via :class:`MixedTasksSource`
+    to combat pool exhaustion — MATH alone cycles through the
+    Level 1-2 bootstrap pool in ~2 days of continuous mining.
+    """
+
+    source_id: str = "gsm8k"
+    _env: Any = None  # lazy-loaded GSM8KEnvironment
+
+    def _environment(self):
+        if self._env is None:
+            from .gsm8k_env import GSM8KEnvironment
+            self._env = GSM8KEnvironment()
+        return self._env
+
+    def build_window_batch(self, window_context: dict[str, Any], count: int) -> dict[str, Any]:
+        import random
+
+        env = self._environment()
+        seed = int(str(window_context["public_randomness"])[:8], 16)
+        rng = random.Random(seed)
+        model_ref = str(window_context["model_ref"])
+        tokenizer = None
+        if not model_ref.startswith("toy://"):
+            try:
+                tokenizer = load_tokenizer_for_model(model_ref)
+            except Exception:
+                tokenizer = None
+
+        cooldown: set[int] = set(window_context.get("cooldown_indices") or [])
+        n_problems = len(env)
+        picked: set[int] = set()
+        tasks: list[dict[str, Any]] = []
+        attempts = 0
+        while len(tasks) < count and attempts < count * 200:
+            attempts += 1
+            idx = rng.randrange(n_problems)
+            if idx in picked or idx in cooldown:
+                continue
+            picked.add(idx)
+            problem = env.get_problem(idx)
+            if not problem["ground_truth"]:
+                # Couldn't extract the ``#### X`` numeric answer; drop.
+                continue
+            rendered = _render_math_conversation(problem["prompt"], tokenizer)
+            tasks.append(
+                {
+                    "task_id": f"gsm8k-{window_context['window_id']}-{idx}",
+                    "task_family": self.source_id,
+                    "split": "train",
+                    "seed": seed,
+                    "dataset_index": idx,
+                    "prompt": rendered,
+                    "source_prompt": problem["prompt"],
+                    "prompt_hash": prompt_hash(rendered),
+                    "reference_answer": problem["ground_truth"],
+                    "problem_id": problem["id"],
+                    "difficulty": 0.35,
+                    "template_id": "math-boxed-v1",
+                    "evaluation_policy": {"mode": "exact_final_answer"},
+                    "contamination_policy": {"forbidden_overlap_tags": ["benchmark_holdout"]},
+                    "tags": [
+                        f"problem_id:{problem['id']}",
+                        "split:train",
+                        "source:gsm8k",
+                    ],
+                    "verification_mode": "exact_final_answer",
+                }
+            )
+        return {
+            "task_source": self.source_id,
+            "window_id": window_context["window_id"],
+            "public_randomness": window_context["public_randomness"],
+            "model_ref": window_context["model_ref"],
+            "tasks": tasks,
+        }
+
+    def verify_task_binding(
+        self,
+        completion: dict[str, Any],
+        task_batch: dict[str, Any],
+        tokenizer: Any,
+    ) -> tuple[bool, dict[str, Any]]:
+        task = _task_lookup(task_batch).get(completion["payload"]["task_id"])
+        if task is None:
+            return False, {"reason": "unknown_task_id"}
+        expected_tokens = tokenizer.encode(task["prompt"], add_special_tokens=False)
+        tokens = completion["payload"]["tokens"]
+        prompt_length = completion["payload"]["prompt_length"]
+        ok = (
+            completion["payload"]["task_source"] == self.source_id
+            and completion["payload"].get("prompt_hash") == task["prompt_hash"]
+            and prompt_length == len(expected_tokens)
+            and tokens[:prompt_length] == expected_tokens
+        )
+        return ok, {"reason": "ok" if ok else "prompt_hash_mismatch", "task": task}
+
+    def evaluate_completion(self, completion: dict[str, Any], task: dict[str, Any]) -> dict[str, Any]:
+        from .math_env import evaluate_math_trace
+
+        contamination_tags = set(completion["payload"].get("contamination_tags", []))
+        forbidden = set(task.get("contamination_policy", {}).get("forbidden_overlap_tags", []))
+        if contamination_tags & forbidden:
+            return {
+                "accepted": False,
+                "reason": "contamination_detected",
+                "task": task,
+                "evaluation": {},
+            }
+        evaluation = evaluate_math_trace(task, completion["payload"]["completion_text"])
+        return {
+            "accepted": bool(evaluation["accepted"]),
+            "reason": "ok" if evaluation["accepted"] else evaluation["format_reason"],
+            "task": task,
+            "evaluation": evaluation,
+        }
+
+
+@dataclass
+class _WeightedSource:
+    """A single constituent of a :class:`MixedTasksSource` mix.
+
+    ``weight`` is the relative sampling frequency for this source when
+    drawing a task; values are normalized across the mix at dispatch
+    time so callers can pass unnormalized numbers (e.g. ``[2, 1]`` for
+    a 2:1 ratio).
+    """
+
+    source: Any  # duck-typed TaskSource
+    weight: float
+
+
+@dataclass
+class MixedTasksSource:
+    """Weighted round-robin over multiple TaskSources.
+
+    Combats single-source pool exhaustion: MATH alone cycles through
+    the Level 1-2 bootstrap pool in ~2 days of continuous mining,
+    GSM8K alone is ~1.2 days. Mixing them (with optional weighting)
+    extends the sustainable-mining horizon and gives the policy broader
+    reasoning exposure without changing the scorer path.
+
+    Determinism: every draw picks a single constituent source via the
+    window-seeded RNG; that source then draws its task with its own
+    determinism-preserving seed. Two independent runs with the same
+    window_context + same mix produce byte-identical batches.
+
+    ``verify_task_binding`` + ``evaluate_completion`` dispatch by the
+    task's ``task_source`` field (carried through
+    :meth:`build_window_batch`) so verification and scoring reuse the
+    constituent source's implementation unchanged.
+    """
+
+    source_id: str = "mixed"
+    sources: tuple[_WeightedSource, ...] = ()
+
+    def build_window_batch(self, window_context: dict[str, Any], count: int) -> dict[str, Any]:
+        import random
+
+        if not self.sources:
+            raise ValueError("MixedTasksSource has no constituent sources")
+
+        seed = int(str(window_context["public_randomness"])[:8], 16)
+        rng = random.Random(seed ^ 0xA5A5_A5A5)  # distinct seed from per-source RNGs
+
+        weights = [s.weight for s in self.sources]
+        total = sum(weights)
+        if total <= 0:
+            raise ValueError("MixedTasksSource weights must be positive")
+
+        # Allocate per-source counts proportionally; give the first
+        # source any rounding remainder so sum == count.
+        shares = [int((w / total) * count) for w in weights]
+        remainder = count - sum(shares)
+        if shares:
+            shares[0] += remainder
+
+        all_tasks: list[dict[str, Any]] = []
+        for share, weighted in zip(shares, self.sources):
+            if share <= 0:
+                continue
+            sub_batch = weighted.source.build_window_batch(window_context, share)
+            all_tasks.extend(sub_batch["tasks"])
+
+        # Shuffle deterministically so miners don't see source-block
+        # ordering — surfaces any source-specific degradation uniformly
+        # across the window's sampled positions.
+        rng.shuffle(all_tasks)
+
+        return {
+            "task_source": self.source_id,
+            "window_id": window_context["window_id"],
+            "public_randomness": window_context["public_randomness"],
+            "model_ref": window_context["model_ref"],
+            "tasks": all_tasks,
+        }
+
+    def verify_task_binding(
+        self,
+        completion: dict[str, Any],
+        task_batch: dict[str, Any],
+        tokenizer: Any,
+    ) -> tuple[bool, dict[str, Any]]:
+        task = _task_lookup(task_batch).get(completion["payload"]["task_id"])
+        if task is None:
+            return False, {"reason": "unknown_task_id"}
+        sub_source_id = str(task.get("task_family") or "")
+        # Find the constituent source whose source_id matches the task's
+        # task_family and delegate verification to it. This keeps each
+        # source's prompt-binding logic encapsulated.
+        for weighted in self.sources:
+            if weighted.source.source_id == sub_source_id:
+                return weighted.source.verify_task_binding(
+                    completion, task_batch, tokenizer
+                )
+        return False, {"reason": f"unknown_sub_source:{sub_source_id}"}
+
+    def evaluate_completion(self, completion: dict[str, Any], task: dict[str, Any]) -> dict[str, Any]:
+        sub_source_id = str(task.get("task_family") or "")
+        for weighted in self.sources:
+            if weighted.source.source_id == sub_source_id:
+                return weighted.source.evaluate_completion(completion, task)
+        return {
+            "accepted": False,
+            "reason": f"unknown_sub_source:{sub_source_id}",
+            "task": task,
+            "evaluation": {},
+        }
+
+
+def build_task_source(
+    source_id: str,
+    *,
+    max_level: int | None = None,
+    mix: list[tuple[str, float]] | None = None,
+) -> TaskSource:
+    """Build a task source by id.
+
+    ``source_id`` options:
+      - ``"dataset_prompts"`` — legacy string-prompt source.
+      - ``"reasoning_tasks"`` — legacy synthetic reasoning source.
+      - ``"math"`` — Hendrycks MATH. Supports ``max_level`` filter.
+      - ``"gsm8k"`` — GSM8K grade-school word problems. No level filter.
+      - ``"mixed"`` — weighted combination of other sources. Requires
+        ``mix`` kwarg: a list of ``(source_id, weight)`` tuples. The
+        MATH sub-source receives the ``max_level`` filter if set.
+
+    Examples::
+
+        build_task_source("mixed", mix=[("math", 2.0), ("gsm8k", 1.0)])
+        build_task_source("mixed", mix=[("math", 1.0), ("gsm8k", 1.0)], max_level=2)
+    """
     if source_id == "dataset_prompts":
         return DatasetPromptsSource()
     if source_id == "reasoning_tasks":
         return ReasoningTasksSource()
     if source_id == "math":
         return MathTasksSource(max_level=max_level)
+    if source_id == "gsm8k":
+        return GSM8KTasksSource()
+    if source_id == "mixed":
+        if not mix:
+            raise ValueError(
+                "build_task_source('mixed', ...) requires a non-empty `mix` kwarg"
+            )
+        constituents: list[_WeightedSource] = []
+        for sub_id, weight in mix:
+            if sub_id == "mixed":
+                raise ValueError("nested 'mixed' sources are not supported")
+            sub_source = build_task_source(sub_id, max_level=max_level)
+            constituents.append(_WeightedSource(source=sub_source, weight=float(weight)))
+        return MixedTasksSource(sources=tuple(constituents))
     raise ValueError(f"Unsupported task source: {source_id}")

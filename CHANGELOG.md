@@ -8,6 +8,24 @@ so both runtimes bump in lockstep.
 ## [Unreleased]
 
 ### Added
+- GSM8K task source (`dataset/task_sources/gsm8k_env.py` +
+  `GSM8KTasksSource`). 7,473 grade-school word problems as a
+  companion to Hendrycks MATH — doubles the deterministic task pool
+  so continuous mining doesn't cycle the Level 1-2 bootstrap slice
+  in 2 days. Ground-truth numeric answers extracted from the `####`
+  tail of each GSM8K `answer` field; miner prompt unchanged
+  (`\boxed{...}` format), validator scoring path unchanged.
+- `MixedTasksSource` with weighted proportional sampling across
+  multiple task sources. Preserves per-window determinism (seeded
+  via public_randomness). `build_task_source("mixed", mix=[...])`
+  takes `(source_id, weight)` tuples. `verify_task_binding` +
+  `evaluate_completion` dispatch to the constituent source by task
+  family so multi-source mixing doesn't duplicate verification or
+  scoring logic.
+- 20 new tests covering GSM8K answer extraction edge cases,
+  GSM8K task source determinism, empty-ground-truth filtering,
+  MixedTasksSource proportional allocation, shuffle interleaving,
+  family-based dispatch, nested-mix rejection.
 - Deterministic MATH holdout module (`dataset/math_holdout.py`). 500
   problems reserved for the Forge eval harness, derived via
   `reliquary_protocol.derive_eval_holdout_indices` so Ledger and
