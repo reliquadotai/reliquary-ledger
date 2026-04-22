@@ -19,10 +19,22 @@ def build_audit_index(
     publish: bool = False,
 ) -> dict[str, Any]:
     window_manifests = _latest_window_manifests(registry=registry, limit=limit)
-    scorecards = {
-        artifact["artifact_id"]: artifact
-        for artifact in registry.list_artifacts("scorecard")
-    }
+    # Fetch ONLY the scorecards referenced by the selected manifests —
+    # not the full list_artifacts scan which is O(N) over all scorecards
+    # (700+ under heavy R2 throttle = ~10 min). With limit=25 we do at
+    # most 25 gets instead. Fall back to list_artifacts for backends
+    # that don't support get_artifact (tests, local fs).
+    scorecards: dict[str, dict[str, Any]] = {}
+    for manifest in window_manifests:
+        sc_id = manifest["payload"].get("scorecard_id")
+        if not sc_id:
+            continue
+        try:
+            scorecards[sc_id] = registry.get_artifact("scorecard", sc_id)
+        except Exception:
+            # Skip missing / unreachable scorecards rather than failing
+            # the whole index — partial audit is better than none.
+            continue
     entries = [
         _window_audit_entry(
             cfg=cfg,
