@@ -22,7 +22,11 @@ def validate_window(
 ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
     completion_bundle_refs = registry.list_completion_bundles(window_id=int(window_context["window_id"]))
     all_completions: list[dict[str, Any]] = []
-    seen_task_ids_by_miner: dict[str, set[str]] = defaultdict(set)
+    # GRPO requires M rollouts per task from the same miner — the duplicate
+    # check must key on (task_id, sample_index) rather than task_id alone,
+    # otherwise 7/8 rollouts get rejected as "duplicates" the moment
+    # SAMPLES_PER_TASK > 1.
+    seen_rollout_keys_by_miner: dict[str, set[tuple[str, int]]] = defaultdict(set)
     for ref in completion_bundle_refs:
         completions = registry.read_completion_bundle(ref)
         for completion in completions:
@@ -61,8 +65,9 @@ def validate_window(
         miner_id = completion["producer_id"]
         payload = completion["payload"]
         miner_totals[miner_id]["submitted"] += 1
-        duplicate_task = payload["task_id"] in seen_task_ids_by_miner[miner_id]
-        seen_task_ids_by_miner[miner_id].add(payload["task_id"])
+        rollout_key = (payload["task_id"], int(payload.get("sample_index", 0)))
+        duplicate_task = rollout_key in seen_rollout_keys_by_miner[miner_id]
+        seen_rollout_keys_by_miner[miner_id].add(rollout_key)
         report = verify_completion(cfg=cfg, completion=completion, task_batch=task_batch_artifact, seen_nonces=seen_nonces)
         if duplicate_task:
             report["accepted"] = False
