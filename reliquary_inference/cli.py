@@ -596,18 +596,53 @@ def run_validator(
     # hard-fail proof verification.
     policy_consumer_hook = _build_validator_policy_consumer_hook(cfg)
 
+    # Backfill horizon: how many historical windows the validator will
+    # scan each loop looking for unprocessed completion bundles. With
+    # 6-min windows this covers the last ~1 hour. Prevents windows
+    # mined while the validator was offline or slow from being orphaned
+    # forever — the forge GRPO cycle needs scorecards for EVERY mined
+    # window where at least 1 rollout is in zone.
+    backfill_horizon = int(cfg.get("validator_backfill_horizon_windows", 10))
     while True:
         try:
             window_context = chain.get_window_context(cfg=cfg).as_dict()
-            window_id = int(window_context["window_id"])
+            current_window = int(window_context["window_id"])
 
             if policy_consumer_hook is not None:
-                policy_consumer_hook(ledger_window=window_id)
+                policy_consumer_hook(ledger_window=current_window)
 
-            if window_id not in processed and registry.list_completion_bundles(window_id=window_id):
-                scorecard, _ = _validate_and_score_single_window(cfg, registry, chain, window_context)
-                processed.add(window_id)
-                console.print(f"published weights for window {window_id}: {scorecard['payload']['weights']}")
+            # Backfill loop: start from the oldest unprocessed window within
+            # the horizon and walk forward. Stops at current_window.
+            # WINDOW_LENGTH on Bittensor testnet is 30 blocks.
+            WINDOW_STRIDE = int(cfg.get("window_stride_blocks", 30))
+            oldest = current_window - backfill_horizon * WINDOW_STRIDE
+            candidate = max(oldest, 0)
+            while candidate <= current_window:
+                if candidate not in processed:
+                    try:
+                        bundles = registry.list_completion_bundles(window_id=candidate)
+                    except Exception as exc:
+                        console.print(
+                            f"[yellow]list_completion_bundles({candidate}) error: {exc}[/yellow]"
+                        )
+                        bundles = []
+                    if bundles:
+                        window_ctx = dict(window_context)
+                        window_ctx["window_id"] = candidate
+                        try:
+                            scorecard, _ = _validate_and_score_single_window(
+                                cfg, registry, chain, window_ctx,
+                            )
+                            processed.add(candidate)
+                            console.print(
+                                f"published weights for window {candidate}: "
+                                f"{scorecard['payload']['weights']}"
+                            )
+                        except Exception as exc:
+                            console.print(
+                                f"[yellow]validate window={candidate} error: {exc}[/yellow]"
+                            )
+                candidate += WINDOW_STRIDE
             if once:
                 return
         except Exception as exc:

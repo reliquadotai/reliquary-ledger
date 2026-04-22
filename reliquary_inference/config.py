@@ -136,5 +136,14 @@ def load_config() -> dict[str, object]:
             if os.environ.get("RELIQUARY_INFERENCE_MATH_MAX_LEVEL")
             else None
         ),
+        # Validator backfill: how many historical windows to scan each loop
+        # for unprocessed completion bundles. 10 windows × 30 blocks × 12 s
+        # ≈ 60 min — covers typical R2-rate-limit-induced lag.
+        "validator_backfill_horizon_windows": _env_int(
+            "RELIQUARY_INFERENCE_VALIDATOR_BACKFILL_HORIZON_WINDOWS", 10,
+        ),
+        "window_stride_blocks": _env_int(
+            "RELIQUARY_INFERENCE_WINDOW_STRIDE_BLOCKS", 30,
+        ),
         "git_sha": _git_sha(),
     }
