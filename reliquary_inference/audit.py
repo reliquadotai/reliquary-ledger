@@ -87,7 +87,51 @@ def build_audit_index(
 
 
 def _latest_window_manifests(*, registry, limit: int) -> list[dict[str, Any]]:
-    manifests = registry.list_artifacts("window_manifest")
+    """Return the ``limit`` most-recently-uploaded window manifests.
+
+    The fast path uses the registry's detailed listing (key + uploaded
+    timestamp) to pick the top-N candidate keys, then fetches just
+    those bodies. That turns an O(N) body-fetch across every historical
+    manifest (750+ under load) into O(N) metadata listing + O(limit)
+    body fetches — a ~50× reduction at our scale.
+
+    Falls back to the original "fetch all, sort in-memory" behaviour
+    for registries that don't surface upload timestamps (e.g. the
+    filesystem backend used in tests).
+    """
+    from .protocol.artifacts import artifact_directory_name
+
+    store = getattr(registry, "store", None)
+    refs = None
+    if store is not None:
+        try:
+            refs = store.list_prefix(artifact_directory_name("window_manifest"))
+        except Exception:
+            refs = None
+
+    uploaded_sortable = (
+        refs is not None
+        and refs
+        and all(isinstance(r, dict) and r.get("uploaded") for r in refs)
+    )
+    if uploaded_sortable:
+        # Sort by uploaded DESC and fetch only the top-N candidates. We
+        # pull a few extras so that deduplication by window_id (a single
+        # window may have multiple manifests published) doesn't drop us
+        # below `limit`.
+        refs.sort(key=lambda r: str(r.get("uploaded") or ""), reverse=True)
+        candidate_refs = refs[: max(limit * 3, limit)]
+        manifests: list[dict[str, Any]] = []
+        for ref in candidate_refs:
+            try:
+                manifests.append(
+                    __import__("json").loads(store.get_bytes(ref["key"]).decode("utf-8"))
+                )
+            except Exception:
+                continue
+    else:
+        manifests = registry.list_artifacts("window_manifest")
+
     by_window: dict[int, dict[str, Any]] = {}
     for manifest in manifests:
         window_id = int(manifest["window_id"])

@@ -360,6 +360,23 @@ class RestR2ObjectStore:
         return result
 
     def list_prefix(self, prefix: str) -> list[dict[str, Any]]:
+        # Prefer the detailed list when the backend supports it — gives us
+        # `uploaded` + `size` in one round trip so callers can sort by
+        # timestamp without re-fetching every object body. Falls back to
+        # the plain list() for any backend that doesn't expose the
+        # detailed variant (keeps test shims happy).
+        list_detailed = getattr(self.backend, "list_detailed", None)
+        if callable(list_detailed):
+            objs = list_detailed(prefix)
+            return [
+                {
+                    "backend": "r2_rest",
+                    "key": obj["key"],
+                    "uploaded": obj.get("uploaded") or "",
+                    "size": obj.get("size") or 0,
+                }
+                for obj in objs
+            ]
         keys = self.backend.list(prefix)
         return [{"backend": "r2_rest", "key": k} for k in keys]
 
