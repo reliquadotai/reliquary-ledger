@@ -121,5 +121,10 @@ def load_config() -> dict[str, object]:
         # training signal to start the learning loop.
         "zone_filter_bootstrap": _env_bool("RELIQUARY_INFERENCE_ZONE_FILTER_BOOTSTRAP", False),
         "cooldown_windows": _env_int("RELIQUARY_INFERENCE_COOLDOWN_WINDOWS", 50),
+        # Miner sampling — used when samples_per_task > 1 so the M rollouts
+        # in a GRPO group aren't all identical. Default 0.9 matches DAPO
+        # T_PROTO. top_p=1.0 = no nucleus truncation (DAPO default).
+        "generation_temperature": float(os.getenv("RELIQUARY_INFERENCE_GENERATION_TEMPERATURE", "0.9")),
+        "generation_top_p": float(os.getenv("RELIQUARY_INFERENCE_GENERATION_TOP_P", "1.0")),
         "git_sha": _git_sha(),
     }

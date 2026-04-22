@@ -59,13 +59,36 @@ class MiningEngine:
         if str(self.cfg["miner_mode"]) == "dual_engine" and self.cfg.get("vllm_base_url"):
             full_tokens = self._generate_with_vllm(prompt_text, prompt_ids)
         else:
+            # GRPO needs multiple DISTINCT rollouts per prompt — greedy (do_sample=False)
+            # would make all M samples identical, collapsing group σ to 0 and
+            # starving the zone filter. We switch to sampling with the DAPO-
+            # canonical T_PROTO=0.9 whenever samples_per_task>1, and seed per
+            # (window_id, task_id, miner, sample_index) so a validator
+            # re-running the same sample gets the same tokens.
+            samples_per_task = int(self.cfg.get("samples_per_task", 1))
+            use_sampling = samples_per_task > 1
             with torch.no_grad():
                 generate_kwargs = {
                     "attention_mask": attention_mask,
                     "max_new_tokens": int(self.cfg["max_new_tokens"]),
-                    "do_sample": False,
                     "pad_token_id": self.tokenizer.pad_token_id,
                 }
+                if use_sampling:
+                    # Per-rollout seed so each of the M samples takes a different
+                    # branch through the sampling distribution.
+                    seed_material = (
+                        f"{window_context['window_id']}|{task['task_id']}|"
+                        f"{miner_id}|{sample_index}"
+                    ).encode("utf-8")
+                    sample_seed = int(hashlib.sha256(seed_material).hexdigest()[:8], 16)
+                    torch.manual_seed(sample_seed)
+                    generate_kwargs.update(
+                        do_sample=True,
+                        temperature=float(self.cfg.get("generation_temperature", 0.9)),
+                        top_p=float(self.cfg.get("generation_top_p", 1.0)),
+                    )
+                else:
+                    generate_kwargs["do_sample"] = False
                 try:
                     outputs = self.model.generate(
                         prompt_ids,
@@ -148,12 +171,18 @@ class MiningEngine:
         return artifact
 
     def _generate_with_vllm(self, prompt_text: str, prompt_ids: torch.Tensor) -> list[int]:
+        # vLLM path: keep temperature configurable so GRPO groups also get
+        # variance when the dual-engine path is on. Defaults to 0.9 matching
+        # DAPO T_PROTO. Set RELIQUARY_INFERENCE_GENERATION_TEMPERATURE=0 to
+        # revert to greedy.
+        temperature = float(self.cfg.get("generation_temperature", 0.9))
         payload = json.dumps(
             {
                 "model": self.model_name,
                 "prompt": prompt_text,
                 "max_tokens": int(self.cfg["max_new_tokens"]),
-                "temperature": 0.0,
+                "temperature": temperature,
+                "top_p": float(self.cfg.get("generation_top_p", 1.0)),
             }
         ).encode("utf-8")
         req = request.Request(
