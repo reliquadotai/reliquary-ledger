@@ -104,12 +104,29 @@ class GroupVerdict:
         }
 
 
+# Hard-fail reasons that are "environment said this rollout is wrong" — the
+# rollout is still protocol-valid; its reward is just 0. These count toward
+# the group's σ because GRPO needs both correct AND wrong rollouts within a
+# group to compute (r − μ) / σ.
+#
+# All other hard-fails (signature, proof, tokens, prompt-binding, schema)
+# are *protocol violations* — an adversarial or buggy miner. Those get
+# dropped because they'd corrupt the group with untrusted rewards.
+ENVIRONMENT_HARD_FAIL_REASONS = frozenset(
+    {
+        "environment_failed_evaluation",  # wrong answer / format fail — still a valid 0-reward rollout
+        "reward_contract_violation",      # miner's declared reward disagreed with ours — still 0
+        "reward_missing",                 # no reward reported — treat as 0
+    }
+)
+
+
 def filter_groups(
     verdicts: Iterable[Mapping],
     *,
     bootstrap: bool = False,
     reward_key: str = "correctness",
-    only_accepted: bool = True,
+    only_accepted: bool = False,
 ) -> dict[GroupKey, GroupVerdict]:
     """Group verdicts by (miner_id, task_id) and compute zone decisions.
 
@@ -126,20 +143,26 @@ def filter_groups(
         Which float field in the verdict payload to use as the reward signal.
         For MATH we use ``correctness`` (0.0 or 1.0).
     only_accepted:
-        If True (default), only verdicts whose ``accepted`` flag is True
-        contribute to the group's σ. Rejected completions are ignored —
-        this prevents failed miners from tainting a group's zone check.
+        Default False — for GRPO we WANT wrong-answer rollouts to count
+        toward the group's σ (that's where the within-group contrast comes
+        from). Protocol-invalid rollouts (bad signature, bad proof, bad
+        tokens, prompt-binding mismatch, schema) are always dropped;
+        environment-level hard-fails (``environment_failed_evaluation``,
+        ``reward_contract_violation``, ``reward_missing``) are kept
+        because those rollouts are protocol-valid and just carry reward=0.
 
-    Returns
-    -------
-    dict mapping GroupKey → GroupVerdict. Every group that yielded at
-    least one qualifying verdict is represented, regardless of zone
-    outcome — callers can iterate and filter as needed.
+        Setting True reverts to the stricter "pipeline-accepted only"
+        behaviour — useful for weight scoring, not for GRPO group σ.
     """
     buckets: dict[GroupKey, list[float]] = defaultdict(list)
     for verdict in verdicts:
         payload = verdict.get("payload", verdict)
-        if only_accepted and not bool(payload.get("accepted", False)):
+        accepted = bool(payload.get("accepted", False))
+        hard_fail = payload.get("hard_fail_reason")
+        # Drop protocol-invalid rollouts. Keep environment-level fails.
+        if only_accepted and not accepted:
+            continue
+        if not accepted and hard_fail is not None and hard_fail not in ENVIRONMENT_HARD_FAIL_REASONS:
             continue
         miner_id = str(
             payload.get("miner_id")

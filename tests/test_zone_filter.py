@@ -87,13 +87,20 @@ def test_is_in_zone_very_small_below_threshold():
 # ---------------------------------------------------------------------------
 
 
-def _verdict(miner_id: str, task_id: str, correctness: float, accepted: bool = True) -> dict:
+def _verdict(
+    miner_id: str,
+    task_id: str,
+    correctness: float,
+    accepted: bool = True,
+    hard_fail_reason: str | None = None,
+) -> dict:
     return {
         "payload": {
             "miner_id": miner_id,
             "task_id": task_id,
             "correctness": correctness,
             "accepted": accepted,
+            "hard_fail_reason": hard_fail_reason,
         },
     }
 
@@ -137,25 +144,80 @@ def test_filter_groups_bootstrap_accepts_looser():
     assert filter_groups(verdicts, bootstrap=True)[GroupKey("A", "t1")].in_zone is True
 
 
-def test_filter_groups_drops_rejected_by_default():
-    # 4 accepted (k=4/8), 4 rejected (would be k=8/8 if included).
+def test_filter_groups_includes_environment_failures_by_default():
+    """For GRPO, wrong-answer rollouts (environment_failed_evaluation)
+    contribute to the group's σ — that's where the within-group contrast
+    comes from. Only protocol-invalid rollouts get dropped."""
     verdicts = (
         [_verdict("A", "t1", 1.0, accepted=True) for _ in range(4)]
-        + [_verdict("A", "t1", 0.0, accepted=True) for _ in range(4)]
-        + [_verdict("A", "t1", 1.0, accepted=False) for _ in range(4)]
+        + [
+            _verdict(
+                "A", "t1", 0.0,
+                accepted=False,
+                hard_fail_reason="environment_failed_evaluation",
+            )
+            for _ in range(4)
+        ]
+    )
+    group = filter_groups(verdicts)[GroupKey("A", "t1")]
+    assert group.n == 8  # all 8 count
+    assert group.mean_reward == pytest.approx(0.5)
+    assert group.in_zone is True  # σ = 0.5 passes
+
+
+def test_filter_groups_drops_protocol_invalid_rollouts():
+    """Signature/proof/token failures are adversarial — exclude them even
+    with default `only_accepted=False`."""
+    verdicts = (
+        [_verdict("A", "t1", 1.0, accepted=True) for _ in range(4)]
+        + [
+            _verdict("A", "t1", 1.0, accepted=False, hard_fail_reason="signature_invalid")
+            for _ in range(2)
+        ]
+        + [
+            _verdict("A", "t1", 1.0, accepted=False, hard_fail_reason="proof_sketch_mismatch")
+            for _ in range(2)
+        ]
+    )
+    group = filter_groups(verdicts)[GroupKey("A", "t1")]
+    assert group.n == 4  # only the accepted ones
+    assert group.mean_reward == 1.0
+
+
+def test_filter_groups_reward_contract_violation_counted_as_zero():
+    """A miner that lied about its reward is still protocol-valid on the
+    proof axis — its rollout counts, but with reward=0."""
+    verdicts = (
+        [_verdict("A", "t1", 1.0, accepted=True) for _ in range(4)]
+        + [
+            _verdict(
+                "A", "t1", 0.0,
+                accepted=False,
+                hard_fail_reason="reward_contract_violation",
+            )
+            for _ in range(4)
+        ]
     )
     group = filter_groups(verdicts)[GroupKey("A", "t1")]
     assert group.n == 8
-    assert group.mean_reward == 0.5
+    assert group.mean_reward == pytest.approx(0.5)
 
 
-def test_filter_groups_includes_rejected_when_flag_off():
+def test_filter_groups_only_accepted_strict_mode():
+    """only_accepted=True reverts to the strict pipeline-accepted-only
+    behaviour (for weight scoring, not GRPO)."""
     verdicts = [
         _verdict("A", "t1", 1.0, accepted=True),
-        _verdict("A", "t1", 0.0, accepted=False),
+        _verdict(
+            "A", "t1", 0.0,
+            accepted=False,
+            hard_fail_reason="environment_failed_evaluation",
+        ),
     ]
-    group = filter_groups(verdicts, only_accepted=False)[GroupKey("A", "t1")]
-    assert group.n == 2
+    strict = filter_groups(verdicts, only_accepted=True)
+    loose = filter_groups(verdicts, only_accepted=False)
+    assert strict[GroupKey("A", "t1")].n == 1
+    assert loose[GroupKey("A", "t1")].n == 2
 
 
 def test_filter_groups_missing_ids_skipped():
