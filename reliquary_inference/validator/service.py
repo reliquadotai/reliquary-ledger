@@ -143,6 +143,17 @@ def validate_window(
                 parent_ids=[completion["artifact_id"], task_batch_artifact["artifact_id"]],
                 payload={
                     "completion_id": completion["artifact_id"],
+                    # miner_id is the producer of the completion being
+                    # judged here — NOT the validator that produced this
+                    # verdict (that's ``producer_id`` on the artifact
+                    # envelope). Zone filter groups by (miner_id, task_id);
+                    # without this field it falls back to the verdict's
+                    # producer_id = validator, which never matches the
+                    # miner's hotkey in completion_bundles → in-zone keys
+                    # never join back to rollout data → GRPO trainer
+                    # silently assembles zero groups.
+                    "miner_id": miner_id,
+                    "sample_index": int(payload.get("sample_index", 0)),
                     "accepted": report["accepted"],
                     "hard_fail_reason": report["hard_fail_reason"],
                     "soft_fail_reason": report["soft_fail_reason"],
