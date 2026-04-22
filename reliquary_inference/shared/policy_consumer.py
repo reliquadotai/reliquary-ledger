@@ -266,6 +266,26 @@ class PolicyConsumer:
                 attestation=attestation,
             )
 
+        # Reparam-trick defense-in-depth: static sanity check on delta
+        # tensors before we mutate the cached model. Catches NaN/inf,
+        # vanishingly small projections, and RMSNorm×Linear rescaling
+        # exploits that would pass the signature + smoke-hash gates but
+        # render the model untrainable on the next step. Skipping the
+        # check silently is safer than blocking a legitimate delta on a
+        # format quirk, so the guard returns ok=True for any shard it
+        # can't interpret (see reparam_guard module docstring).
+        try:
+            from .reparam_guard import guard_delta_shards
+            guard_result = guard_delta_shards(getattr(delta, "shards", []) or [])
+        except Exception:
+            guard_result = None
+        if guard_result is not None and not guard_result.ok:
+            return self._rejected(
+                reason=f"reparam_guard:{guard_result.reason}",
+                commitment=commitment,
+                attestation=attestation,
+            )
+
         # All checks passed — atomic apply.
         try:
             self.applier(delta)
