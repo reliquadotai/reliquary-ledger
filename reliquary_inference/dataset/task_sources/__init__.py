@@ -215,12 +215,13 @@ class MathTasksSource:
     """
 
     source_id: str = "math"
+    max_level: int | None = None
     _env: Any = None  # lazy-loaded MATHEnvironment
 
     def _environment(self):
         if self._env is None:
             from .math_env import MATHEnvironment
-            self._env = MATHEnvironment()
+            self._env = MATHEnvironment(max_level=self.max_level)
         return self._env
 
     def build_window_batch(self, window_context: dict[str, Any], count: int) -> dict[str, Any]:
@@ -319,11 +320,11 @@ class MathTasksSource:
         }
 
 
-def build_task_source(source_id: str) -> TaskSource:
+def build_task_source(source_id: str, *, max_level: int | None = None) -> TaskSource:
     if source_id == "dataset_prompts":
         return DatasetPromptsSource()
     if source_id == "reasoning_tasks":
         return ReasoningTasksSource()
     if source_id == "math":
-        return MathTasksSource()
+        return MathTasksSource(max_level=max_level)
     raise ValueError(f"Unsupported task source: {source_id}")

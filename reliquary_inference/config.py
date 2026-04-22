@@ -126,5 +126,15 @@ def load_config() -> dict[str, object]:
         # T_PROTO. top_p=1.0 = no nucleus truncation (DAPO default).
         "generation_temperature": float(os.getenv("RELIQUARY_INFERENCE_GENERATION_TEMPERATURE", "0.9")),
         "generation_top_p": float(os.getenv("RELIQUARY_INFERENCE_GENERATION_TOP_P", "1.0")),
+        # MATH difficulty cap during bootstrap — restrict sampling pool to
+        # Level 1..N problems (Hendrycks 1=easiest, 5=hardest). Qwen2.5-3B
+        # on Level 4-5 gets 0/8 ~100% of the time, producing σ=0 groups
+        # that starve the zone filter. Setting max_level=2 gives the base
+        # model a realistic shot at partial credit. Unset / None = no cap.
+        "math_max_level": (
+            int(os.environ["RELIQUARY_INFERENCE_MATH_MAX_LEVEL"])
+            if os.environ.get("RELIQUARY_INFERENCE_MATH_MAX_LEVEL")
+            else None
+        ),
         "git_sha": _git_sha(),
     }

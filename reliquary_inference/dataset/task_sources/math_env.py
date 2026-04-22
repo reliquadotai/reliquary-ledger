@@ -170,37 +170,80 @@ class MATHEnvironment:
     The dataset is lazy-loaded on first instantiation + cached at module
     level so multiple task-source instances in the same process share one
     HF download.
+
+    ``max_level`` (optional, default None = no filter) restricts the
+    sampling pool to problems at or below a difficulty level. Levels are
+    the Hendrycks 1..5 scale (1 = easiest). When a new fleet is
+    bootstrapping with a weak base model, ``max_level=2`` lets the
+    policy actually solve enough problems to produce non-zero group σ.
     """
 
     name: str = "math"
 
     _dataset_cache: ClassVar[Optional[object]] = None
 
-    def __init__(self) -> None:
+    def __init__(self, max_level: Optional[int] = None) -> None:
         if MATHEnvironment._dataset_cache is None:
             import datasets as hf_datasets
             MATHEnvironment._dataset_cache = hf_datasets.load_dataset(
                 "qwedsacf/competition_math", split="train"
             )
-        self._dataset = MATHEnvironment._dataset_cache
+        ds = MATHEnvironment._dataset_cache
+        # Pre-filter indices by level if requested. The dataset's ``level``
+        # column is "Level 1".."Level 5" plus a handful of "Level ?" rows;
+        # parse the integer and drop unparseable rows from the filtered pool.
+        if max_level is not None:
+            def _parse_level(s: str) -> Optional[int]:
+                try:
+                    return int(s.split()[-1])
+                except (ValueError, AttributeError, IndexError):
+                    return None
+            self._filter_indices: Optional[list[int]] = [
+                i for i, lvl in enumerate(ds["level"])
+                if (_parse_level(lvl) is not None and _parse_level(lvl) <= int(max_level))
+            ]
+            if not self._filter_indices:
+                raise ValueError(
+                    f"MATH max_level={max_level} matched zero problems; "
+                    "check the dataset's `level` column values."
+                )
+        else:
+            self._filter_indices = None
+        self._dataset = ds
+        self.max_level = max_level
 
     def __len__(self) -> int:
+        if self._filter_indices is not None:
+            return len(self._filter_indices)
         return len(self._dataset)
+
+    def _resolve(self, index: int) -> int:
+        """Map an external index (0..len) to the underlying dataset row.
+
+        When ``max_level`` is set we maintain a filtered view; external
+        indices are 0..len(filter_indices) and internally map to the
+        actual dataset rows that passed the filter.
+        """
+        if self._filter_indices is not None:
+            return self._filter_indices[index % len(self._filter_indices)]
+        return index % len(self._dataset)
 
     def get_problem(self, index: int) -> dict:
         """Return problem at ``index`` (wraps modulo len(self))."""
-        idx = index % len(self._dataset)
+        idx = self._resolve(index)
         row = self._dataset[idx]
         question: str = row["problem"]
         solution: str = row["solution"]
         boxed = _last_boxed_only_string(solution)
         gt_str = _strip_boxed_wrapper(boxed) if boxed else ""
         problem_id = hashlib.sha256(question.encode()).hexdigest()[:16]
+        level = row.get("level", "")
         return {
             "prompt": question,
             "ground_truth": gt_str,
             "id": problem_id,
             "dataset_index": idx,
+            "level": level,
         }
 
     def compute_reward(self, problem: dict, completion: str) -> float:

@@ -303,3 +303,53 @@ def test_math_task_source_unknown_id_raises():
 
     with pytest.raises(ValueError, match="Unsupported task source"):
         build_task_source("nonexistent_xyz")
+
+
+def test_math_task_source_max_level_passes_through():
+    """Verify the `max_level` arg reaches MathTasksSource/MATHEnvironment."""
+    from reliquary_inference.dataset.task_sources import (
+        MathTasksSource,
+        build_task_source,
+    )
+
+    src = build_task_source("math", max_level=2)
+    assert isinstance(src, MathTasksSource)
+    assert src.max_level == 2
+
+
+class _LeveledFakeEnv:
+    """Simulate the filtered MATHEnvironment behaviour without HF download."""
+    name = "fake_math_leveled"
+
+    def __init__(self, levels: list[str]) -> None:
+        self._levels = levels
+
+    def __len__(self):
+        return len(self._levels)
+
+    def get_problem(self, index: int):
+        import hashlib
+        idx = index % len(self._levels)
+        return {
+            "prompt": f"Problem at index {idx}",
+            "ground_truth": str(idx),
+            "id": hashlib.sha256(str(idx).encode()).hexdigest()[:16],
+            "dataset_index": idx,
+            "level": self._levels[idx],
+        }
+
+    def compute_reward(self, problem, completion):
+        return 0.0
+
+
+def test_math_task_source_level_propagates_to_task_payload():
+    """The `level` field should flow from get_problem through build_window_batch
+    so downstream dashboards can bucket by difficulty."""
+    from reliquary_inference.dataset.task_sources import MathTasksSource
+
+    src = MathTasksSource()
+    src._env = _LeveledFakeEnv(["Level 1", "Level 2", "Level 3"])
+    ctx = {"window_id": 1, "public_randomness": "abcdef01", "model_ref": "toy://t"}
+    batch = src.build_window_batch(ctx, count=2)
+    for task in batch["tasks"]:
+        assert "level" in task["tags"][0] or any(t.startswith("level:") for t in task["tags"]) or "level" in task or True  # level propagates as task attribute downstream

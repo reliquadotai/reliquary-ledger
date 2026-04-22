@@ -134,7 +134,10 @@ def _task_batch_artifact(cfg: dict, window_context: dict, count: int) -> dict:
     enriched.setdefault(
         "cooldown_indices", sorted(cooldown.current_cooldown_set(current_window))
     )
-    source = build_task_source(enriched["task_source"])
+    source = build_task_source(
+        enriched["task_source"],
+        max_level=cfg.get("math_max_level"),
+    )
     payload = source.build_window_batch(enriched, count=count)
     return make_artifact(
         artifact_type="task_batch",
