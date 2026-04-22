@@ -37,6 +37,14 @@ def _window_totals(audit_payload: dict[str, Any] | None, *, limit: int) -> dict[
         "reasoning_correct_total": 0.0,
         "reasoning_format_ok_total": 0.0,
         "reasoning_policy_compliance_total": 0.0,
+        # DAPO zone filter — mesh-level training signal density metrics.
+        "zone_total_groups": 0.0,
+        "zone_in_zone_groups": 0.0,
+        "zone_out_of_zone_groups": 0.0,
+        "zone_windows_observed": 0.0,          # number of windows where zone_filter ran
+        "zone_sigma_sum": 0.0,                  # for computing mean σ across groups
+        "zone_sigma_observations": 0.0,
+        "zone_mean_reward_sum": 0.0,            # for computing mean μ across groups
     }
     for window in windows:
         verification_totals = window.get("verification_totals", {})
@@ -49,6 +57,16 @@ def _window_totals(audit_payload: dict[str, Any] | None, *, limit: int) -> dict[
         totals["reasoning_correct_total"] += float(window_metrics.get("reasoning_correct_total", 0.0))
         totals["reasoning_format_ok_total"] += float(window_metrics.get("reasoning_format_ok_total", 0.0))
         totals["reasoning_policy_compliance_total"] += float(window_metrics.get("reasoning_policy_compliance_total", 0.0))
+        zone = window_metrics.get("zone_filter") or {}
+        if zone:
+            totals["zone_windows_observed"] += 1.0
+            totals["zone_total_groups"] += float(zone.get("total_groups", 0))
+            totals["zone_in_zone_groups"] += float(zone.get("in_zone_groups", 0))
+            totals["zone_out_of_zone_groups"] += float(zone.get("out_of_zone_groups", 0))
+            for g in zone.get("groups", []):
+                totals["zone_sigma_sum"] += float(g.get("sigma", 0.0))
+                totals["zone_mean_reward_sum"] += float(g.get("mean_reward", 0.0))
+                totals["zone_sigma_observations"] += 1.0
         publish_result = window.get("chain_publish_result") or {}
         if publish_result.get("success") is True:
             totals["publish_success"] += 1.0
@@ -176,6 +194,17 @@ def collect_metrics_snapshot(
     reasoning_policy_compliance = (
         rolling_totals["reasoning_policy_compliance_total"] / reasoning_eval_count if reasoning_eval_count else 0.0
     )
+    zone_sigma_obs = rolling_totals["zone_sigma_observations"]
+    zone_mean_sigma = (
+        rolling_totals["zone_sigma_sum"] / zone_sigma_obs if zone_sigma_obs else 0.0
+    )
+    zone_mean_reward = (
+        rolling_totals["zone_mean_reward_sum"] / zone_sigma_obs if zone_sigma_obs else 0.0
+    )
+    zone_total = rolling_totals["zone_total_groups"]
+    zone_in_zone_rate = (
+        rolling_totals["zone_in_zone_groups"] / zone_total if zone_total else 0.0
+    )
     snapshot = {
         "generated_at": now,
         "runtime": summary,
@@ -192,6 +221,13 @@ def collect_metrics_snapshot(
         "rolling_reasoning_correct_rate": reasoning_correct_rate,
         "rolling_reasoning_format_rate": reasoning_format_rate,
         "rolling_reasoning_policy_compliance": reasoning_policy_compliance,
+        "rolling_zone_total_groups": rolling_totals["zone_total_groups"],
+        "rolling_zone_in_zone_groups": rolling_totals["zone_in_zone_groups"],
+        "rolling_zone_out_of_zone_groups": rolling_totals["zone_out_of_zone_groups"],
+        "rolling_zone_in_zone_rate": zone_in_zone_rate,
+        "rolling_zone_mean_sigma": zone_mean_sigma,
+        "rolling_zone_mean_reward": zone_mean_reward,
+        "rolling_zone_windows_observed": rolling_totals["zone_windows_observed"],
         "task_source_totals": task_source_totals,
         "publish_success_total": rolling_totals["publish_success"],
         "publish_failure_total": rolling_totals["publish_failure"],
@@ -307,6 +343,34 @@ def render_metrics(snapshot: dict[str, Any]) -> str:
         "reliquary_rolling_reasoning_policy_compliance": (
             snapshot["rolling_reasoning_policy_compliance"],
             "Mean reasoning policy-compliance score across recent finalized windows.",
+        ),
+        "reliquary_rolling_zone_total_groups": (
+            snapshot["rolling_zone_total_groups"],
+            "Total rollout groups seen by zone_filter across the rolling audit window (DAPO group count).",
+        ),
+        "reliquary_rolling_zone_in_zone_groups": (
+            snapshot["rolling_zone_in_zone_groups"],
+            "Rollout groups that passed the zone_filter (sigma >= sigma_min) across the rolling audit window.",
+        ),
+        "reliquary_rolling_zone_out_of_zone_groups": (
+            snapshot["rolling_zone_out_of_zone_groups"],
+            "Rollout groups that failed the zone_filter across the rolling audit window.",
+        ),
+        "reliquary_rolling_zone_in_zone_rate": (
+            snapshot["rolling_zone_in_zone_rate"],
+            "Fraction of rollout groups that passed zone_filter — higher = more GRPO training signal.",
+        ),
+        "reliquary_rolling_zone_mean_sigma": (
+            snapshot["rolling_zone_mean_sigma"],
+            "Mean within-group reward std across all zone_filter groups — the learning-signal density metric.",
+        ),
+        "reliquary_rolling_zone_mean_reward": (
+            snapshot["rolling_zone_mean_reward"],
+            "Mean within-group reward across all zone_filter groups — proxy for miner correctness rate.",
+        ),
+        "reliquary_rolling_zone_windows_observed": (
+            snapshot["rolling_zone_windows_observed"],
+            "Number of windows where zone_filter data was recorded in the scorecard.",
         ),
         "reliquary_publish_success_total": (
             snapshot["publish_success_total"],
