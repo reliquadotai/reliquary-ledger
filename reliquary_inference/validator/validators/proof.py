@@ -43,13 +43,23 @@ class ProofStage:
         device = next(model.parameters()).device
         r_vec = verifier.generate_r_vec(randomness).to(device)
 
-        input_ids = torch.tensor([tokens], device=device)
-        attention_mask = torch.ones_like(input_ids, device=device)
-        with torch.no_grad():
-            hidden_states, _ = forward_single_layer(
-                model, input_ids, attention_mask, LAYER_INDEX
-            )
-        hidden_states = hidden_states[0]
+        # Fast path: batched_verify.compute_cached_hidden_states may have
+        # pre-computed hidden states for all M completions in the same
+        # (miner, window) group via a single forward pass — 5-7× cheaper
+        # than the per-completion serial forward. The cache is keyed by
+        # completion_id; presence means an upstream helper has already
+        # paid the forward-pass cost.
+        cached_hidden = (context.extras or {}).get("cached_hidden_states") or {}
+        completion_id = str(context.completion.get("artifact_id") or "")
+        hidden_states = cached_hidden.get(completion_id)
+        if hidden_states is None:
+            input_ids = torch.tensor([tokens], device=device)
+            attention_mask = torch.ones_like(input_ids, device=device)
+            with torch.no_grad():
+                hs_batched, _ = forward_single_layer(
+                    model, input_ids, attention_mask, LAYER_INDEX
+                )
+            hidden_states = hs_batched[0]
 
         seq_len = len(tokens)
         indices = indices_from_root(tokens, randomness, seq_len, min(CHALLENGE_K, seq_len))

@@ -39,6 +39,7 @@ def verify_completion(
     completion: dict[str, Any],
     task_batch: dict[str, Any],
     seen_nonces: set[tuple[str, int]],
+    cached_hidden_states: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Verify a single completion artifact against the window's task batch.
 
@@ -103,6 +104,7 @@ def verify_completion(
         tokenizer=tokenizer,
         randomness=str(payload["randomness"]),
         signing_secret=cfg.get("signing_secret"),
+        extras={"cached_hidden_states": cached_hidden_states or {}},
     )
 
     verdict = run_pipeline(default_stages(), context)

@@ -7,6 +7,10 @@ from typing import Any
 from ..protocol.artifacts import make_artifact
 from ..utils.json_io import write_json
 from .cooldown import CooldownMap, DEFAULT_COOLDOWN_WINDOWS, default_cooldown_path
+from .batched_verify import (
+    compute_cached_hidden_states,
+    group_completions_for_batched_forward,
+)
 from .copycat import detect_index_copycats
 from .verifier import verify_completion
 from .weights import compute_weights
@@ -61,6 +65,38 @@ def validate_window(
         "reasoning_final_answer_count": 0,
         "per_task_source": {},
     }
+    # Batched proof verification: one forward pass per (miner, window)
+    # group instead of per-completion. Mirrors the miner's batched
+    # generate — essential for the validator to keep up with M=8 GRPO
+    # groups. Feature-flag gated via cfg["batched_verify"] (default True).
+    # Gracefully empty on any failure → per-completion ProofStage falls
+    # back to its own forward.
+    cached_hidden_states: dict[str, Any] = {}
+    if bool(cfg.get("batched_verify", True)) and all_completions:
+        try:
+            from ..shared.modeling import load_model_bundle
+            bundle = load_model_bundle(
+                str(task_batch_artifact["payload"]["model_ref"]),
+                device=str(cfg["device"]),
+                dtype_name=str(cfg.get("load_dtype", "auto")),
+                require_flash_attention=bool(cfg.get("require_flash_attention", False)),
+            )
+            from ..protocol.constants import LAYER_INDEX
+            for batch in group_completions_for_batched_forward(
+                all_completions,
+                max_batch_size=int(cfg.get("batched_verify_max_size", 8)),
+            ):
+                cached_hidden_states.update(
+                    compute_cached_hidden_states(
+                        completions=batch,
+                        model=bundle["model"],
+                        tokenizer=bundle["tokenizer"],
+                        layer_index=LAYER_INDEX,
+                    )
+                )
+        except Exception:
+            cached_hidden_states = {}
+
     for completion in all_completions:
         miner_id = completion["producer_id"]
         payload = completion["payload"]
@@ -68,7 +104,13 @@ def validate_window(
         rollout_key = (payload["task_id"], int(payload.get("sample_index", 0)))
         duplicate_task = rollout_key in seen_rollout_keys_by_miner[miner_id]
         seen_rollout_keys_by_miner[miner_id].add(rollout_key)
-        report = verify_completion(cfg=cfg, completion=completion, task_batch=task_batch_artifact, seen_nonces=seen_nonces)
+        report = verify_completion(
+            cfg=cfg,
+            completion=completion,
+            task_batch=task_batch_artifact,
+            seen_nonces=seen_nonces,
+            cached_hidden_states=cached_hidden_states,
+        )
         if duplicate_task:
             report["accepted"] = False
             report["soft_fail_reason"] = "duplicate_task_submission"
