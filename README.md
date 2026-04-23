@@ -129,6 +129,7 @@ See [`docs/miner-quickstart.md`](docs/miner-quickstart.md).
 - [Readiness review](docs/readiness-review.md)
 - [Release checklist](docs/release-checklist.md)
 - [Protocol paper](docs/paper/reliquary_protocol_paper.md)
+- [External review package](docs/review/) — threat model + scope + pinned commit hashes for cryptographer review
 - [Narrative: how it works](docs/narrative/how_it_works.md)
 - [Narrative: launch announcement](docs/narrative/announcement.md)
 
