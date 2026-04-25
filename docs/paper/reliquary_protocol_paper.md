@@ -496,8 +496,8 @@ charter).
   in the RestrictedPython path.
 - **Signature migration to Ed25519**: HMAC-SHA256 is secure but
   symmetric; asymmetric signatures would let validators publish
-  verdicts without pre-sharing secrets with the mesh. Deferred
-  until the multi-sig coldkey flow stabilizes.
+  verdicts without pre-sharing secrets with the mesh. Deferred to a
+  future protocol version.
 
 ## References
 

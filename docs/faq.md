@@ -95,12 +95,12 @@ publishes weights + compact commitment references through the chain.
 
 ## Who controls the subnet?
 
-No single entity. The coldkey is a multi-sig (3-of-5; signers listed in
-the governance charter). Protocol upgrades require a coordinated
-`reliquary-protocol` version bump with testnet bake + on-chain commit of
-upgrade intent. Governance operates entirely via the on-chain charter
-committed per-window through the subnet identity interface — no external
-delegation, no single-key authority.
+Subnet ownership follows Bittensor's standard subnet-owner mechanics.
+Acceptance of any miner or validator submission is determined by the
+protocol's verifier pipeline + stake-weighted mesh consensus, not by
+external governance. Protocol upgrades require a coordinated
+`reliquary-protocol` version bump with testnet bake + on-chain commit
+of upgrade intent.
 
 ## Can a validator-mesh majority push a bad upgrade?
 

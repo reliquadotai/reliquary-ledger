@@ -120,24 +120,12 @@ runs in shadow mode before promotion.
   validator recruitment + public comms + tokenomics (this doc
   is Epic 4; paper is Epic 2).
 
-## The policy on governance
-
-No one founder, no one team, no one committee has unilateral control.
-Multi-sig coldkey drilled and tested on testnet. Upgrade path
-version-pinned. The authoritative on-chain charter is committed
-per-window via the subnet identity commit interface and enforced by
-the validator mesh; every policy publication carries an HMAC-signed
-attestation under the rotating policy-authority hotkey.
-
-Anti-centralization is not a marketing claim; it's a protocol
-invariant. See `docs/legal/anti_centralization.md`.
-
 ## Links
 
-- Source: [reliquary-inference](https://github.com/reliquadotai/reliquary-ledger)
-  (Ledger), [reliquary](https://github.com/reliquadotai/reliquary-forge) (Forge).
+- Source: [reliquary-ledger](https://github.com/reliquadotai/reliquary-ledger),
+  [reliquary-forge](https://github.com/reliquadotai/reliquary-forge),
+  [reliquary-protocol](https://github.com/reliquadotai/reliquary-protocol).
 - Protocol paper: `docs/paper/reliquary_protocol_paper.md`.
-- Anti-centralization commitment: `docs/legal/anti_centralization.md`.
 - License: MIT (see each repo's LICENSE).
 - Status dashboards + mesh audits: `docs/audit/`.
 

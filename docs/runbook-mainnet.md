@@ -53,8 +53,8 @@ Symptom: unexpected transactions from validator hotkey; stake movement not initi
    - `btcli wallet new_hotkey --wallet.name reliquary-ledger --wallet.hotkey validator-next`
    - `btcli stake add` to the new hotkey; `btcli stake remove` from compromised one.
    - Update `HOTKEY_NAME` in env file; restart services.
-3. File incident postmortem within 7 days — required by governance charter.
-4. If coldkey compromise is suspected: execute multi-sig recovery. See governance doc (out of runbook scope).
+3. File incident postmortem within 7 days.
+4. If coldkey compromise is suspected: follow Bittensor's standard subnet-owner key-recovery procedure (out of runbook scope).
 
 ## Scenario: health endpoint reports UNHEALTHY after restart
 
