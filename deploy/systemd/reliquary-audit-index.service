@@ -1,0 +1,24 @@
+[Unit]
+Description=Reliquary audit index rebuild + publish
+# Rebuilds audit/index.{json,html} from R2 + chain state and uploads to
+# the public R2 bucket so external dashboards (and the web /paper page)
+# stay fresh. Triggered every 10 min by reliquary-audit-index.timer.
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/srv/reliquary-inference/state/reliquary-inference.env
+
+[Service]
+Type=oneshot
+User=reliquary
+EnvironmentFile=/srv/reliquary-inference/state/reliquary-inference.env
+WorkingDirectory=/srv/reliquary-inference/state
+# --publish is the binding flag. Without it, the rebuild only writes
+# locally to ${EXPORT_DIR}/audit/index.json and the public R2 bucket
+# stays frozen at whatever was last there. We hit this exact failure
+# 2026-04-22 → 2026-04-25; the runbook scenario "public audit mirror
+# is stale" exists because of it.
+ExecStart=/bin/bash -lc "exec /opt/reliquary-venv/bin/reliquary-inference build-audit-index --limit 10 --publish"
+TimeoutStartSec=1800
+Restart=no
+StandardOutput=append:/srv/reliquary-inference/state/logs/audit-index.log
+StandardError=append:/srv/reliquary-inference/state/logs/audit-index.log

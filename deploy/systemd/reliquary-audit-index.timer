@@ -1,0 +1,19 @@
+[Unit]
+Description=Rebuild audit index every 10 min so zone_filter metrics + public mirror stay fresh
+Requires=reliquary-audit-index.service
+
+[Timer]
+# Fire once 30 s post-boot to catch any drift from a restart, then
+# every 10 min thereafter. 10 min is the cadence the operator
+# dashboard documents and the time scale at which zone-filter
+# Prometheus gauges become visibly stale.
+OnBootSec=30sec
+OnUnitActiveSec=10min
+# Persist last-fire time across reboots so a long downtime doesn't
+# trigger a burst-fire on boot.
+Persistent=true
+# Add jitter so a multi-host deployment doesn't hammer R2 in lockstep.
+RandomizedDelaySec=15
+
+[Install]
+WantedBy=timers.target
