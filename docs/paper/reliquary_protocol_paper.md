@@ -501,13 +501,13 @@ charter).
 
 ## References
 
-- Source: `reliquary-inference` (Ledger runtime), `reliquary` (Forge
+- Source: `reliquary-ledger` (Ledger runtime), `reliquary-forge` (Forge
   runtime), `reliquary-protocol` (shared).
 - Tier PRDs: `private/reliquary-plan/{00_STRATEGY,01_TIER1_PRD,
   02_TIER2_PRD,03_TIER3_PRD,04_TIER4_PRD}.md`.
 - Clean-room spec docs: `private/reliquary-plan/notes/spec-*.md`.
-- Mesh-live audits: `reliquary-inference/docs/audit/mesh_live/`.
-- Cross-GPU audit: `reliquary-inference/docs/audit/cross_gpu/`.
+- Mesh-live audits: `reliquary-ledger/docs/audit/mesh_live/`.
+- Cross-GPU audit: `reliquary-ledger/docs/audit/cross_gpu/`.
 - Empirical audit harness: `reliquary_inference.audit_harness`.
 
 ---

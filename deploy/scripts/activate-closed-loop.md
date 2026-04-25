@@ -98,7 +98,7 @@ deltas are erased. Next windows back to baseline.
   and re-apply the latest N commitments during bundle load.
 - `reliquary.training.checkpoint_storage.fetch_bundle` requires the
   `reliquary` package. On Ledger-only deployments, install with
-  `pip install -e /path/to/reliquary` alongside `reliquary-inference`.
+  `pip install -e /path/to/reliquary-forge` alongside `reliquary-ledger`.
 - No automatic revert on bad-delta: if Forge publishes a destructive
   delta, every node applies it. Monitor `weight_publication_success`
   after each hot-swap and roll back the flag if the signal drops.

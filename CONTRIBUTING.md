@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve `reliquary-inference`.
+Thanks for helping improve `reliquary-ledger`.
 
 ## Development Setup
 

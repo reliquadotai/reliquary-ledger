@@ -116,9 +116,10 @@ A majority in one runtime cannot force a change that breaks the other
 because both runtimes' canonical bytes must match — a forked runtime
 produces orphan verdicts that the other side rejects.
 
-## Why is the repository named `reliquary-inference` if the product name is Reliquary Ledger?
+## What's the relationship between the repo, the package, and the brand?
 
-Historical — the repo was created before the Ledger / Forge split was
-finalised. The package inside it is `reliquary_inference`; the product-
-facing name is **Reliquary Ledger**. The companion repo
-[`reliquary`](https://github.com/reliquadotai/reliquary) is **Reliquary Forge**.
+The repo is [`reliquary-ledger`](https://github.com/reliquadotai/reliquary-ledger).
+The Python package inside it is `reliquary_inference` (kept stable so existing
+operators don't have to re-pin imports). The product-facing brand is **Reliquary
+Ledger**. The companion repo [`reliquary-forge`](https://github.com/reliquadotai/reliquary-forge)
+is **Reliquary Forge** (Python package `reliquary`).

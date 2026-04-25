@@ -16,7 +16,7 @@ This review covers both repositories with the inference runtime as P0 and the br
   - Fixed by adding separate audit-bucket configuration, default raw-artifact URL suppression, and explicit docs for private artifacts plus public audit.
 - Public copy still carried comparative and positioning language.
   - Fixed by rewriting the public docs around Reliquary as a self-contained product and removing lineage/comparison wording.
-- `reliquary` still exposed tone debt in README and blueprint docs.
+- `reliquary-forge` still exposed tone debt in README and blueprint docs.
   - Fixed by rewriting the README and the lightweight blueprint in neutral product language.
 
 ## Post-Release Hardening
@@ -33,5 +33,5 @@ This review covers both repositories with the inference runtime as P0 and the br
 
 ## Repo Outcome
 
-- `reliquary-inference`: inference runtime and live subnet surface for Reliquary
-- `reliquary`: broader platform for verified inference, distillation, and RL
+- `reliquary-ledger`: inference runtime and live subnet surface for Reliquary
+- `reliquary-forge`: broader platform for verified inference, distillation, and RL

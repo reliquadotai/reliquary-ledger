@@ -16,7 +16,7 @@ reviewed against so subsequent revisions are scoped.
 ## Where to send feedback
 
 Open a GitHub issue against
-[reliquary-inference](https://github.com/reliquadotai/reliquary-inference)
+[reliquary-inference](https://github.com/reliquadotai/reliquary-ledger)
 with the tag `audit-feedback` and the paper commit hash in the
 issue title. Critical findings (reject mainnet) are triaged within
 24h; major within 1 week; minor are queued for the next protocol

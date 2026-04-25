@@ -60,7 +60,7 @@ Then open:
 - `Reliquary Chain State`
 - `Reliquary Platform`
 
-The platform dashboard is expected to show partial data unless the broader `reliquary` control plane is running on the same host.
+The platform dashboard is expected to show partial data unless the broader Reliquary control plane is running on the same host.
 
 ## Runtime Health
 

@@ -1,6 +1,6 @@
 # Review Findings
 
-This document captures the current technical review across `reliquary-inference` and the broader `reliquary` platform.
+This document captures the current technical review across `reliquary-ledger` and the broader Reliquary platform.
 
 ## Blocker
 

@@ -1,18 +1,18 @@
-[![CPU CI](https://github.com/reliquadotai/reliquary-inference/actions/workflows/cpu-ci.yml/badge.svg)](https://github.com/reliquadotai/reliquary-inference/actions/workflows/cpu-ci.yml)
+[![CPU CI](https://github.com/reliquadotai/reliquary-ledger/actions/workflows/cpu-ci.yml/badge.svg)](https://github.com/reliquadotai/reliquary-ledger/actions/workflows/cpu-ci.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
 [![Testnet Live](https://img.shields.io/badge/testnet-netuid_462-brightgreen)](docs/status.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 # Reliquary Ledger
 
-**Reliquary Ledger** is the inference runtime for [Reliquary](https://github.com/reliquadotai/reliquary),
+**Reliquary Ledger** is the inference runtime for [Reliquary](https://github.com/reliquadotai/reliquary-forge),
 a proof-carrying Bittensor subnet that runs two companion protocols under a
 single netuid: **Ledger** (inference) and **Forge** (training). Ledger produces
 **verifiable completions**: miners generate solutions to deterministic tasks,
 validators replay hidden-state sketch commitments, and a 4-validator mesh
 publishes on-chain verdicts that gate weights and feed the Forge trainer.
 
-Ledger and its companion [Reliquary Forge](https://github.com/reliquadotai/reliquary)
+Ledger and its companion [Reliquary Forge](https://github.com/reliquadotai/reliquary-forge)
 share a [protocol package](https://github.com/reliquadotai/reliquary-protocol) so the
 two runtimes cross-verify deterministically inside the same subnet.
 
@@ -66,7 +66,7 @@ Sanitized operational status: [`docs/status.md`](docs/status.md).
 ### Verify It Yourself (local demo, no chain writes)
 
 ```bash
-git clone https://github.com/reliquadotai/reliquary-inference.git
+git clone https://github.com/reliquadotai/reliquary-ledger.git
 cd reliquary-inference
 cp env.example .env
 uv venv && source .venv/bin/activate
@@ -105,7 +105,7 @@ See [`docs/miner-quickstart.md`](docs/miner-quickstart.md).
 - `/healthz`, `/status`, `/metrics`, `/dashboard` HTTP endpoints with CORS
 - PolicyConsumer with reparam-trick sanity guard on delta apply
 
-**Excluded** (handled by [reliquary](https://github.com/reliquadotai/reliquary), the Forge training runtime)
+**Excluded** (handled by [reliquary](https://github.com/reliquadotai/reliquary-forge), the Forge training runtime)
 - GRPO training
 - Distillation packs
 - Learner checkpoints

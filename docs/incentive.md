@@ -91,7 +91,7 @@ Ledger's weight formula covers **inference** work only. The companion
 Forge trainer consumes in-zone rollout groups from Ledger and publishes
 policy checkpoints via the closed-loop bridge. Forge's incentive system
 (trainer-quorum weighting, benchmark-gated promotion) lives in
-[reliquary/docs/scoring.md](https://github.com/reliquadotai/reliquary/blob/main/docs/scoring.md)
+[reliquary/docs/scoring.md](https://github.com/reliquadotai/reliquary-forge/blob/main/docs/scoring.md)
 and is independent of the per-completion weight here.
 
 ## Relevant constants

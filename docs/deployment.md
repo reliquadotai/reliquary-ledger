@@ -1,6 +1,6 @@
 # Deployment
 
-`reliquary-inference` is designed for host-level Python services. The default public posture is:
+**Reliquary Ledger** is designed for host-level Python services. The default public posture is:
 
 - private artifact storage
 - separate public audit publishing

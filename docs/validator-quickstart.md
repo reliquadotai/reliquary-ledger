@@ -16,7 +16,7 @@ Validators also run `policy_consumer` to hot-swap Forge's policy deltas.
 ## Clone + install
 
 ```bash
-git clone https://github.com/reliquadotai/reliquary-inference.git
+git clone https://github.com/reliquadotai/reliquary-ledger.git
 cd reliquary-inference
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev,gpu]"

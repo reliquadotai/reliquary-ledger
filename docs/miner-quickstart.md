@@ -18,7 +18,7 @@ to verify.
 ## Clone + install
 
 ```bash
-git clone https://github.com/reliquadotai/reliquary-inference.git
+git clone https://github.com/reliquadotai/reliquary-ledger.git
 cd reliquary-inference
 uv venv
 source .venv/bin/activate

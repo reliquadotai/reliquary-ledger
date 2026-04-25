@@ -43,9 +43,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/reliquadotai/reliquary-inference"
-Repository = "https://github.com/reliquadotai/reliquary-inference"
-Issues = "https://github.com/reliquadotai/reliquary-inference/issues"
+Homepage = "https://github.com/reliquadotai/reliquary-ledger"
+Repository = "https://github.com/reliquadotai/reliquary-ledger"
+Issues = "https://github.com/reliquadotai/reliquary-ledger/issues"
 
 [project.optional-dependencies]
 dev = [

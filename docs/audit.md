@@ -1,6 +1,6 @@
 # Audit Surface
 
-`reliquary-inference` publishes a lightweight static audit surface from finalized `window_manifest` artifacts.
+**Reliquary Ledger** publishes a lightweight static audit surface from finalized `window_manifest` artifacts.
 
 ## Stable Outputs
 
