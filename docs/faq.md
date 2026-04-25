@@ -9,9 +9,8 @@ Both runtimes share a
 [protocol package](https://github.com/0xgrizz/reliquary-protocol) so their
 bytes cross-verify deterministically.
 
-Ledger is live on testnet netuid 462. Mainnet cutover is gated on 4 weeks
-of continuous-operation track record plus external cryptographer review of
-the protocol paper.
+Ledger is live on testnet netuid 462. Mainnet cutover is gated on a 4-week
+continuous-operation track record on testnet.
 
 ## Which task source is live?
 

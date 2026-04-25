@@ -148,7 +148,6 @@ produces orphan verdicts that the other side rejects.
 
 ### What's the next major milestone?
 
-External cryptographer review of the protocol paper (Tier 2 Epic 6).
 Full 100K empirical audit on Blackwell fleet. Mainnet Ledger cutover
 after the continuous-operation track record on testnet netuid 462
 crosses 4 weeks of uninterrupted mesh consensus.

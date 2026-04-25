@@ -55,7 +55,7 @@ def test_audit_documents_sketch_layer_limitations() -> None:
     zero = report.classes["tamper_zero"]
     # We simply assert the audit ran and produced a per-class report.
     # The actual numerical FN rate is a property of the sketch layer and is
-    # captured in the audit artifact for external review, not asserted here.
+    # captured in the audit artifact for downstream inspection, not asserted here.
     assert zero.trials == 32
     assert 0.0 <= zero.false_negative_rate <= 1.0
 

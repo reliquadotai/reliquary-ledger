@@ -109,11 +109,13 @@ known-good operators.
 ### 7. Open protocol paper + open audit
 
 The protocol paper (`docs/paper/reliquary_protocol_paper.md`) is a
-public document. External cryptographers are engaged for review
-under the Tier 2 Epic 6 campaign. All audit findings — critical,
-major, minor — are published in `docs/audit/` with the reviewer's
-identity (if they consent) and the commit hash they reviewed. No
-findings are suppressed.
+public document. The audit harness, empirical reports, cross-GPU
+determinism data, and mesh-live consensus runs are all published
+under `docs/audit/` with raw inputs + outputs so any reader can
+reproduce the numbers on their own hardware. All audit findings —
+critical, major, minor — are published with the reviewer's identity
+(if they consent) and the commit hash they reviewed. No findings are
+suppressed.
 
 ## What we explicitly do NOT commit to
 
@@ -188,7 +190,7 @@ open a GH issue tagged `governance-gap` — we treat those as P0 bugs.
 - **After mainnet activation**: onchain governance charter published;
   upgrade-intent commitment mechanism wired; validator recruitment
   plan public.
-- **After 100K audit + external review**: findings published;
+- **After 100K audit campaign**: findings published;
   mitigations merged; protocol version bumped.
 - **Forge activation**: both runtimes running at production cadence,
   shared protocol package at a stable version, end-to-end audit

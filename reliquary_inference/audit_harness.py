@@ -18,7 +18,7 @@ load or chain state is required for the baseline report. GPU
 (torch.cuda) is used when available for speed but CPU is the fallback.
 
 Spec: private/reliquary-plan/notes/spec-proof-protocol.md acceptance
-tests 1-10; Tier 2 Epic 6 of 02_TIER2_PRD.md.
+tests 1-10.
 """
 
 from __future__ import annotations

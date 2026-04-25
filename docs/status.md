@@ -74,4 +74,4 @@ and auditors can scrape without operator cooperation.
   left to the operator
 - the repo is testnet-first today, not presented as a finished mainnet
   deployment; mainnet cutover requires ≥ 4 weeks of continuous-operation
-  track record plus external cryptographer review of the protocol paper
+  track record on testnet netuid 462

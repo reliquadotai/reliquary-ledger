@@ -106,19 +106,13 @@ pipeline with cache-warmed metagraph.
 Submit via `reliquary-env submit`. Stake TAO as commitment; your env
 runs in shadow mode before promotion.
 
-**As a cryptographer**: read the protocol paper at
-`docs/paper/reliquary_protocol_paper.md` and open GH issues tagged
-`audit-feedback` with a commit hash. Critical findings triaged within
-24h.
-
 ## Roadmap
 
 - **Tier 1** ✅ — proof protocol + nine-stage verifier + chain
   hardening + bootstrap infrastructure (shipped).
 - **Tier 2** 🟢 — validator mesh + distributed training + delta
   checkpoints + observability + empirical audit baseline + multi-
-  sig ownership (shipped on code; 100K campaign + external review
-  pending).
+  sig ownership (shipped on code; 100K campaign in progress).
 - **Tier 3** 🟡 — permissionless env registry + closed-loop
   runtime + shared protocol package + Forge runtime activation (schema
   + sandbox shipped; onchain submission + Forge runtime launch pending).

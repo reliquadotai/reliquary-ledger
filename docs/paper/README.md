@@ -3,27 +3,19 @@
 `reliquary_protocol_paper.md` — draft protocol paper (v0.1, 2026-04-18)
 that formalizes Reliquary's proof-carrying inference protocol, mesh
 consensus, artifact storage, and permissionless env registry at the
-level of detail needed for external cryptographer review.
-
-## Purpose
-
-Tier 2 Epic 6 calls for 2 external cryptographers to review the
-protocol. This doc is the input they'll review against. It is
-deliberately written to be self-contained: a reviewer should not need
-to crawl the source tree to understand the protocol — every load-
-bearing constant is named and pinned, every verification invariant is
-spelled out.
+level of detail needed for an independent reader to reproduce a working
+implementation from scratch.
 
 ## Update cadence
 
 This paper is a living document. It is versioned alongside the shared
 `reliquary-protocol` package; every bump of `reliquary_protocol.VERSION`
-may trigger a paper revision. External reviewers pin the commit hash
-they reviewed against so subsequent revisions are scoped.
+may trigger a paper revision. Readers should pin the commit hash they
+reviewed against so subsequent revisions are scoped.
 
 ## Where to send feedback
 
-External reviewers: open a GitHub issue against
+Open a GitHub issue against
 [reliquary-inference](https://github.com/0xgrizz/reliquary-inference)
 with the tag `audit-feedback` and the paper commit hash in the
 issue title. Critical findings (reject mainnet) are triaged within

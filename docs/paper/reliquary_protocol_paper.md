@@ -22,8 +22,7 @@ subnet state from a single block-height snapshot.
 
 This paper documents the protocol at the level of detail necessary for
 a cryptographer or a distributed-systems practitioner to reproduce a
-working implementation from scratch. It is the intended input to the
-external review called for by Tier 2 Epic 6.
+working implementation from scratch.
 
 ## 1. Design goals
 
@@ -481,7 +480,7 @@ charter).
   via transformers on staging1 Blackwell); all 4 math answers correct;
   all 4 provenance bindings resolve.
 
-## 14. Open questions for external review
+## 14. Open questions
 
 - **Sketch tolerance lower bound**: `PROOF_SKETCH_TOLERANCE_BASE = 6000`
   has substantial headroom in empirical cross-GPU runs; can it be
@@ -514,6 +513,6 @@ charter).
 ---
 
 **Draft status**: this paper is a living document, bumped alongside the
-shared protocol version. External reviewers should pin the commit hash
-they reviewed against; future revisions may clarify or tighten claims
-but will not silently weaken security properties.
+shared protocol version. Reviewers should pin the commit hash they
+reviewed against; future revisions may clarify or tighten claims but
+will not silently weaken security properties.
