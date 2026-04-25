@@ -15,10 +15,11 @@ class EnvironmentStage:
 
     def check(self, context: StageContext) -> StageResult:
         from ...dataset.task_sources import build_task_source
+        from .prompt import _validator_mix
 
         task_source_name = context.payload.get("task_source")
         try:
-            task_source = build_task_source(task_source_name)
+            task_source = build_task_source(task_source_name, mix=_validator_mix(task_source_name))
         except Exception as exc:
             return reject(
                 self.name,

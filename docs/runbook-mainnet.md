@@ -73,6 +73,89 @@ After any configuration change:
 - [ ] First set_weights call lands onchain (visible in metagraph within 1 window).
 - [ ] Prometheus `reliquary_verifier_stage_total` counter advancing.
 
+## Scenario: public audit mirror is stale
+
+Symptom: `https://pub-…r2.dev/audit/index.json` reports a `generated_at`
+timestamp older than ~30 min, OR `audit/index.json` is missing entirely
+for the live netuid. External viewers see no recent windows.
+
+This does NOT necessarily mean the validator is down — it usually means
+the audit-index publisher service has stopped, or the public R2 base URL
+has drifted from what the audit index is configured to write.
+
+```bash
+# 1. Confirm the validator + miner are actually mining live windows.
+#    `latest_window_mined` should be within ~12 min of the current chain window.
+curl -s http://127.0.0.1:9108/status | jq '{
+  latest_window_mined,
+  latest_importable_window,
+  import_lag_windows,
+  netuid,
+  network
+}'
+
+# 2. Confirm the audit-index timer fired recently. If LAST is > 15 min ago,
+#    the rebuild has stalled — restart the timer.
+systemctl --user list-timers reliquary-audit-index.timer
+
+# 3. If the timer is healthy but the public bucket is still stale, the
+#    publish path is probably mis-configured. Compare:
+grep -E 'RELIQUARY_INFERENCE_(AUDIT_BUCKET|PUBLIC_AUDIT_BASE_URL|AUDIT_PREFIX)' \
+  /save/state/reliquary-inference.env 2>/dev/null
+#    against the URL you're querying. The PUBLIC_AUDIT_BASE_URL must match
+#    the public.r2.dev hostname for the bucket the AUDIT_BUCKET writes to.
+
+# 4. Force a one-shot rebuild + publish so the mirror catches up immediately.
+python3 -m reliquary_inference.cli build-audit-index --publish
+
+# 5. Verify externally — should print a recent ISO timestamp + the live netuid.
+curl -s "${RELIQUARY_INFERENCE_PUBLIC_AUDIT_BASE_URL}/audit/index.json" \
+  | jq '{generated_at, netuid, window_count, latest: .windows[0].window_id}'
+
+# 6. Re-arm the timer if it had drifted.
+systemctl --user restart reliquary-audit-index.timer
+```
+
+If step 1 shows `latest_window_mined` is ALSO stale (> 30 min behind chain),
+the validator/miner is actually down — switch to "validator stopped"
+playbook below before worrying about the mirror.
+
+## Scenario: validator stopped publishing verdicts
+
+Symptom: `latest_window_mined` from `/status` is multiple windows behind
+the live chain head; verdicts haven't shown up in R2 for the recent
+windows; mesh consensus hasn't advanced.
+
+```bash
+# 1. Are services up?
+systemctl --user status reliquary-ledger-validator-mainnet \
+                         reliquary-ledger-miner-mainnet 2>&1 \
+  | grep -E 'Active|Loaded'
+
+# 2. Recent journal — look for an unhandled exception or a chain-RPC error.
+journalctl --user -u reliquary-ledger-validator-mainnet --since '1 hour ago' \
+  --no-pager | tail -60
+
+# 3. Is the chain endpoint reachable?
+btcli subnet metagraph --netuid "$RELIQUARY_NETUID" --network finney 2>&1 | head -10
+
+# 4. If the service exited cleanly (no stack trace) but isn't running:
+systemctl --user restart reliquary-ledger-validator-mainnet \
+                          reliquary-ledger-miner-mainnet
+
+# 5. If the service is restart-looping with a chain-connect error:
+#    fall through to the "dead websocket endpoint" playbook above.
+
+# 6. Once recovered, confirm `latest_window_mined` advances on the next
+#    `/status` poll (~12 min later). Also re-publish the audit index per
+#    the stale-mirror playbook above.
+```
+
+Important: don't restart blindly. If the service died from a known
+correctness invariant (e.g. reparam guard rejected every delta for a
+window, or a sketch-tolerance assertion fired), restarting will just
+re-trigger the same exit. Read the journal first.
+
 ## Escalation
 
 - **Severity 1 (outage, >10 min unhealthy):** page oncall rotation.

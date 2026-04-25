@@ -144,6 +144,7 @@ def _task_batch_artifact(cfg: dict, window_context: dict, count: int) -> dict:
     source = build_task_source(
         enriched["task_source"],
         max_level=cfg.get("math_max_level"),
+        mix=cfg.get("task_mix"),
     )
     payload = source.build_window_batch(enriched, count=count)
     return make_artifact(

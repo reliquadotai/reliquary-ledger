@@ -19,6 +19,44 @@ def _env_bool(name: str, default: bool) -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
+def _env_task_mix(name: str) -> list[tuple[str, float]] | None:
+    """Parse a ``"<source>:<weight>,<source>:<weight>,..."`` mix spec.
+
+    Returns ``None`` when the env var is unset or empty so callers can
+    distinguish "operator didn't configure a mix" from "operator
+    configured an empty mix" (the latter would be a config error and
+    we let ``build_task_source`` raise on it).
+
+    Example:
+        RELIQUARY_INFERENCE_TASK_MIX="math:2,gsm8k:1"
+        → [("math", 2.0), ("gsm8k", 1.0)]
+    """
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return None
+    mix: list[tuple[str, float]] = []
+    for entry in raw.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        if ":" not in entry:
+            raise ValueError(
+                f"{name}: each entry must be 'source_id:weight'; got {entry!r}"
+            )
+        sub_id, sub_weight = entry.split(":", 1)
+        sub_id = sub_id.strip()
+        try:
+            weight = float(sub_weight.strip())
+        except ValueError as exc:
+            raise ValueError(
+                f"{name}: weight for {sub_id!r} is not a number; got {sub_weight!r}"
+            ) from exc
+        if not sub_id:
+            raise ValueError(f"{name}: empty source_id in entry {entry!r}")
+        mix.append((sub_id, weight))
+    return mix
+
+
 def _git_sha() -> str:
     package_root = Path(__file__).resolve().parents[1]
     try:
@@ -60,7 +98,16 @@ def load_config() -> dict[str, object]:
         # `math` is the live target on testnet netuid 462. `reasoning_tasks`
         # and `dataset_prompts` remain in the source tree for tests + low-
         # resource fallbacks; set the env var explicitly to pick them.
+        # ``mixed`` runs a weighted blend of constituent sources — see
+        # ``task_mix`` below for the per-source weight spec.
         "task_source": _env_str("RELIQUARY_INFERENCE_TASK_SOURCE", "math"),
+        # Required when task_source == "mixed". Format: comma-separated
+        # ``<source_id>:<weight>`` pairs, e.g. "math:2,gsm8k:1" → MATH
+        # gets twice the sampling share. None when source != "mixed".
+        # MUST be identical across every validator + miner in the mesh
+        # for a coordinated cutover (mismatched mix → prompt_hash drift
+        # → mass-rejection).
+        "task_mix": _env_task_mix("RELIQUARY_INFERENCE_TASK_MIX"),
         # With samples_per_task=8 (DAPO M=8), a single task per window is the
         # canonical shape: one prompt, M rollouts, one GRPO group per window.
         "task_count": _env_int("RELIQUARY_INFERENCE_TASK_COUNT", 1),
