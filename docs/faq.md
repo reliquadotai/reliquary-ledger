@@ -6,7 +6,7 @@ The inference runtime for Reliquary, a proof-carrying Bittensor subnet that
 runs two companion protocols under a single netuid. Ledger produces verifiable
 completions that a companion trainer (Forge) turns into policy checkpoints.
 Both runtimes share a
-[protocol package](https://github.com/0xgrizz/reliquary-protocol) so their
+[protocol package](https://github.com/reliquadotai/reliquary-protocol) so their
 bytes cross-verify deterministically.
 
 Ledger is live on testnet netuid 462. Mainnet cutover is gated on a 4-week
@@ -121,4 +121,4 @@ produces orphan verdicts that the other side rejects.
 Historical — the repo was created before the Ledger / Forge split was
 finalised. The package inside it is `reliquary_inference`; the product-
 facing name is **Reliquary Ledger**. The companion repo
-[`reliquary`](https://github.com/0xgrizz/reliquary) is **Reliquary Forge**.
+[`reliquary`](https://github.com/reliquadotai/reliquary) is **Reliquary Forge**.

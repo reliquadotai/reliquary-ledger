@@ -98,6 +98,6 @@ in milliseconds. Cheating is mathematically unprofitable.**
 ---
 
 *Technical details: see the [protocol paper](../paper/reliquary_protocol_paper.md).
-Source: [reliquary-inference](https://github.com/0xgrizz/reliquary-inference),
-[reliquary](https://github.com/0xgrizz/reliquary),
-[reliquary-protocol](https://github.com/0xgrizz/reliquary-protocol).*
+Source: [reliquary-inference](https://github.com/reliquadotai/reliquary-inference),
+[reliquary](https://github.com/reliquadotai/reliquary),
+[reliquary-protocol](https://github.com/reliquadotai/reliquary-protocol).*

@@ -134,8 +134,8 @@ invariant. See `docs/legal/anti_centralization.md`.
 
 ## Links
 
-- Source: [reliquary-inference](https://github.com/0xgrizz/reliquary-inference)
-  (Ledger), [reliquary](https://github.com/0xgrizz/reliquary) (Forge).
+- Source: [reliquary-inference](https://github.com/reliquadotai/reliquary-inference)
+  (Ledger), [reliquary](https://github.com/reliquadotai/reliquary) (Forge).
 - Protocol paper: `docs/paper/reliquary_protocol_paper.md`.
 - Anti-centralization commitment: `docs/legal/anti_centralization.md`.
 - License: MIT (see each repo's LICENSE).

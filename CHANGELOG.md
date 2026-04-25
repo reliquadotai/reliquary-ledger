@@ -2,7 +2,7 @@
 
 All notable changes to **Reliquary Ledger** (`reliquary-inference`) are
 documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
-we version jointly with [reliquary-protocol](https://github.com/0xgrizz/reliquary-protocol)
+we version jointly with [reliquary-protocol](https://github.com/reliquadotai/reliquary-protocol)
 so both runtimes bump in lockstep.
 
 ## [Unreleased]
@@ -105,7 +105,7 @@ so both runtimes bump in lockstep.
 
 ### Fixed
 - Correctness source in `forge` (shipped in
-  [reliquary](https://github.com/0xgrizz/reliquary) `run_forge_grpo_live.py`):
+  [reliquary](https://github.com/reliquadotai/reliquary) `run_forge_grpo_live.py`):
   read per-rollout reward from `verdict_bundles` instead of
   `completion_bundles` (miners don't compute their own correctness).
 - `reliquary-protocol.storage.R2ObjectBackend._call` now retries 429 /
