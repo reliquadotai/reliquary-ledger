@@ -781,6 +781,19 @@ def run_validator(
             chain_ok = True
             current_window = int(window_context["window_id"])
 
+            # Early health update: mark chain reachable as soon as the
+            # window context comes back. Without this, the backfill loop
+            # below can take 5-30 min per outer iteration before the
+            # finally block fires — leaving /health "never connected"
+            # for the duration even though chain is healthy.
+            _update_health(
+                health_holder,
+                started_at=validator_started_at,
+                chain_ok=True,
+                window_verified=any_window_verified,
+                model_loaded=True,
+            )
+
             if policy_consumer_hook is not None:
                 policy_consumer_hook(ledger_window=current_window)
 
@@ -811,6 +824,16 @@ def run_validator(
                             console.print(
                                 f"published weights for window {candidate}: "
                                 f"{scorecard['payload']['weights']}"
+                            )
+                            # Mid-loop health update so /health flips to
+                            # ok within seconds of each successful window
+                            # rather than waiting for the full backfill.
+                            _update_health(
+                                health_holder,
+                                started_at=validator_started_at,
+                                chain_ok=True,
+                                window_verified=True,
+                                model_loaded=True,
                             )
                         except Exception as exc:
                             console.print(
