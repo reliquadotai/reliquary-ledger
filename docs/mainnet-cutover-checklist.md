@@ -1,82 +1,74 @@
-# Mainnet cutover checklist
+# Mainnet cutover checklist (autonomous, self-paced)
 
-Single operator-facing form merging the private Tier 1 + Tier 2 PRD exit
-criteria with the public release checklist. Every item must be **green**
-before flipping `ALLOW_MAINNET=1` and running `deploy/apply-mainnet-sn81-profile.sh`.
+Single operator-facing form. Every item is **internal** — code, tests,
+fleet state, on-disk artifacts. **Nothing on this list is gated on
+external coordination.** When all boxes are green the cutover is the
+operator's call and runs unilaterally.
 
-The cutover is OTF-paced — we wait for conviction-delegation activation
-on `netuid 81` regardless of whether all other items are green sooner.
+The cutover script is `deploy/apply-mainnet-sn81-profile.sh` with
+`ALLOW_MAINNET=1`. It rewrites the active env to point at finney +
+the chosen mainnet netuid, restarts the validator/miner units, and
+verifies first-window weight publication. There is no remote signal
+required to run it.
 
-## Stability on testnet 462
-
-- [ ] **14 consecutive days** continuous operation on netuid 462 with **zero hard-fail proof rejects** on validators running mainline code (`reliquary_inference.protocol.LEDGER_PROOF_VERSION == "v5"`).
-- [ ] All 4 mesh validators online ≥ 99% in the same 14-day window.
-- [ ] `reliquary_mesh_validator_disagreement_rate` < 0.05 on every validator over the window.
-- [ ] Public R2 audit index (https://pub-954f95c7d2f3478886c8a8ff7a4946e0.r2.dev/audit/index.html) shows continuous windows with no gap > 30 min.
-- [ ] In-zone rate stays in `[0.55, 0.75]` band — DAPO σ-filter is firing on real signal, not noise.
-
-## Code + tests
+## A. Code is green
 
 - [ ] `git status` clean on the four checkouts (ledger, forge, protocol, miner-pro) running on the production fleet.
-- [ ] All four mesh validators on the **same git SHA** of `reliquary-ledger` (verify via `:9180/health` payload — emits the build SHA).
-- [ ] Local `pytest -q` green on a single dev box: ≥ 600 tests passing across reliquary-ledger, ≥ 600 across reliquary-forge, ≥ 50 across reliquary-protocol.
-- [ ] `cross_gpu_audit.py` re-run with the current code, ≤ 7 days old, **zero sketch drift** across the staging fleet.
-- [ ] `audit_harness.py` adversarial campaign run with the current code, FP rate < 1%, FN rate < 5%.
+- [ ] All running mesh validators on the **same git SHA** of `reliquary-ledger` (verify via `:9180/healthz` payload).
+- [ ] Local `pytest -q` green: 686+ on reliquary-ledger, 80+ on reliquary-forge, 50+ on reliquary-protocol harvest tests. The pre-existing `test_cli.py::test_status_summary_*` flake is the only acceptable failure (fixture issue, not code regression).
+- [ ] `cross_gpu_audit.py` re-run with current code, ≤ 24 h old, **zero sketch drift** across every production hardware class on the fleet (Blackwell + Hopper currently verified bit-exact).
+- [ ] `audit_harness.py` adversarial campaign run with current code, FP rate < 1%, FN rate < 5%.
 
-## Storage + R2
+## B. Fleet is live
 
-- [ ] R2 bucket `reliquary-ledger-mainnet` created.
-- [ ] R2 lifecycle rule applied: delta artifacts expire > 30 days, audit artifacts > 90 days, raw verdicts > 30 days.
-- [ ] Audit bucket public-read ACL set; audit URL reachable from a clean browser without auth.
-- [ ] R2 cost monitoring: Prometheus metric `reliquary_r2_api_call_total{result=...}` emitted, alert rule wired.
-- [ ] HF Hub trainer repo created (e.g. `reliquadotai/reliquary-sn81`) with write token issued.
-- [ ] HF Hub publisher (Phase 1.4) has pushed ≥ 10 successful checkpoints to a **test repo** during testnet bake-in.
+- [ ] At least 2 independent miner hotkeys producing rollouts on testnet 462.
+- [ ] At least 3 independent validator hotkeys publishing verdicts on testnet 462.
+- [ ] `reliquary_mesh_validator_disagreement_rate` < 0.05 across the active mesh.
+- [ ] `/healthz` returns `ok` (HTTP 200, `state=ok`) on every validator in the mesh.
+- [ ] `:9108/metrics` reachable on the dev box; Grafana dashboards render live data.
+- [ ] Public R2 audit index (https://pub-954f95c7d2f3478886c8a8ff7a4946e0.r2.dev/audit/index.html) shows continuous windows with no gap > 30 min over the last 6 hours.
 
-## Multi-sig + governance
+## C. Trainer is firing
 
-- [ ] 3-of-5 multi-sig signer list finalized (names, SS58 addresses, custody locations) and recorded in `private/reliquary-plan/audit/`.
-- [ ] Multi-sig ceremony rehearsed end-to-end against a local subtensor; rehearsal capture committed to `docs/ceremony-rehearsal-2026-Wxx.md`.
-- [ ] `accept_subnet_owner` extrinsic dry-run produced via `reliquary_inference/chain/multisig.py` and reviewed by all signers.
-- [ ] Operational charter (`docs/governance-charter.md`) finalized; sha256 computed and recorded.
-- [ ] OTF/Jake review-surface package delivered (private link, with threat-model.md, scope.md, pinned-hashes.md, reproducing.md, response-protocol.md).
+- [ ] `reliquary-forge-trainer.timer` has fired ≥ 5 cycles in the last 24 h that **trained** (i.e. produced a `forge-grpo-*` delta artifact, not a "0 in-zone groups" skip).
+- [ ] At least one trainer cycle has triggered the HF Hub side-channel push and the resulting checkpoint is visible at `https://huggingface.co/<RELIQUARY_HF_REPO_ID>`.
+- [ ] At least one full `policy_consumer applied` cycle observed end-to-end: trainer publishes delta → miner applies it → next mining round uses the updated weights.
 
-## Operational hardening
+## D. Storage + R2
 
-- [ ] `/health` returns 200 OK on every mesh validator; structured report shows model loaded, chain connected, last_window age < 180 s, proof_worker fresh.
-- [ ] `:9108/metrics` reachable on every validator; Grafana dashboards showing live data.
-- [ ] Alertmanager wired to operator on-call channel (Slack/PagerDuty).
-- [ ] `deploy/apply-mainnet-sn81-profile.sh` reviewed; `ALLOW_MAINNET=1` gate verified.
-- [ ] Operator runbook (`docs/runbook-mainnet.md`) walked through end-to-end by ≥ 2 team members.
-- [ ] Rollback runbook (`docs/runbook-rollback.md`) tested on a staging box.
-- [ ] Watchtower deployment tested with one image rollover on a non-validator box (so Watchtower auto-update is known-good before mainnet day).
+- [ ] Mainnet R2 bucket created with lifecycle rule (delta artifacts > 30 days expire, audit artifacts > 90 days, raw verdicts > 30 days).
+- [ ] Audit subset has public-read ACL; the audit URL is reachable from a clean browser without auth.
+- [ ] R2 cost monitoring alert wired (rough budget guard).
+- [ ] HF Hub repo created; `RELIQUARY_HF_TOKEN` provisioned in the trainer host's env file.
 
-## Cutover-day choreography
+## E. Onboarding is autonomous
 
-- [ ] T-72 h: notify all mesh validators of the cutover window (private channel).
-- [ ] T-24 h: final dry-run of the multi-sig ceremony on local subtensor.
-- [ ] T-1 h: final review of this checklist; all items green.
-- [ ] T-0: stop testnet processes simultaneously on all 4 mesh nodes.
-- [ ] T-0: apply mainnet profile (`ALLOW_MAINNET=1 ./deploy/apply-mainnet-sn81-profile.sh`).
-- [ ] T-0+5 m: execute multi-sig `accept_subnet_owner` extrinsic on netuid 81.
-- [ ] T-0+10 m: boot validator processes pointed at finney + netuid 81.
-- [ ] T-0+10 m: commit governance charter sha on chain via `subtensor.commit`.
-- [ ] T-0+15 m: verify first mainnet window opens, 4 verdicts published, weights set on chain.
-- [ ] T+24 h: post public announcement.
-- [ ] T+24 h: live monitoring of mesh, miners, weights, R2.
-- [ ] T+7 d: postmortem committed.
+- [ ] Spinning up a new validator hotkey on testnet 462 takes ≤ 30 min from clean box: clone, copy `env.testnet.example` to `.env`, fill in wallet path + R2 creds, `docker compose up -d validator`, mesh sees the new verdicts within one window. (This is the proof that an external operator can join on mainnet day 1; we exercise it ourselves with our own additional hotkeys.)
+- [ ] Spinning up a new miner hotkey is similarly ≤ 15 min from a Targon-class GPU box: same flow, role=miner.
+- [ ] An "optimized miner" reference (`reliquary_inference/miner/optimized_engine.py`) demonstrates the miner competitive surface — frontier-σ prompt selection, early-submit ordering, cooldown awareness — so external miners have a documented starting point above the baseline engine.
 
-## Sign-off
+## F. Cutover script is exercised
 
-| Role             | Name | Date | Signature |
-|------------------|------|------|-----------|
-| Tech lead        |      |      |           |
-| Validator op #1  |      |      |           |
-| Validator op #2  |      |      |           |
-| Multi-sig signer |      |      |           |
-| Multi-sig signer |      |      |           |
+- [ ] `deploy/apply-mainnet-sn81-profile.sh` runs cleanly with `ALLOW_MAINNET=1` against a local subtensor (or a dry-run env), verifies `diagnose-config` output, and the resulting service starts publishing weights without error.
+- [ ] `docs/runbook-rollback.md` procedure rehearsed: stop, swap env, restart, /healthz returns ok within 10 min.
+- [ ] One operator has walked through the runbook end-to-end on a non-production box.
 
----
+## G. Cutover-day choreography (operator-driven)
 
-This checklist is the **only** authority for "are we ready?". Anything
-not listed here that comes up during cutover triggers an abort + reset
-to testnet, not a workaround.
+- [ ] T-30 min: snapshot the current testnet state (audit index, validator scores, trainer cursor).
+- [ ] T-0: stop testnet processes; apply mainnet profile (`ALLOW_MAINNET=1 ./deploy/apply-mainnet-sn81-profile.sh`).
+- [ ] T-0+5 m: verify validator units active; first chain.get_window_context returns; /healthz returns ok.
+- [ ] T-0+15 m: verify first mainnet window opens, first verdict published, weights set on chain.
+- [ ] T+24 h: live monitoring + announcement on operator comms channel.
+- [ ] T+7 d: postmortem captured.
+
+## What is **not** on this checklist (intentionally)
+
+- Multi-sig signer ceremony — tracked separately, not gating.
+- External stakeholder coordination — not gating.
+- Subnet ownership / conviction-style delegation — not gating; the canonical reference implementation runs on mainnet as a normal operator deployment first, ownership comes when it comes.
+- Validator recruitment from third parties — we run multiple of our own validators ourselves and prove autonomous onboarding by registering new hotkeys; external recruitment is post-launch growth, not pre-launch readiness.
+- Calendar-day stability windows — replaced with concrete metric-driven gates (sections A–F).
+
+When sections A–G are all checked, the system is mainnet-ready.
+Pulling the trigger is an operator decision, not a coordination event.

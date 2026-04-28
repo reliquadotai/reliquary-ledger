@@ -2,9 +2,11 @@
 
 Reliquary is a Bittensor subnet (live on testnet **netuid 462**) that runs two
 companion runtimes under a single netuid: **Ledger** (proof-carrying inference,
-this repo) and **Forge** (training). It is **not yet on mainnet** — cutover to
-SN81 follows OTF conviction-delegation activation (target: Week 10–12 of the
-Tier 1+2 plan).
+this repo) and **Forge** (training). The reference implementation is mainnet-
+ready as a self-contained operator deployment — cutover is gated only on
+internal proof-of-system criteria (code green, cross-GPU bit-exact verified,
+trainer firing, mesh quorum stable). Subnet identity for mainnet is tracked
+separately and does not block readiness.
 
 Pick your role:
 

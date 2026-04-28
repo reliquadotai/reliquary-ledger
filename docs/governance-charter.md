@@ -54,7 +54,7 @@ It does **not** cover:
 ## Conflict resolution
 
 - Bug reports: GitHub issues on the appropriate repo.
-- Protocol disagreements: discussion in operator comms channel; if no consensus emerges within 14 days, the subnet owner makes the call and announces it on chain per the upgrade cadence above.
+- Protocol disagreements: discussion in operator comms channel; if no consensus emerges, the subnet owner makes the call and announces it on chain per the upgrade cadence above.
 - Security vulnerabilities: private disclosure per `SECURITY.md`.
 
 ## Charter amendment
