@@ -94,8 +94,10 @@ def test_tolerance_grows_with_position_per_spec() -> None:
         hidden, commitment, r_vec, sequence_length=5000, position=4096
     )
     assert diag_zero["sketch_tolerance"] < diag_4096["sketch_tolerance"]
-    assert diag_zero["sketch_tolerance"] == 6000
-    assert diag_4096["sketch_tolerance"] == 6000 + int(5.0 * (4096 ** 0.5))
+    # Tolerance base tightened from 6000 to 1000 on 2026-04-28 after empirical
+    # calibration (see protocol/constants.py inline comment + 9671f9a).
+    assert diag_zero["sketch_tolerance"] == 1000
+    assert diag_4096["sketch_tolerance"] == 1000 + int(5.0 * (4096 ** 0.5))
 
 
 def test_far_future_position_accepts_honest_commit() -> None:
