@@ -10,10 +10,10 @@
 # All other config flows through env vars (RELIQUARY_INFERENCE_*, BT_*).
 # See env.testnet.example for the full operator contract.
 #
-# Parallel-work credit: romain13190/reliquary@ed6da6c. the upstream entrypoint
-# inspired the env-driven dispatch shape; the role taxonomy is ours
-# (separate miner/validator/metrics commands rather than a single
-# `validate` with --no-train).
+# Parallel-work credit: romain13190/reliquary@ed6da6c. The upstream
+# entrypoint inspired the env-driven dispatch shape; the role taxonomy
+# here is independent (separate miner/validator/metrics commands rather
+# than a single `validate` with --no-train).
 set -euo pipefail
 
 ROLE="${RELIQUARY_INFERENCE_ROLE:-miner}"

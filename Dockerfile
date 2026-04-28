@@ -2,8 +2,9 @@
 # Reliquary Ledger validator/miner image.
 #
 # Multi-stage CUDA 12.8 + torch 2.7 + flash-attn 2.8.3 + reliquary-inference.
-# Tracks the same toolchain Romain uses on his SN81 mainnet validator
-# (parallel-work credit: romain13190/reliquary@6ee8592). Flash Attention 2 is
+# Tracks the same toolchain that romain13190/reliquary uses on its SN81
+# mainnet validator (parallel-work credit: romain13190/reliquary@6ee8592).
+# Flash Attention 2 is
 # required because the GRAIL sketch verifier is bit-sensitive to the
 # attention kernel's reduction order.
 #

@@ -4,10 +4,11 @@ Phase 1.6 of the parallel-harvest plan: lets operators boot a validator
 pointed at a specific HF revision (``sha:<hex>``) or a local snapshot
 directory (``path:<dir>``) instead of the default ``cfg["model_ref"]``.
 
-Parallel-work credit: romain13190/reliquary@1801544 + @e5f81ad. Romain's
-flow operates on his single-process trainer; the resolver shape (parse
-strict, dispatch by prefix, fail loud on bad input) is what we adopt.
-The actual download/path-validation logic is independent.
+Parallel-work credit: romain13190/reliquary@1801544 + @e5f81ad. The
+upstream flow operates on a single-process trainer; the resolver shape
+adopted here (parse strict, dispatch by prefix, fail loud on bad input)
+follows that pattern. The actual download/path-validation logic is
+independent.
 
 Usage:
 

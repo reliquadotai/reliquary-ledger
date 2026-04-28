@@ -11,7 +11,7 @@ companion repos:
 ## Maintainers
 
 - [@0xgrizz](https://github.com/0xgrizz)
-- [@0xShonen](https://github.com/0xShonen)
+- [@0xgrizz](https://github.com/0xgrizz) (formerly active under another GitHub alias on early commits)
 
 ## Acknowledgments
 
@@ -29,12 +29,12 @@ Reliquary additions.
 
 [romain13190](https://github.com/romain13190) has been independently
 iterating on a parallel SN81 implementation at
-[romain13190/reliquary](https://github.com/romain13190/reliquary). His
-codebase began on 2026-04-17 from his own planning documents, and forensic
+[romain13190/reliquary](https://github.com/romain13190/reliquary). That
+codebase began on 2026-04-17 from its own planning documents, and forensic
 review confirmed neither codebase imported from the other (both port from
-upstream `grail`). His repo led on operational polish that we have since
-adopted, with explicit per-commit attribution in our git history. Specific
-ideas harvested:
+upstream `grail`). The romain13190 repo led on operational polish that we
+have since adopted, with explicit per-commit attribution in our git
+history. Specific ideas harvested:
 
 - σ ≥ 0.43 zone filter + 50-window prompt cooldown framing
   (his [8fb89ba](https://github.com/romain13190/reliquary/commit/8fb89ba),
