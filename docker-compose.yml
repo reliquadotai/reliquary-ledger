@@ -1,0 +1,85 @@
+# Reliquary Ledger — operator compose file.
+#
+# Quickstart (testnet 462):
+#   cp env.testnet.example .env  # then edit netuid, R2 creds, wallet path
+#   export BT_WALLETS_DIR=$HOME/.bittensor/wallets
+#   docker compose up -d miner          # or `validator`, or both
+#   curl http://localhost:9180/healthz
+#
+# Auto-update opt-in: also run docker/docker-compose.watchtower.yml.
+# See docs/deployment.md for the production runbook.
+
+services:
+  miner:
+    image: ghcr.io/reliquadotai/reliquary-ledger:latest
+    container_name: reliquary-ledger-miner
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      RELIQUARY_INFERENCE_ROLE: miner
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - type: bind
+        source: ${BT_WALLETS_DIR:?set BT_WALLETS_DIR to the host path of your wallets/}
+        target: /root/.bittensor/wallets
+        read_only: true
+      - reliquary-ledger-state:/var/lib/reliquary-ledger
+      - reliquary-ledger-logs:/var/log/reliquary-ledger
+      - hf-cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9180/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 4
+      start_period: 120s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+
+  validator:
+    image: ghcr.io/reliquadotai/reliquary-ledger:latest
+    container_name: reliquary-ledger-validator
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      RELIQUARY_INFERENCE_ROLE: validator
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "${RELIQUARY_INFERENCE_METRICS_PORT:-9108}:9108"
+      - "${RELIQUARY_INFERENCE_HEALTH_PORT:-9180}:9180"
+    volumes:
+      - type: bind
+        source: ${BT_WALLETS_DIR:?set BT_WALLETS_DIR to the host path of your wallets/}
+        target: /root/.bittensor/wallets
+        read_only: true
+      - reliquary-ledger-state:/var/lib/reliquary-ledger
+      - reliquary-ledger-logs:/var/log/reliquary-ledger
+      - hf-cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9180/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 4
+      start_period: 180s
+    # Validators have on-chain weight-setting authority — no auto-update by
+    # default. Operators who want Watchtower-managed updates of their
+    # validator should set this label to "true" explicitly and review
+    # release notes before each pull.
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+volumes:
+  reliquary-ledger-state:
+  reliquary-ledger-logs:
+  hf-cache:

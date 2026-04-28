@@ -1,0 +1,28 @@
+# Optional Watchtower auto-update for Reliquary Ledger images.
+#
+# Operators opt in by running:
+#   docker compose -f docker-compose.yml \
+#     -f docker/docker-compose.watchtower.yml up -d
+#
+# Watchtower polls GHCR every 5 min and updates only containers labeled
+# `com.centurylinklabs.watchtower.enable=true`. By default that's the
+# miner only — validators are excluded so weight-setting authority isn't
+# rolled mid-window. Operators who want validator auto-updates should
+# flip the label in docker-compose.yml.
+#
+# Parallel-work credit: romain13190/reliquary@948fc67 (Watchtower compose
+# example). The label-gating policy and validator-exclusion are ours.
+
+services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: reliquary-ledger-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      --interval 300
+      --label-enable
+      --cleanup
+      --include-restarting
+      --rolling-restart
