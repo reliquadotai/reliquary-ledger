@@ -50,7 +50,7 @@ publishing weights without them.
 | item | status | note |
 |---|---|---|
 | `reliquary-forge-trainer.timer` ≥ 5 cycles in 24h that **trained** | partial | last 24h: 2 cycles produced delta artifacts (`forge-grpo-1777362752`, `forge-grpo-1777371092`); other cycles legitimately skipped with "0 in-zone groups" (single-miner correlation) — 2nd miner (H100) addresses this directly |
-| At least one HF Hub side-channel push to `RELIQUARY_HF_REPO_ID` | **wired, awaiting first eligible cycle** | `_maybe_hf_publish` hook landed on staging2 trainer (commit `4f5f088`); env wired via `/opt/reliquary-secrets/hf-publisher.env`; will fire on next training cycle whose `current_window % 10 == 0` — confirmed when ReliquaryForge/reliquary-sn462-testnet receives its first commit |
+| At least one HF Hub side-channel push to `RELIQUARY_HF_REPO_ID` | **green** | `_maybe_hf_publish` hook landed on staging2 trainer (commit `4f5f088`); fired live at 12:08:35 UTC on the trainer's 12:04 cycle (run_id `forge-grpo-1777377872`, current_window 7005120 → publish_interval gate satisfied). Pushed `model.safetensors` (6.17 GB) + `tokenizer.json` (11.4 MB) to https://huggingface.co/ReliquaryForge/reliquary-sn462-testnet; verified via `huggingface.co/api/models/ReliquaryForge/reliquary-sn462-testnet` returning `lastModified=2026-04-28T12:08:34Z` and `sha=191034859ba835cae2c26e030ae48a3da5373a75` |
 | `policy_consumer applied` cycle observed end-to-end on miner | green | rtx6000b log `Apr 28 10:30:52 policy_consumer applied run_id=forge-grpo-1777371092 at ledger_window=7004640` followed by `Apr 28 10:56:40 mined 8 completions for window 7004670` — the miner mined under the applied delta |
 
 ### D. Storage + R2
@@ -108,6 +108,15 @@ Apr 28 10:56:40 mined 8 completions for window 7004670
 [10:12:22]   merkle_root: 75b75675fbee14acd4bc13cf402eeff9930b1c60ff6438e7361d01dab0cfa737
 [10:12:50]   smoke_hash: bb95d11e3a2f8850e0b7902d5a7ebe286eb335371bbdeab4f2a2d14a59073bb6
 [10:12:50]   effective_at_ledger_window: 7004610 (current: 7004550)
+
+[12:04:54]   scorecards scanned=3322 new=8 skipped_errors=0 in_zone_groups=2 consumed_windows=2
+[12:05:06]   training set: 2 groups, 16 total rollouts
+[12:05:19]   merkle_root: 90c63364421114949e462a5cf8c326d72a44903afbd15fa2276e45fe1caba8e5
+[12:07:54] publishing CheckpointAttestation + PolicyCommitment
+[12:07:56]   effective_at_ledger_window: 7005180 (current: 7005120)
+[12:07:57]   hf_hub_publisher: serialising snapshot to /tmp/reliquary-hf-snap-7211xqz0
+[12:08:35]   hf_hub_publisher: published checkpoint_n=1 revision=191034859ba8
+SUMMARY: run_id=forge-grpo-1777377872 groups=2 rollouts=16 effective_at=7005180
 
 == staging1 + staging2 validators ==
 published weights for window 7004430:
