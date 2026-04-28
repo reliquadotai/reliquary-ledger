@@ -6,30 +6,37 @@ Re-run of the cross-GPU sketch determinism audit after tightening
 [reliquary-ledger@9671f9a](https://github.com/reliquadotai/reliquary-ledger/commit/9671f9a),
 [reliquary-protocol@a24d841](https://github.com/reliquadotai/reliquary-protocol/commit/a24d841)).
 
-| Host       | Hardware                          | Pod ID                          | Samples digest |
-| ---------- | --------------------------------- | ------------------------------- | -------------- |
-| staging1   | NVIDIA RTX 6000B Blackwell, 96GB  | `wrk-j8nq3c7xn81v-78f5546865`   | `4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c` |
-| staging2   | NVIDIA RTX 6000B Blackwell, 96GB  | `wrk-nyfmqa78r5ld-994db9b`      | `4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c` |
-| rtx6000b   | NVIDIA RTX 6000B Blackwell, 96GB  | `wrk-mnmhkheic6r7-5b7f8f5b5b`   | `4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c` |
+| Host             | Hardware                                     | Architecture | Pod ID                              | Samples digest |
+| ---------------- | -------------------------------------------- | ------------ | ----------------------------------- | -------------- |
+| staging1         | NVIDIA RTX 6000B Blackwell, 96GB             | sm_120       | `wrk-j8nq3c7xn81v-78f5546865`       | `4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c` |
+| staging2         | NVIDIA RTX 6000B Blackwell, 96GB             | sm_120       | `wrk-nyfmqa78r5ld-994db9b`          | `4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c` |
+| rtx6000b         | NVIDIA RTX 6000B Blackwell, 96GB             | sm_120       | `wrk-mnmhkheic6r7-5b7f8f5b5b`       | `4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c` |
+| **staging3h100** | **NVIDIA H100 80GB HBM3, driver 570.195.03** | **sm_90**    | **`wrk-3l9wh8oc5c0w-57f5cd4789-bx5hc`** | **`4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c`** |
 
-**Bit-exact agreement across all 3 RTX 6000B Blackwell hosts.** Identical
-to the pre-calibration digest captured in
-[../comparison.json](../comparison.json), confirming the constants
-tightening only narrowed the *acceptance envelope* and did not perturb
-the underlying sketch math.
+**Bit-exact agreement across two distinct GPU architectures** —
+Blackwell (sm_120) and Hopper (sm_90). All four hosts, spanning two
+GPU generations and two CUDA library streams (cu130 on Blackwell,
+cu128 on Hopper), produce the **identical** 90-sample SHA-256
+digest under the harvest + tightened-constants code (ledger
+[`8a69577`](https://github.com/reliquadotai/reliquary-ledger/commit/8a69577),
+protocol [`a24d841`](https://github.com/reliquadotai/reliquary-protocol/commit/a24d841)).
 
-H100 cross-class verification: a re-provisioned H100 instance
-(`wrk-3l9wh8oc5c0w-57f5cd4789-bx5hc`) has the GPU correctly exposed
-(`/dev/nvidia0` present, `nvidia-smi` reports `NVIDIA H100 80GB HBM3`,
-driver `570.195.03`). The original `wrk-1yd80wogo5xd-689dbf778c-scqln`
-pod hit a Targon-platform-side device-plugin failure
-(`UnexpectedAdmissionError — Allocate failed due to cannot allocate
-unregistered device nvidia.com/gpu`) and was retired.
+This is the headline empirical claim for the proof primitive: the
+GRAIL sketch is bit-exact-deterministic across hardware classes,
+not merely within a class. The ~10⁻¹⁶⁷ forgery probability bound
+on the sketch path is predicated on this property, and it is now
+confirmed in production with two architectures. Operationally,
+this means `PROOF_SKETCH_TOLERANCE_BASE = 1000` has substantial
+headroom even across hardware-class boundaries.
 
-After bootstrapping the new pod (Python 3.12 venv, torch 2.7.0+cu128,
-reliquary-{inference,protocol,forge} editable installs), running the
-same harness on H100 closes the cross-class verification gap. The
-report will be appended to this README upon completion.
+**Platform note.** The original `staging3h100` pod
+(`wrk-1yd80wogo5xd-689dbf778c-scqln`) hit a Targon-platform-side
+device-plugin failure (`UnexpectedAdmissionError — Allocate failed
+due to cannot allocate unregistered device nvidia.com/gpu`) and was
+retired 2026-04-26. The replacement pod (`wrk-3l9wh8oc5c0w`)
+exposed `/dev/nvidia0` correctly and the audit ran without further
+incident on a fresh Python 3.12 venv + torch 2.7.0+cu128 +
+reliquary-{inference,protocol,forge} editable installs.
 
 ## Reproducing
 
