@@ -55,76 +55,32 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def _import_base():
-    """Lazy-import MiningEngine so the helper symbols in this module
-    (selection, scoring, estimate_in_zone) are importable from a CPU
-    box without transformers installed.
-    """
-    from .engine import MiningEngine
+class OptimizedMiningEngine:
+    """Competitive-miner reference. The competitive surface lives as
+    plain methods on this mixin; the production wiring is done by
+    ``make_optimized_mining_engine`` below, which synthesises a
+    subclass ``(MiningEngine, OptimizedMiningEngine)`` at runtime so
+    the base class's ``generate_m_completions`` + GRAIL commitment
+    flow is reused unchanged.
 
-    return MiningEngine
-
-
-class _OptimizedMiningEngineMeta(type):
-    """Metaclass that resolves MiningEngine as the base lazily on first
-    access. Lets tests import the class symbol without paying the
-    transformers import cost; only constructing an instance triggers
-    the heavy chain.
-    """
-
-    def __new__(mcs, name, bases, namespace):
-        return super().__new__(mcs, name, bases, namespace)
-
-    def __init__(cls, name, bases, namespace):
-        super().__init__(name, bases, namespace)
-        cls._base_resolved = False
-
-    def __call__(cls, *args, **kwargs):
-        if not cls._base_resolved:
-            base = _import_base()
-            cls.__bases__ = (base,) + cls.__bases__
-            cls._base_resolved = True
-        return super().__call__(*args, **kwargs)
-
-
-class OptimizedMiningEngine(metaclass=_OptimizedMiningEngineMeta):
-    """Competitive-miner reference. Subclasses ``MiningEngine`` and adds:
+    Methods exposed:
 
     - ``score_prompt(text)`` — fast in-zone prediction (next-token entropy).
     - ``select_prompts(candidates, n, cooldown_task_ids)`` — picks
       ``n`` prompts most likely to land in zone, dropping cooldowns.
     - ``estimate_in_zone(rewards)`` — local σ gate before submit.
 
-    The base class's ``generate_m_completions`` + GRAIL commitment
-    flow is reused unchanged. Only the prompt-selection layer changes.
+    Designed to be importable on a CPU-only box without transformers:
+    the class itself doesn't import ``MiningEngine``; only the factory
+    function does. Tests can call the methods unbound against a stub
+    that exposes a callable ``score_prompt`` attribute (see
+    ``tests/test_optimized_miner.py``).
     """
 
-    # Tuning knobs. Override via __init__ args or subclass.
+    # Tuning knobs. Override via factory kwargs or subclass.
     DEFAULT_ENTROPY_FLOOR_NATS = 2.0
     DEFAULT_ENTROPY_CEIL_NATS = 10.0
     DEFAULT_LOCAL_SIGMA_GATE = 0.0  # 0 = no gate; raise to skip out-of-zone groups
-
-    def __init__(
-        self,
-        *,
-        cfg: dict[str, Any],
-        entropy_floor: float = DEFAULT_ENTROPY_FLOOR_NATS,
-        entropy_ceil: float = DEFAULT_ENTROPY_CEIL_NATS,
-        local_sigma_gate: float = DEFAULT_LOCAL_SIGMA_GATE,
-    ) -> None:
-        # The metaclass injected MiningEngine as a base on first call,
-        # so this super().__init__ wires up bundle/model/tokenizer/etc.
-        super().__init__(cfg=cfg)  # type: ignore[misc]
-        self.entropy_floor = float(entropy_floor)
-        self.entropy_ceil = float(entropy_ceil)
-        self.local_sigma_gate = float(local_sigma_gate)
-        logger.info(
-            "OptimizedMiningEngine ready: entropy_band=[%.2f, %.2f] nats, "
-            "local_sigma_gate=%.3f",
-            self.entropy_floor,
-            self.entropy_ceil,
-            self.local_sigma_gate,
-        )
 
     # ────────  Frontier-σ scoring  ────────
 
@@ -249,6 +205,44 @@ def _normalize_entropy_to_unit_interval(
     return (entropy_nats - floor) / (ceil - floor)
 
 
+def make_optimized_mining_engine(
+    *,
+    cfg: dict[str, Any],
+    entropy_floor: float = OptimizedMiningEngine.DEFAULT_ENTROPY_FLOOR_NATS,
+    entropy_ceil: float = OptimizedMiningEngine.DEFAULT_ENTROPY_CEIL_NATS,
+    local_sigma_gate: float = OptimizedMiningEngine.DEFAULT_LOCAL_SIGMA_GATE,
+):
+    """Construct a runtime engine that subclasses ``MiningEngine`` and
+    mixes in ``OptimizedMiningEngine``'s competitive surface.
+
+    Synthesises the subclass via ``type()`` so we never mutate
+    ``__bases__`` at runtime — that path collides with CPython's
+    deallocator-slot check on classes whose layout matches
+    ``object``. Returns a fully-initialised engine ready to drive the
+    miner loop.
+    """
+    from .engine import MiningEngine
+
+    HybridEngine = type(
+        "OptimizedHybridMiningEngine",
+        (MiningEngine, OptimizedMiningEngine),
+        {},
+    )
+    engine = HybridEngine(cfg=cfg)
+    engine.entropy_floor = float(entropy_floor)
+    engine.entropy_ceil = float(entropy_ceil)
+    engine.local_sigma_gate = float(local_sigma_gate)
+    logger.info(
+        "OptimizedMiningEngine ready: entropy_band=[%.2f, %.2f] nats, "
+        "local_sigma_gate=%.3f",
+        engine.entropy_floor,
+        engine.entropy_ceil,
+        engine.local_sigma_gate,
+    )
+    return engine
+
+
 __all__ = [
     "OptimizedMiningEngine",
+    "make_optimized_mining_engine",
 ]

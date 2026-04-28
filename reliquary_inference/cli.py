@@ -63,13 +63,13 @@ def _make_mining_engine(cfg: dict):
     sensible defaults), so call-sites are interchangeable.
     """
     if _miner_optimized_enabled():
-        from .miner.optimized_engine import OptimizedMiningEngine
+        from .miner.optimized_engine import make_optimized_mining_engine
 
         console.print(
             "[cyan]miner=optimized (frontier-σ prompt selection + "
             "cooldown-aware + local σ gate)[/cyan]"
         )
-        return OptimizedMiningEngine(cfg=cfg)
+        return make_optimized_mining_engine(cfg=cfg)
     return MiningEngine(cfg=cfg)
 
 
