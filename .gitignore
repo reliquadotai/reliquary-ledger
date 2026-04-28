@@ -1,6 +1,19 @@
 .env
 .env.local
 .env.*.local
+*.env
+!env.example
+!env.testnet.example
+!deploy/mainnet/sn81.env.template
+
+# Wallets and key material — never commit
+wallets/
+secrets/
+*.pem
+*.key
+id_rsa*
+*.sealed
+
 .venv/
 __pycache__/
 *.pyc
