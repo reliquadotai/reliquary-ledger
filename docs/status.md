@@ -2,6 +2,20 @@
 
 This page is the sanitized public status surface for Reliquary Ledger.
 
+> **2026-04-28 update.** Empirical sketch + logprob calibration applied
+> across the fleet. `PROOF_SKETCH_TOLERANCE_BASE` tightened from 6000 to
+> 1000 and `LOGPROB_DRIFT_THRESHOLD` tightened from 0.15 to 0.01 based
+> on bit-exact-zero honest-baseline + cheater-p95 measurement on
+> staging2 RTX 6000B Blackwell ([calibration data](https://github.com/reliquadotai/reliquary-forge/blob/main/docs/audit/calibration/staging2_rtx6000b_2026-04-28.json)).
+> Cross-GPU determinism verified bit-exact across 3× RTX 6000B; H100
+> cross-class verification re-bootstrapped after a Targon platform
+> incident on the original pod. The structured `/health` endpoint
+> (Phase 3.1) is now bound on port `9180` on staging1, staging2, and
+> rtx6000b-targon. Phase 1.4 HF Hub continuous-publishing side-channel
+> is wired to <https://huggingface.co/ReliquaryForge/reliquary-sn462-testnet>;
+> push fires every 10 windows on training cycles that produce ≥ 1
+> in-zone group.
+
 ## Current Snapshot
 
 - Network: `test`
