@@ -65,7 +65,7 @@ def _verifier() -> SketchProofVerifier:
 
 def test_protocol_version_matches_golden_fixture() -> None:
     """If the protocol version changes, these golden vectors must be regenerated."""
-    assert LEDGER_PROOF_VERSION == "v1", (
+    assert LEDGER_PROOF_VERSION == "v5", (
         f"Protocol version changed to {LEDGER_PROOF_VERSION!r}; regenerate "
         "GOLDEN_SINGLE_POSITION and GOLDEN_BATCH_ROLLOUT against the new algorithm."
     )

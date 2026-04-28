@@ -24,10 +24,14 @@ def test_protocol_constants_are_immutable_by_construction() -> None:
         )
 
 
-def test_ledger_proof_version_is_v1() -> None:
-    assert protocol_constants.LEDGER_PROOF_VERSION == "v1"
-    assert root_constants.PROOF_VERSION == "v1"
-    assert root_constants.LEDGER_PROOF_VERSION == "v1"
+def test_ledger_proof_version_is_v5() -> None:
+    # The proof version was bumped to v5 to align with upstream grail's
+    # FA2-tolerance + order-invariant sketch protocol. Any change here
+    # requires regenerating the golden vectors and bumping the version
+    # at the same time (see test_protocol_version_matches_golden_fixture).
+    assert protocol_constants.LEDGER_PROOF_VERSION == "v5"
+    assert root_constants.PROOF_VERSION == "v5"
+    assert root_constants.LEDGER_PROOF_VERSION == "v5"
 
 
 def test_prime_q_is_mersenne_m31() -> None:
