@@ -1,0 +1,556 @@
+{
+  "timestamp": "2026-04-28T08:19:48Z",
+  "host": "wrk-nyfmqa78r5ld-994db9b-stnnz",
+  "torch_version": "2.11.0+cu130",
+  "cuda_available": true,
+  "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "gpu_memory_total": 101850873856,
+  "cuda_capability": [
+    12,
+    0
+  ],
+  "randomness_hex": "00000000000000000000000000000000000000000000000000000000deadbeef",
+  "samples_digest": "4de1918431de9f268efacfcb298e52cbe80a4adb6388af3b183753e7e960572c",
+  "samples": [
+    {
+      "seed": 0,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 2147483323
+    },
+    {
+      "seed": 0,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 2147483319
+    },
+    {
+      "seed": 0,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 2147482675
+    },
+    {
+      "seed": 1,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 2147483143
+    },
+    {
+      "seed": 1,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 2147483064
+    },
+    {
+      "seed": 1,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 2147482135
+    },
+    {
+      "seed": 7,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 194
+    },
+    {
+      "seed": 7,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 439
+    },
+    {
+      "seed": 7,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 716
+    },
+    {
+      "seed": 42,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 2147483631
+    },
+    {
+      "seed": 42,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 2147483634
+    },
+    {
+      "seed": 42,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 2147483550
+    },
+    {
+      "seed": 100,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 2147483361
+    },
+    {
+      "seed": 100,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 2147483303
+    },
+    {
+      "seed": 100,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 2147482789
+    },
+    {
+      "seed": 256,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 133
+    },
+    {
+      "seed": 256,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 173
+    },
+    {
+      "seed": 256,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 109
+    },
+    {
+      "seed": 1024,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 2147483411
+    },
+    {
+      "seed": 1024,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 2147483015
+    },
+    {
+      "seed": 1024,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 2147482939
+    },
+    {
+      "seed": 2048,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 2147483437
+    },
+    {
+      "seed": 2048,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 2147483263
+    },
+    {
+      "seed": 2048,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 2147482932
+    },
+    {
+      "seed": 4096,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 462
+    },
+    {
+      "seed": 4096,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 554
+    },
+    {
+      "seed": 4096,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 1386
+    },
+    {
+      "seed": 9999,
+      "scale": 1.0,
+      "hidden_dim": 128,
+      "sketch": 2147483613
+    },
+    {
+      "seed": 9999,
+      "scale": 2.5,
+      "hidden_dim": 128,
+      "sketch": 2147483579
+    },
+    {
+      "seed": 9999,
+      "scale": 8.0,
+      "hidden_dim": 128,
+      "sketch": 2147483545
+    },
+    {
+      "seed": 0,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 46
+    },
+    {
+      "seed": 0,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 2147483502
+    },
+    {
+      "seed": 0,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 138
+    },
+    {
+      "seed": 1,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 320
+    },
+    {
+      "seed": 1,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 639
+    },
+    {
+      "seed": 1,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 960
+    },
+    {
+      "seed": 7,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 12
+    },
+    {
+      "seed": 7,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 209
+    },
+    {
+      "seed": 7,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 36
+    },
+    {
+      "seed": 42,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 280
+    },
+    {
+      "seed": 42,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 466
+    },
+    {
+      "seed": 42,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 840
+    },
+    {
+      "seed": 100,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 2147483439
+    },
+    {
+      "seed": 100,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 2147483231
+    },
+    {
+      "seed": 100,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 2147483023
+    },
+    {
+      "seed": 256,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 2147483107
+    },
+    {
+      "seed": 256,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 2147482814
+    },
+    {
+      "seed": 256,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 2147482027
+    },
+    {
+      "seed": 1024,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 402
+    },
+    {
+      "seed": 1024,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 926
+    },
+    {
+      "seed": 1024,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 1206
+    },
+    {
+      "seed": 2048,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 128
+    },
+    {
+      "seed": 2048,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 256
+    },
+    {
+      "seed": 2048,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 384
+    },
+    {
+      "seed": 4096,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 4
+    },
+    {
+      "seed": 4096,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 8
+    },
+    {
+      "seed": 4096,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 12
+    },
+    {
+      "seed": 9999,
+      "scale": 1.0,
+      "hidden_dim": 256,
+      "sketch": 218
+    },
+    {
+      "seed": 9999,
+      "scale": 2.5,
+      "hidden_dim": 256,
+      "sketch": 436
+    },
+    {
+      "seed": 9999,
+      "scale": 8.0,
+      "hidden_dim": 256,
+      "sketch": 654
+    },
+    {
+      "seed": 0,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 2
+    },
+    {
+      "seed": 0,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 4
+    },
+    {
+      "seed": 0,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 2147483617
+    },
+    {
+      "seed": 1,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 122
+    },
+    {
+      "seed": 1,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 244
+    },
+    {
+      "seed": 1,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 366
+    },
+    {
+      "seed": 7,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 2147483463
+    },
+    {
+      "seed": 7,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 2147483279
+    },
+    {
+      "seed": 7,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 2147483095
+    },
+    {
+      "seed": 42,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 2147483535
+    },
+    {
+      "seed": 42,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 2147483423
+    },
+    {
+      "seed": 42,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 2147483311
+    },
+    {
+      "seed": 100,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 536
+    },
+    {
+      "seed": 100,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 1072
+    },
+    {
+      "seed": 100,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 1608
+    },
+    {
+      "seed": 256,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 36
+    },
+    {
+      "seed": 256,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 72
+    },
+    {
+      "seed": 256,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 108
+    },
+    {
+      "seed": 1024,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 2147483153
+    },
+    {
+      "seed": 1024,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 2147482659
+    },
+    {
+      "seed": 1024,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 2147482165
+    },
+    {
+      "seed": 2048,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 2147483505
+    },
+    {
+      "seed": 2048,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 2147483363
+    },
+    {
+      "seed": 2048,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 2147483221
+    },
+    {
+      "seed": 4096,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 2147483571
+    },
+    {
+      "seed": 4096,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 2147483495
+    },
+    {
+      "seed": 4096,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 2147483418
+    },
+    {
+      "seed": 9999,
+      "scale": 1.0,
+      "hidden_dim": 512,
+      "sketch": 2147483453
+    },
+    {
+      "seed": 9999,
+      "scale": 2.5,
+      "hidden_dim": 512,
+      "sketch": 2147483259
+    },
+    {
+      "seed": 9999,
+      "scale": 8.0,
+      "hidden_dim": 512,
+      "sketch": 2147483065
+    }
+  ]
+}
