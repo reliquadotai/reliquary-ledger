@@ -1,6 +1,11 @@
 # Reliquary: Proof-Carrying Inference for Decentralized AI Subnets
 
-**Draft protocol paper — v0.1 (2026-04-18)**
+**Draft protocol paper — v0.2 (2026-04-28)**
+
+Targeting arXiv submission upon completion of the Phase 1.2 calibration
+sweep. This is a living document; reviewers should pin the commit
+hash they reviewed against (future revisions may clarify or tighten
+claims but will not silently weaken security properties).
 
 ## Abstract
 
@@ -45,6 +50,61 @@ working implementation from scratch.
   hashes.
 - **Lazy upgradeability**: a shared protocol package pins version; both
   runtimes coordinate upgrades via a single semver bump.
+
+## 1.5. Related work
+
+Reliquary descends from three lines of public work, plus a fourth that
+informs its training-time half. Citations here are precise enough that
+a reader can locate each method in the literature without ambiguity.
+
+**Hidden-state sketch proofs (Grail).** The `grail` project introduced
+the log-magnitude-bucketed top-K hidden-state sketch with random linear
+projection mod a Mersenne prime as the core proof primitive [grail].
+Reliquary's proof layer is a clean-room re-derivation that adopts
+identical numerical parameters (CHALLENGE_K=32, PROOF_TOPK=16,
+PROOF_NUM_BUCKETS=8, PRIME_Q=2^31-1, sqrt-growth tolerance) so
+honest miners running either codebase produce equivalent commitments
+on the same checkpoint. The 9-stage verifier pipeline, mesh consensus
+with stake-weighted median, copycat directional blame, distillation
+lane, and permissionless environment registry are independent
+Reliquary additions.
+
+**Inference-side proof binding (TopLoc).** The TopLoc framework
+proposes binding inference outputs to model parameters via top-K
+activation snapshots [toploc]. Reliquary's sqrt-growth tolerance
+envelope was originally calibrated to TopLoc's empirical safety
+margin; subsequent cross-GPU audits show ~50% headroom remains over
+the worst observed honest drift.
+
+**Decentralized RL post-training (Templar, R1-Zero, DAPO).** Reliquary
+Forge runs PPO-clipped GRPO with KL penalty against a frozen reference
+[grpo, r1-zero], with σ-zone filtering [dapo] gating which rollout
+groups feed the gradient step. The rollout-bundle → verdict-bundle →
+checkpoint-attestation envelope chain takes its plane-separation
+discipline from Templar [templar], with one substantive divergence:
+Reliquary holds inference and training behind a single subnet
+identity, joined by a closed-loop bridge of signed envelopes, rather
+than running two independent subnets. The bridge is what lets us
+publish proof-carrying rollouts and proof-binding policy updates as
+mutually-verifiable artifacts.
+
+**Distributed inner-loop training (DiLoCo, DeMo, Hivemind).** Forge's
+multi-trainer scaling path (FSDP2 inner loop + DiLoCo outer loop) is
+a direct adaptation of DiLoCo's two-clock training [diloco] with DeMo
+gradient compression [demo] as an opt-in for bandwidth-bounded
+clusters. The trainer-quorum manifest is Hivemind-flavored [hivemind]
+without the all-reduce contention hot path; trainers checkpoint
+independently and reconcile via the closed-loop bridge.
+
+**What's new in Reliquary.** The protocol's distinguishing claims are
+(i) the 9-stage pipeline elevates the sketch primitive into a stack
+that catches multi-class adversaries the sketch alone misses; (ii) the
+4+ validator mesh with stake-weighted median + outlier gating
+provides Byzantine fault tolerance up to a 10% stake-cap; (iii) the
+closed-loop bridge holds inference and training in one subnet under
+provenance-binding signed envelopes rather than two; (iv) the
+permissionless environment registry lets task authors stake into the
+schedule rather than the subnet owner gatekeeping it.
 
 ## 2. System model
 
@@ -480,7 +540,62 @@ charter).
   via transformers on staging1 Blackwell); all 4 math answers correct;
   all 4 provenance bindings resolve.
 
-## 14. Open questions
+## 14. Limitations
+
+The protocol is honest about what it does and doesn't claim.
+
+- **Sketch alone is not a complete proof.** The hidden-state sketch
+  detects bit-level deviation from the declared inference path on the
+  challenged positions, but per-position variance under FP arithmetic
+  noise is O(2000) at the hidden-dim sizes used in our reference
+  models. The sketch alone cannot distinguish a careful adversary who
+  perturbs activations *within* the tolerance envelope from an honest
+  miner. The 9-stage pipeline is the actual security boundary: any
+  attack that survives sketch verification still has to survive
+  prompt binding, environment re-execution, reward verification,
+  logprob replay, and distribution validation. We cite the sketch's
+  ~10⁻¹⁶⁷ forgery probability for a pure-sketch adversary; for the
+  full pipeline the bound is empirical (current FN rate < 5% across
+  three adversarial classes; FP rate measured at 0 over 1000 honest
+  trials).
+
+- **Cross-GPU determinism is empirical, not analytic.** We have run
+  the proof primitive on three Blackwell + one H100 with bit-exact
+  agreement (zero sketch drift across 90 samples). We have *not*
+  proven analytically that any future GPU class will agree. Each new
+  hardware generation requires a fresh 90-sample audit; the audit
+  harness is published so any operator can run it on their card and
+  contribute the report to the public audit index.
+
+- **Mesh consensus tolerates up to f<n/2 Byzantine validators with
+  stake cap 10%.** Beyond that — concretely, > 50% of capped stake
+  controlled by a single entity — consensus is not safe. The protocol
+  has no defense against a sustained > 50% stake attack other than
+  detection (outlier rate gate flags inconsistent voting); standard
+  Bittensor subnet-owner mechanics handle the response, which is out
+  of scope for this paper.
+
+- **No defense against censorship by the chain itself.** If
+  Bittensor's subtensor declines a commit-reveal extrinsic, Reliquary
+  cannot make progress for that window. We assume honest chain
+  inclusion + ordering; this is the same trust model every Bittensor
+  subnet operates under.
+
+- **Proof-of-inference, not proof-of-correctness.** A miner can
+  produce a verifiable inference of an incorrect answer; the reward
+  function (environment-side) is what penalizes wrong answers, not
+  the proof system. The proof binds the inference to a model + input;
+  it does not certify the answer is correct.
+
+- **Calibration data is preliminary.** ``PROOF_SKETCH_TOLERANCE_BASE``
+  and ``LOGPROB_DRIFT_THRESHOLD`` in the current implementation use
+  conservative defaults. A planned multi-day calibration sweep
+  (Phase 1.2 of the operational roadmap) will replace these with
+  empirical p99 of honest-miner divergence. Until that data lands,
+  the production thresholds are likely 2–6× looser than necessary,
+  trading detection sensitivity for false-positive safety.
+
+## 15. Open questions
 
 - **Sketch tolerance lower bound**: `PROOF_SKETCH_TOLERANCE_BASE = 6000`
   has substantial headroom in empirical cross-GPU runs; can it be
@@ -501,14 +616,47 @@ charter).
 
 ## References
 
+### Academic + protocol prior art
+
+- **[grail]** the `grail` project: hidden-state sketch with log-magnitude
+  bucketing + random linear projection mod Mersenne prime — primary
+  prior art for the proof primitive. Source: github.com/grail-the-game/grail.
+- **[toploc]** Top-K activation snapshot binding for proof-of-inference;
+  empirical safety-margin calibration. Cited for the sqrt-growth
+  tolerance envelope.
+- **[grpo]** Group Relative Policy Optimization: PPO-clipped surrogate
+  with KL penalty against a frozen reference, group-relative
+  advantage normalization. (DeepSeek 2024 GRPO line.)
+- **[r1-zero]** R1-Zero / DeepSeek-R1: zero-shot reasoning RL with
+  binary rewards and σ-filtered batch composition. Source for the
+  reward-shape choices in Forge.
+- **[dapo]** Dynamic Advantage Policy Optimization: σ-zone filtering of
+  rollout groups; the in-zone vs out-of-zone training signal split.
+- **[templar]** Templar: decentralized post-training subnet with
+  rollout-verdict-checkpoint plane separation; cited for the bridge
+  envelope shape.
+- **[diloco]** DiLoCo: distributed low-communication two-clock
+  training; cited for Forge's outer-loop scaling path.
+- **[demo]** DeMo: gradient-magnitude compression for bandwidth-bounded
+  trainer-quorum communication.
+- **[hivemind]** Hivemind: trainer-quorum manifests for permissionless
+  contributors.
+
+### Reliquary internal references
+
 - Source: `reliquary-ledger` (Ledger runtime), `reliquary-forge` (Forge
-  runtime), `reliquary-protocol` (shared).
-- Tier PRDs: `private/reliquary-plan/{00_STRATEGY,01_TIER1_PRD,
-  02_TIER2_PRD,03_TIER3_PRD,04_TIER4_PRD}.md`.
-- Clean-room spec docs: `private/reliquary-plan/notes/spec-*.md`.
+  runtime), `reliquary-protocol` (shared package).
 - Mesh-live audits: `reliquary-ledger/docs/audit/mesh_live/`.
-- Cross-GPU audit: `reliquary-ledger/docs/audit/cross_gpu/`.
+- Cross-GPU determinism audit: `reliquary-ledger/docs/audit/cross_gpu/`.
 - Empirical audit harness: `reliquary_inference.audit_harness`.
+- Calibration tooling: `reliquary-forge/scripts/cheater_curve_threshold.py`,
+  `reliquary-forge/scripts/measure_sketch_drift.py`.
+- Public R2 audit index:
+  https://pub-954f95c7d2f3478886c8a8ff7a4946e0.r2.dev/audit/index.html
+
+Internal planning documents (Tier PRDs, clean-room spec docs) are
+maintained in a separate non-public repository to keep operational
+detail off arXiv-bound branches.
 
 ---
 
