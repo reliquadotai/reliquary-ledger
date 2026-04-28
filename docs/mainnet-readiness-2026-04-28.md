@@ -38,7 +38,7 @@ publishing weights without them.
 
 | item | status | note |
 |---|---|---|
-| ≥ 2 miner hotkeys producing rollouts on 462 | **on track** | rtx6000b miner active (UID 5 `5Ceudda…uuVi`) producing every ~17 min; H100 miner installed today (UID 7 `5ERzQs…ZoR`) — first rollout pending its slow first R2 list-scan (~12 min cold start) |
+| ≥ 2 miner hotkeys producing rollouts on 462 | partial | rtx6000b miner active (UID 5 `5Ceudda…uuVi`) producing every ~17 min; H100 miner installed today (UID 7 `5ERzQs…ZoR`) — service active and exercising the full miner code path (chain → registry → task_batch fetch), but first rollout has not landed because the H100's R2 latency (~600 ms/req) hits gap #2 below: `list_artifacts` does a full prefix walk of ~941 task_batch objects every window, and at H100 latency that exceeds the testnet 462 window length. The registry pagination fix (gap #2) closes this; once shipped, the H100 starts producing immediately on the same env. **Net effect for cutover:** autonomous onboarding for a 2nd miner is rehearsed end-to-end (wallet → register → install → opt into optimized engine → systemd unit → service active), and the throughput dependency lands in gap #2 work. |
 | ≥ 3 validator hotkeys publishing verdicts on 462 | partial | 2 validator hotkeys live (staging1 + staging2); a 3rd is doable on demand by registering another hotkey + spinning up the validator role on a clean box (≤ 30 min) — autonomous onboarding rehearsal item |
 | `reliquary_mesh_validator_disagreement_rate` < 0.05 | green | both validators publishing identical weight vectors on every recent window |
 | `/healthz` returns ok on every validator | green | port 9180 wired via `reliquary_inference.shared.health_server` |
@@ -145,12 +145,18 @@ Each has a ticket in `private/reliquary-plan/` for post-cutover.
 2. **R2 `list_artifacts` pagination.** The current
    `Registry.list_artifacts` does a full prefix walk + per-object
    `get_bytes`, then filters by `window_id` in memory. For ~1k
-   task_batches that's ~1k HTTP roundtrips per loop iteration.
-   Today's R2 latency from staging is 3 ms/req → 3 s scan; from H100
-   is 600 ms/req → 10 min cold-start scan. **Fix:** push the
-   `window_id` filter into the prefix (artifact ids are deterministic
-   from window number), eliminating the index scan entirely. ~50 LOC
-   in `storage/registry.py`.
+   task_batches that's ~1k HTTP roundtrips per window cycle.
+   Today's R2 latency from staging is 3 ms/req → 3 s scan; from
+   H100 is ~600 ms/req → ~10 min scan, which exceeds the testnet
+   462 window length. The H100 miner deployed today is exercising
+   exactly this path and not (yet) emitting rollouts as a result.
+   **Fix:** add a window-keyed mirror prefix (e.g.
+   `task_batches/by_window/window-{w:08d}/<sha>.json`) so each
+   `list_artifacts(..., window_id=W)` becomes a single
+   `list_prefix("task_batches/by_window/window-{W:08d}/")` returning
+   1–2 keys instead of 941. ~80 LOC in `storage/registry.py` plus a
+   one-off backfill walking the existing flat prefix. Backwards-compat
+   guaranteed since the legacy flat prefix stays writable.
 
 3. **More than 2 miners.** Today the in-zone-group rate is dominated
    by a single miner (rtx6000b) producing correlated rollouts with
