@@ -18,10 +18,18 @@ to the pre-calibration digest captured in
 tightening only narrowed the *acceptance envelope* and did not perturb
 the underlying sketch math.
 
-H100 cross-class verification is pending: staging3h100 (1× H100) has
-the host driver but the GPU is not exposed in the per-tenant container
-(no `/dev/nvidia*`, no nvidia-container-runtime). Targon platform-side
-GPU passthrough setup needed before re-running the audit on H100.
+H100 cross-class verification: a re-provisioned H100 instance
+(`wrk-3l9wh8oc5c0w-57f5cd4789-bx5hc`) has the GPU correctly exposed
+(`/dev/nvidia0` present, `nvidia-smi` reports `NVIDIA H100 80GB HBM3`,
+driver `570.195.03`). The original `wrk-1yd80wogo5xd-689dbf778c-scqln`
+pod hit a Targon-platform-side device-plugin failure
+(`UnexpectedAdmissionError — Allocate failed due to cannot allocate
+unregistered device nvidia.com/gpu`) and was retired.
+
+After bootstrapping the new pod (Python 3.12 venv, torch 2.7.0+cu128,
+reliquary-{inference,protocol,forge} editable installs), running the
+same harness on H100 closes the cross-class verification gap. The
+report will be appended to this README upon completion.
 
 ## Reproducing
 
