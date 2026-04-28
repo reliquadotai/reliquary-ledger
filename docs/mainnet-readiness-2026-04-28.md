@@ -38,7 +38,7 @@ publishing weights without them.
 
 | item | status | note |
 |---|---|---|
-| ≥ 2 miner hotkeys producing rollouts on 462 | partial | rtx6000b miner active (UID 5 `5Ceudda…uuVi`) producing every ~17 min; H100 miner installed today (UID 7 `5ERzQs…ZoR`) — service active and exercising the full miner code path (chain → registry → task_batch fetch), but first rollout has not landed because the H100's R2 latency (~600 ms/req) hits gap #2 below: `list_artifacts` does a full prefix walk of ~941 task_batch objects every window, and at H100 latency that exceeds the testnet 462 window length. The registry pagination fix (gap #2) closes this; once shipped, the H100 starts producing immediately on the same env. **Net effect for cutover:** autonomous onboarding for a 2nd miner is rehearsed end-to-end (wallet → register → install → opt into optimized engine → systemd unit → service active), and the throughput dependency lands in gap #2 work. |
+| ≥ 2 miner hotkeys producing rollouts on 462 | **green** | rtx6000b miner (UID 5 `5Ceudda…uuVi`) producing every ~17 min on the baseline `MiningEngine`; H100 miner (UID 7 `5ERzQs…ZoR`) producing on the `OptimizedMiningEngine` (frontier-σ prompt picker + local σ gate) — first rollout landed 2026-04-28T13:xx UTC: `mined 8 completions for window 7005210` after `policy_consumer applied run_id=forge-grpo-1777377872 at ledger_window=7005210`. Two independent miners on netuid 462, two distinct GPU classes (Blackwell sm_120 + Hopper sm_90), one running the optimised competitive surface. |
 | ≥ 3 validator hotkeys publishing verdicts on 462 | partial | 2 validator hotkeys live (staging1 + staging2); a 3rd is doable on demand by registering another hotkey + spinning up the validator role on a clean box (≤ 30 min) — autonomous onboarding rehearsal item |
 | `reliquary_mesh_validator_disagreement_rate` < 0.05 | green | both validators publishing identical weight vectors on every recent window |
 | `/healthz` returns ok on every validator | green | port 9180 wired via `reliquary_inference.shared.health_server` |
@@ -123,11 +123,14 @@ published weights for window 7004430:
 {'5Ceudda79MvEpsFFZQDhB5dV3ojB4QFaRwX1yoK9ZwuuuuVi': 1.0}
 
 == H100 miner (UID 7) ==
-inference-miner.service ─ active (running) since 2026-04-28T10:53Z
+inference-miner.service ─ active (running)
 RELIQUARY_INFERENCE_MINER_OPTIMIZED=1 (env loaded)
 RELIQUARY_INFERENCE_MATH_MAX_LEVEL=4
-First rollout pending the cold-start R2 list-artifacts scan
-(observed on rtx6000b first cycle to take ~10–12 min before mine emits).
+PYTHONPATH=/opt/reliquary-repos/reliquary (Forge package for policy_consumer)
+miner=optimized (frontier-σ prompt selection + cooldown-aware + local σ gate)
+Loading weights: 100%|██████████| 434/434 [00:00<00:00, 878.41it/s]
+policy_consumer applied run_id=forge-grpo-1777377872 at ledger_window=7005210
+mined 8 completions for window 7005210
 ```
 
 ---
