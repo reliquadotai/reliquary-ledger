@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reliquary — Public Status (testnet netuid 462)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Live status of Reliquary's testnet netuid 462: 4-validator mesh, GRAIL proof verifications, GRPO training cycles, public audit index.">
+<link rel="icon" href="data:image/svg+xml,&lt;svg xmlns=&apos;http://www.w3.org/2000/svg&apos; viewBox=&apos;0 0 100 100&apos;&gt;&lt;circle cx=&apos;50&apos; cy=&apos;50&apos; r=&apos;40&apos; fill=&apos;%2336d399&apos;/&gt;&lt;/svg&gt;">
+<style>
+  :root {
+    --bg: #0c0f14;
+    --panel: #141922;
+    --muted: #667085;
+    --text: #e4e8ef;
+    --accent: #36d399;
+    --warn: #fbbd23;
+    --bad: #f87272;
+    --divider: #1f2530;
+    --mono: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px; line-height: 1.5;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; border-bottom: 1px solid var(--divider);
+    flex-wrap: wrap; gap: 12px;
+  }
+  header h1 {
+    font-size: 16px; font-weight: 600; margin: 0;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  header h1 .accent { color: var(--accent); }
+  header .sub { color: var(--muted); font-size: 12px; }
+  header .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    vertical-align: middle; margin-right: 6px; background: var(--muted);
+  }
+  header .dot.ok { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  header .dot.warn { background: var(--warn); }
+  header .dot.bad { background: var(--bad); }
+  main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+  .banner {
+    background: var(--panel); border: 1px solid var(--divider);
+    border-left: 4px solid var(--accent);
+    padding: 12px 16px; border-radius: 6px; margin-bottom: 24px;
+  }
+  .banner.warn { border-left-color: var(--warn); }
+  .grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--divider);
+    border-radius: 6px; padding: 16px;
+  }
+  .card h2 {
+    margin: 0 0 6px 0; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted);
+  }
+  .card .v { font-size: 24px; font-weight: 600; font-family: var(--mono); }
+  .card .v.small { font-size: 16px; }
+  .card .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .ok  { color: var(--accent); }
+  .warn { color: var(--warn); }
+  .bad { color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+  th, td {
+    text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--divider);
+  }
+  th { color: var(--muted); font-weight: 500; text-transform: uppercase; font-size: 10px; letter-spacing: 0.6px; }
+  footer {
+    color: var(--muted); font-size: 12px; padding: 16px 24px;
+    border-top: 1px solid var(--divider); margin-top: 24px;
+  }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--text); }
+  .links { display: flex; gap: 16px; flex-wrap: wrap; }
+  code {
+    font-family: var(--mono); font-size: 12px;
+    background: var(--panel); padding: 1px 6px; border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1><span class="accent">RELIQUARY</span> &mdash; Public Status</h1>
+    <div class="sub">Testnet · netuid <code>462</code> · 4-validator mesh</div>
+  </div>
+  <div>
+    <span id="health-dot" class="dot"></span><span id="health-label">connecting…</span>
+    <span class="sub" style="margin-left:12px">last refresh <span id="last-refresh">—</span></span>
+  </div>
+</header>
+
+<main>
+
+  <div class="banner">
+    <strong>Public testnet status.</strong>
+    Live on Bittensor testnet <code>netuid 462</code> since 2026-04-21.
+    Mainnet (<code>netuid 81</code>) cutover is pending OTF conviction-delegation
+    activation. Pick a role at
+    <a href="https://github.com/reliquadotai/reliquary-ledger/blob/main/START_HERE.md">START_HERE</a>.
+  </div>
+
+  <div class="grid">
+    <div class="card"><h2>Window</h2><div class="v" id="window-n">—</div><div class="hint" id="window-block">block —</div></div>
+    <div class="card"><h2>Mesh validators</h2><div class="v" id="mesh-count">—</div><div class="hint" id="mesh-status">stake-weighted median</div></div>
+    <div class="card"><h2>In-zone rate</h2><div class="v" id="zone-rate">—</div><div class="hint">σ ≥ 0.43 (steady) / 0.33 (bootstrap)</div></div>
+    <div class="card"><h2>Last verdict</h2><div class="v small" id="last-verdict">—</div><div class="hint" id="last-verdict-when">—</div></div>
+  </div>
+
+  <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin:24px 0 8px;">Recent windows</h3>
+  <div class="card" style="padding:0;overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>Window</th><th>Verdicts</th><th>Accepted</th><th>Soft-flag</th><th>Mesh agree</th><th>Time</th>
+      </tr></thead>
+      <tbody id="windows-tbody"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px;">loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin:24px 0 8px;">Top miners (last 24 windows)</h3>
+  <div class="card" style="padding:0;overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>Hotkey</th><th>UID</th><th>Accepted</th><th>Acceptance rate</th><th>Last score</th>
+      </tr></thead>
+      <tbody id="miners-tbody"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px;">loading…</td></tr></tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  <div class="links">
+    <a href="https://pub-954f95c7d2f3478886c8a8ff7a4946e0.r2.dev/audit/index.html">Public audit index</a>
+    <a href="https://pub-954f95c7d2f3478886c8a8ff7a4946e0.r2.dev/audit/index.json">audit/index.json</a>
+    <a href="https://github.com/reliquadotai/reliquary-ledger">reliquary-ledger</a>
+    <a href="https://github.com/reliquadotai/reliquary-forge">reliquary-forge</a>
+    <a href="https://github.com/reliquadotai/reliquary-protocol">reliquary-protocol</a>
+  </div>
+  <div style="margin-top:8px;">
+    Static page polling the public R2 audit index every 60 s. No backend, no auth.
+    Source: <a href="https://github.com/reliquadotai/reliquary-ledger/blob/main/dashboard/public/index.html">dashboard/public/index.html</a>.
+  </div>
+</footer>
+
+<script>
+const AUDIT_URL = "https://pub-954f95c7d2f3478886c8a8ff7a4946e0.r2.dev/audit/index.json";
+const POLL_SECONDS = 60;
+
+function fmtNumber(n) {
+  if (n === null || n === undefined) return "—";
+  if (typeof n !== "number") return String(n);
+  return n.toLocaleString();
+}
+function fmtPct(n) {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  return (n * 100).toFixed(1) + "%";
+}
+function fmtTime(ts) {
+  if (!ts) return "—";
+  const d = (typeof ts === "number") ? new Date(ts * 1000) : new Date(ts);
+  if (isNaN(d.getTime())) return String(ts);
+  return d.toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "Z");
+}
+function fmtAge(ts) {
+  if (!ts) return "—";
+  const t = (typeof ts === "number") ? ts * 1000 : Date.parse(ts);
+  if (isNaN(t)) return "—";
+  const sec = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if (sec < 60) return `${sec}s ago`;
+  if (sec < 3600) return `${Math.round(sec / 60)}m ago`;
+  return `${Math.round(sec / 3600)}h ago`;
+}
+function setHealth(state, label) {
+  const dot = document.getElementById("health-dot");
+  const lbl = document.getElementById("health-label");
+  dot.className = "dot " + state;
+  lbl.textContent = label;
+}
+
+async function refresh() {
+  try {
+    const res = await fetch(AUDIT_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    render(data);
+    document.getElementById("last-refresh").textContent = fmtTime(Date.now() / 1000);
+    setHealth("ok", "audit index reachable");
+  } catch (err) {
+    console.warn("audit fetch failed:", err);
+    setHealth("warn", "audit index unreachable");
+  }
+}
+
+function render(data) {
+  // Tolerant to several common shapes; the audit JSON evolves and this
+  // page should never throw on a missing field.
+  const windows = data.windows || data.recent_windows || [];
+  const miners = data.miners || data.top_miners || [];
+  const summary = data.summary || data.latest || {};
+
+  const latest = windows[0] || summary || {};
+  document.getElementById("window-n").textContent =
+    fmtNumber(latest.window_id ?? latest.window ?? summary.window_id);
+  document.getElementById("window-block").textContent =
+    "block " + fmtNumber(latest.block ?? summary.block);
+  document.getElementById("mesh-count").textContent =
+    fmtNumber(latest.mesh_validators ?? summary.mesh_validators ?? 4);
+  document.getElementById("zone-rate").textContent =
+    fmtPct(latest.in_zone_rate ?? summary.in_zone_rate);
+
+  if (latest.accepted !== undefined) {
+    document.getElementById("last-verdict").textContent =
+      `${fmtNumber(latest.accepted)}/${fmtNumber(latest.verdicts ?? latest.total ?? "—")}`;
+  } else {
+    document.getElementById("last-verdict").textContent = "—";
+  }
+  document.getElementById("last-verdict-when").textContent =
+    "received " + fmtAge(latest.timestamp ?? latest.published_at);
+
+  const wbody = document.getElementById("windows-tbody");
+  wbody.innerHTML = "";
+  if (windows.length === 0) {
+    wbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px;">no recent windows in audit index</td></tr>';
+  } else {
+    for (const w of windows.slice(0, 24)) {
+      const tr = document.createElement("tr");
+      const verdicts = w.verdicts ?? w.total ?? "—";
+      const accepted = w.accepted ?? "—";
+      const soft = w.soft_flag ?? w.soft_flags ?? "—";
+      const agree = w.mesh_agreement ?? w.agreement ?? "—";
+      tr.innerHTML = `
+        <td>${fmtNumber(w.window_id ?? w.window)}</td>
+        <td>${fmtNumber(verdicts)}</td>
+        <td>${fmtNumber(accepted)}</td>
+        <td>${fmtNumber(soft)}</td>
+        <td>${typeof agree === "number" ? fmtPct(agree) : agree}</td>
+        <td style="color:var(--muted);">${fmtAge(w.timestamp ?? w.published_at)}</td>
+      `;
+      wbody.appendChild(tr);
+    }
+  }
+
+  const mbody = document.getElementById("miners-tbody");
+  mbody.innerHTML = "";
+  if (miners.length === 0) {
+    mbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px;">no miners in audit index</td></tr>';
+  } else {
+    for (const m of miners.slice(0, 25)) {
+      const tr = document.createElement("tr");
+      const hotkey = String(m.hotkey ?? m.miner_hotkey ?? "—");
+      const short = hotkey.length > 12 ? hotkey.slice(0, 6) + "…" + hotkey.slice(-4) : hotkey;
+      tr.innerHTML = `
+        <td title="${hotkey}">${short}</td>
+        <td>${fmtNumber(m.uid)}</td>
+        <td>${fmtNumber(m.accepted ?? m.unique_accepted)}</td>
+        <td>${typeof m.acceptance_rate === "number" ? fmtPct(m.acceptance_rate) : "—"}</td>
+        <td>${typeof m.last_score === "number" ? m.last_score.toFixed(4) : "—"}</td>
+      `;
+      mbody.appendChild(tr);
+    }
+  }
+}
+
+refresh();
+setInterval(refresh, POLL_SECONDS * 1000);
+</script>
+
+</body>
+</html>
