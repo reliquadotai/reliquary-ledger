@@ -36,6 +36,21 @@ def _cfg() -> dict:
     return load_config()
 
 
+def _apply_resume_from(cfg: dict, raw_source: str) -> None:
+    """Apply a ``--resume-from`` source string to ``cfg`` and log the change.
+
+    Thin CLI-side wrapper around
+    ``reliquary_inference.validator.resume.apply_resume_from`` so the bulk
+    of the resolve logic is testable without pulling in typer/rich.
+    """
+    from .validator.resume import apply_resume_from
+
+    apply_resume_from(cfg, raw_source)
+    console.print(
+        f"[cyan]--resume-from {raw_source} → model_ref={cfg['model_ref']}[/cyan]"
+    )
+
+
 class _StorageBackendShim:
     """Adapts the ObjectStore contract (put_bytes/get_bytes/list_prefix)
     used by :class:`reliquary_inference.storage.registry.ObjectRegistry`'s
@@ -424,8 +439,23 @@ def metrics_exporter_command(
 def run_miner(
     once: Annotated[bool, typer.Option("--once")] = False,
     poll_interval: Annotated[int | None, typer.Option("--poll-interval")] = None,
+    resume_from: Annotated[
+        str | None,
+        typer.Option(
+            "--resume-from",
+            envvar="RELIQUARY_INFERENCE_RESUME_FROM",
+            help=(
+                "Boot model bundle from sha:<hex> (HF revision of cfg model_ref) "
+                "or path:<dir> (local snapshot). Useful for pinning to a known-good "
+                "checkpoint or rolling back without changing model_ref. "
+                "Parallel-work credit: romain13190/reliquary@1801544."
+            ),
+        ),
+    ] = None,
 ) -> None:
     cfg = _cfg()
+    if resume_from is not None:
+        _apply_resume_from(cfg, resume_from)
     interval = int(cfg["poll_interval"]) if poll_interval is None else poll_interval
     registry = _registry(cfg)
     chain = _chain(cfg)
@@ -593,8 +623,23 @@ def _build_miner_policy_consumer_hook(cfg: dict):
 def run_validator(
     once: Annotated[bool, typer.Option("--once")] = False,
     poll_interval: Annotated[int | None, typer.Option("--poll-interval")] = None,
+    resume_from: Annotated[
+        str | None,
+        typer.Option(
+            "--resume-from",
+            envvar="RELIQUARY_INFERENCE_RESUME_FROM",
+            help=(
+                "Boot model bundle from sha:<hex> (HF revision of cfg model_ref) "
+                "or path:<dir> (local snapshot). Lets a validator pin to a known-good "
+                "checkpoint without changing model_ref. "
+                "Parallel-work credit: romain13190/reliquary@1801544."
+            ),
+        ),
+    ] = None,
 ) -> None:
     cfg = _cfg()
+    if resume_from is not None:
+        _apply_resume_from(cfg, resume_from)
     interval = int(cfg["poll_interval"]) if poll_interval is None else poll_interval
     registry = _registry(cfg)
     chain = _chain(cfg)
