@@ -43,7 +43,10 @@ def test_challenge_and_sketch_shape() -> None:
 
 
 def test_tolerance_parameters() -> None:
-    assert protocol_constants.PROOF_SKETCH_TOLERANCE_BASE == 6000
+    # Tightened 2026-04-28 from 6000 to 1000 based on staging2 RTX 6000B
+    # calibration (n=24, honest baseline = 0 sketch drift, cheater p95 ≈ PRIME_Q).
+    # See protocol/constants.py inline comment for the methodology.
+    assert protocol_constants.PROOF_SKETCH_TOLERANCE_BASE == 1000
     assert protocol_constants.PROOF_SKETCH_TOLERANCE_GROWTH == pytest.approx(5.0)
 
 

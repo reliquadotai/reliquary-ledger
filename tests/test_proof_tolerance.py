@@ -16,13 +16,16 @@ from reliquary_inference.protocol.constants import (
 from reliquary_inference.protocol.sketch_verifier import adaptive_sketch_tolerance
 
 
+# Tolerance base tightened from 6000 to 1000 on 2026-04-28 after empirical
+# calibration on staging2 RTX 6000B Blackwell (n=24, honest=0 floor). The
+# formula and growth coefficient are unchanged; only the base shifts.
 @pytest.mark.parametrize(
     "position, expected",
     [
-        (0, 6000),
-        (256, 6000 + int(5.0 * math.sqrt(256))),
-        (1024, 6000 + int(5.0 * math.sqrt(1024))),
-        (4096, 6000 + int(5.0 * math.sqrt(4096))),
+        (0, 1000),
+        (256, 1000 + int(5.0 * math.sqrt(256))),
+        (1024, 1000 + int(5.0 * math.sqrt(1024))),
+        (4096, 1000 + int(5.0 * math.sqrt(4096))),
     ],
 )
 def test_tolerance_matches_spec_formula(position: int, expected: int) -> None:
