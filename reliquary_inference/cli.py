@@ -51,6 +51,91 @@ def _apply_resume_from(cfg: dict, raw_source: str) -> None:
     )
 
 
+def _start_health_server(cfg: dict):
+    """Start the structured /health HTTP server in a daemon thread.
+
+    Returns the ``HealthSignalsHolder`` so the main loop can update
+    signals on each iteration, or ``None`` if disabled.
+
+    Phase 3.1 wiring (from the mainnet-readiness audit). The endpoint
+    serves /health (structured HealthReport) and /healthz (binary)
+    with HTTP status reflecting state (200 OK / 200 DEGRADED /
+    503 UNHEALTHY). See ``reliquary_inference.shared.health_server``
+    for the handler implementation.
+    """
+    import os as _os
+    import threading as _threading
+    import time as _time
+
+    bind = _os.environ.get("RELIQUARY_INFERENCE_HEALTH_BIND", "127.0.0.1")
+    port_raw = _os.environ.get("RELIQUARY_INFERENCE_HEALTH_PORT")
+    if not port_raw:
+        return None
+    try:
+        port = int(port_raw)
+    except ValueError:
+        console.print(
+            f"[yellow]invalid RELIQUARY_INFERENCE_HEALTH_PORT={port_raw!r}; "
+            "skipping health server[/yellow]"
+        )
+        return None
+
+    from .shared.health import HealthSignals
+    from .shared.health_server import HealthSignalsHolder, make_server
+
+    holder = HealthSignalsHolder(
+        HealthSignals(started_at=_time.time(), model_loaded=False)
+    )
+    try:
+        server = make_server(bind=bind, port=port, holder=holder)
+    except OSError as exc:
+        console.print(
+            f"[yellow]could not bind health server on {bind}:{port} ({exc}); "
+            "continuing without /health[/yellow]"
+        )
+        return None
+    thread = _threading.Thread(
+        target=server.serve_forever, daemon=True, name="reliquary-health"
+    )
+    thread.start()
+    console.print(f"[cyan]health server listening on {bind}:{port}[/cyan]")
+    return holder
+
+
+def _update_health(
+    holder,
+    *,
+    started_at: float,
+    chain_ok: bool,
+    window_verified: bool,
+    model_loaded: bool,
+    now: float | None = None,
+) -> None:
+    """Snapshot-update the HealthSignalsHolder from inside the main loop.
+
+    Idempotent / no-op when ``holder`` is None (health server disabled).
+    """
+    if holder is None:
+        return
+    import time as _time
+
+    now = _time.time() if now is None else now
+    snap, _ = holder.snapshot()
+    last_chain = now if chain_ok else snap.last_chain_ok_at
+    last_window = now if window_verified else snap.last_window_verified_at
+    from .shared.health import HealthSignals
+
+    holder.update(
+        HealthSignals(
+            started_at=started_at,
+            last_chain_ok_at=last_chain,
+            last_window_verified_at=last_window,
+            last_proof_worker_heartbeat_at=snap.last_proof_worker_heartbeat_at,
+            model_loaded=bool(model_loaded) or bool(snap.model_loaded),
+        )
+    )
+
+
 class _StorageBackendShim:
     """Adapts the ObjectStore contract (put_bytes/get_bytes/list_prefix)
     used by :class:`reliquary_inference.storage.registry.ObjectRegistry`'s
@@ -461,6 +546,11 @@ def run_miner(
     chain = _chain(cfg)
     processed: set[tuple[int, str]] = set()
 
+    # /health HTTP server in daemon thread (Phase 3.1). No-op when
+    # RELIQUARY_INFERENCE_HEALTH_PORT is unset.
+    health_holder = _start_health_server(cfg)
+    miner_started_at = time.time()
+
     # Policy-consumer integration: off by default. When enabled, the miner
     # polls Forge-side PolicyCommitments each loop iteration and hot-swaps
     # its model weights via ReloadingPolicyApplier at the window boundary.
@@ -471,8 +561,11 @@ def run_miner(
     policy_consumer_hook = _build_miner_policy_consumer_hook(cfg)
 
     while True:
+        chain_ok = False
+        window_verified = False
         try:
             window_context = chain.get_window_context(cfg=cfg).as_dict()
+            chain_ok = True
             ledger_window = int(window_context["window_id"])
 
             if policy_consumer_hook is not None:
@@ -482,13 +575,29 @@ def run_miner(
             if key not in processed:
                 mined = _mine_single_window(cfg, registry, window_context, str(cfg["miner_id"]))
                 processed.add(key)
+                window_verified = True
                 console.print(f"mined {mined} completions for window {window_context['window_id']}")
             if once:
+                _update_health(
+                    health_holder,
+                    started_at=miner_started_at,
+                    chain_ok=chain_ok,
+                    window_verified=window_verified,
+                    model_loaded=True,
+                )
                 return
         except Exception as exc:
             if once:
                 raise
             console.print(f"[yellow]miner loop error: {exc}[/yellow]")
+        finally:
+            _update_health(
+                health_holder,
+                started_at=miner_started_at,
+                chain_ok=chain_ok,
+                window_verified=window_verified,
+                model_loaded=chain_ok,
+            )
         time.sleep(interval)
 
 
@@ -645,6 +754,11 @@ def run_validator(
     chain = _chain(cfg)
     processed: set[int] = set()
 
+    # /health HTTP server in daemon thread (Phase 3.1). No-op when
+    # RELIQUARY_INFERENCE_HEALTH_PORT is unset.
+    health_holder = _start_health_server(cfg)
+    validator_started_at = time.time()
+
     # Matches the miner-side hook in run_miner: when the flag is on, every
     # loop iteration polls for new PolicyCommitments + applies the delta
     # to the validator's cached model bundles. Without this, miner weights
@@ -660,8 +774,11 @@ def run_validator(
     # window where at least 1 rollout is in zone.
     backfill_horizon = int(cfg.get("validator_backfill_horizon_windows", 10))
     while True:
+        chain_ok = False
+        any_window_verified = False
         try:
             window_context = chain.get_window_context(cfg=cfg).as_dict()
+            chain_ok = True
             current_window = int(window_context["window_id"])
 
             if policy_consumer_hook is not None:
@@ -690,6 +807,7 @@ def run_validator(
                                 cfg, registry, chain, window_ctx,
                             )
                             processed.add(candidate)
+                            any_window_verified = True
                             console.print(
                                 f"published weights for window {candidate}: "
                                 f"{scorecard['payload']['weights']}"
@@ -700,11 +818,26 @@ def run_validator(
                             )
                 candidate += WINDOW_STRIDE
             if once:
+                _update_health(
+                    health_holder,
+                    started_at=validator_started_at,
+                    chain_ok=chain_ok,
+                    window_verified=any_window_verified,
+                    model_loaded=True,
+                )
                 return
         except Exception as exc:
             if once:
                 raise
             console.print(f"[yellow]validator loop error: {exc}[/yellow]")
+        finally:
+            _update_health(
+                health_holder,
+                started_at=validator_started_at,
+                chain_ok=chain_ok,
+                window_verified=any_window_verified,
+                model_loaded=chain_ok,
+            )
         time.sleep(interval)
 
 
