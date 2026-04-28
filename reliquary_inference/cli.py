@@ -36,6 +36,43 @@ def _cfg() -> dict:
     return load_config()
 
 
+def _miner_optimized_enabled() -> bool:
+    """Honour ``RELIQUARY_INFERENCE_MINER_OPTIMIZED`` to opt into the
+    competitive-miner reference (frontier-σ prompt selection +
+    cooldown-aware + local σ gate). Defaults to off so the baseline
+    deterministic miner is what runs unless an operator explicitly
+    enables it. See ``reliquary_inference/miner/optimized_engine.py``.
+    """
+    import os as _os
+
+    return _os.environ.get("RELIQUARY_INFERENCE_MINER_OPTIMIZED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _make_mining_engine(cfg: dict):
+    """Construct the mining engine, honouring the optimized flag.
+
+    Returns ``OptimizedMiningEngine`` when
+    ``RELIQUARY_INFERENCE_MINER_OPTIMIZED`` is set, otherwise the
+    baseline ``MiningEngine``. Both share the same constructor
+    signature beyond the optimized engine's tuning kwargs (which take
+    sensible defaults), so call-sites are interchangeable.
+    """
+    if _miner_optimized_enabled():
+        from .miner.optimized_engine import OptimizedMiningEngine
+
+        console.print(
+            "[cyan]miner=optimized (frontier-σ prompt selection + "
+            "cooldown-aware + local σ gate)[/cyan]"
+        )
+        return OptimizedMiningEngine(cfg=cfg)
+    return MiningEngine(cfg=cfg)
+
+
 def _apply_resume_from(cfg: dict, raw_source: str) -> None:
     """Apply a ``--resume-from`` source string to ``cfg`` and log the change.
 
@@ -267,10 +304,39 @@ def _latest_or_new_task_batch(cfg: dict, registry, window_context: dict, count: 
 
 def _mine_single_window(cfg: dict, registry, window_context: dict, miner_id: str) -> int:
     task_batch = _latest_or_new_task_batch(cfg, registry, window_context, int(cfg["task_count"]))
-    engine = MiningEngine(cfg=cfg)
+    engine = _make_mining_engine(cfg)
     samples_per_task = int(cfg["samples_per_task"])
     completions: list[dict] = []
-    for task in task_batch["payload"]["tasks"]:
+    if _miner_optimized_enabled():
+        # Route candidates through the optimized engine's frontier-σ
+        # selection. ``select_prompts`` drops cooldown task ids and
+        # picks ``samples_per_task * task_count`` prompts most likely
+        # to land in the validator's σ ≥ 0.43 zone. We pick at most
+        # the original task_batch size so the rollout count stays
+        # constant — the optimization is *which* prompts, not how
+        # many. ``cooldown_task_ids`` here is best-effort: the
+        # validator-side cooldown is the source of truth, but a miner
+        # that asked the registry directly would still skip recently
+        # batched prompts. With no registry-side cooldown surface
+        # exposed yet we pass an empty set; a follow-on can wire the
+        # CooldownMap in.
+        all_tasks = list(task_batch["payload"]["tasks"])
+        try:
+            n = max(1, len(all_tasks))
+            selected = engine.select_prompts(all_tasks, n=n, cooldown_task_ids=set())
+            if selected:
+                tasks_iter = selected
+            else:
+                tasks_iter = all_tasks
+        except Exception as _exc:  # pragma: no cover — never block the loop
+            console.print(
+                f"[yellow]optimized.select_prompts failed ({_exc}); "
+                "falling back to all tasks[/yellow]"
+            )
+            tasks_iter = all_tasks
+    else:
+        tasks_iter = task_batch["payload"]["tasks"]
+    for task in tasks_iter:
         # Batched path: M rollouts share one GPU forward pass. 5-7x faster
         # than serial at M=8 on H100-class GPUs (see MiningEngine.generate_m_completions).
         completions.extend(
@@ -411,7 +477,7 @@ def demo_local(
         task_batch = _task_batch_artifact(cfg, window_context, count or int(cfg["task_count"]))
         registry.put_artifact(task_batch)
         for miner_id in ("local-miner-a", "local-miner-b"):
-            engine = MiningEngine(cfg={**cfg, "miner_id": miner_id})
+            engine = _make_mining_engine({**cfg, "miner_id": miner_id})
             completions = []
             for task in task_batch["payload"]["tasks"]:
                 completion = engine.generate_completion(
@@ -686,7 +752,7 @@ def _build_miner_policy_consumer_hook(cfg: dict):
 
     def _ensure_engine():
         if state["engine"] is None:
-            state["engine"] = MiningEngine(cfg=cfg)
+            state["engine"] = _make_mining_engine(cfg)
         return state["engine"]
 
     def _ensure_consumer():
