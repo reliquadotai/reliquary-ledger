@@ -113,10 +113,16 @@ def test_stake_cap_prevents_whale_unilateral_control() -> None:
     )
     mv = report.median_verdicts["c1"]
 
-    # total stake 1000 → cap 100. whale capped to 100; smalls sum 100.
-    # acceptance_score = 100 / 200 = 0.5 → accepted (>= 0.5).
-    assert mv.accepted is True
-    assert mv.acceptance_score == pytest.approx(0.5)
+    # 2026-04-29 audit-driven tightening: stake_cap_fraction 0.10 -> 0.05.
+    # Total stake 1000 → cap 50. Whale capped to 50; smalls sum 100
+    # (each at 25, below the 50 cap). Honest 100 vs whale-accept 50 →
+    # acceptance_score = 50 / 150 ≈ 0.333 → REJECTED. The whale can no
+    # longer flip the verdict by sheer stake, which is exactly the
+    # property the cap is meant to enforce.
+    assert mv.accepted is False
+    assert mv.acceptance_score == pytest.approx(50.0 / 150.0)
+    # The whale should also be flagged as a stake-cap-clipped outlier.
+    assert "whale" in mv.outlier_validators
 
 
 def test_quorum_unsatisfied_reported() -> None:

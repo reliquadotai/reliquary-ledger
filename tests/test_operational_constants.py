@@ -19,7 +19,9 @@ from reliquary_inference.protocol import constants as protocol_constants
 
 def test_mesh_stake_cap_fraction_in_bounds() -> None:
     assert 0 < protocol_constants.MESH_STAKE_CAP_FRACTION <= 1
-    assert protocol_constants.MESH_STAKE_CAP_FRACTION == 0.10
+    # Tightened 2026-04-29 from 0.10 -> 0.05 per security audit #8
+    # (sybil-stake-cap median manipulation).
+    assert protocol_constants.MESH_STAKE_CAP_FRACTION == 0.05
 
 
 def test_mesh_min_quorum_stake_fraction_in_bounds() -> None:
