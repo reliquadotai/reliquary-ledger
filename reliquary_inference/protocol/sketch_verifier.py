@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os as _os
 
 import torch
 
@@ -147,7 +148,16 @@ class SketchProofVerifier:
         return torch.from_numpy(coeffs.astype(np.int8))
 
     def create_commitment(self, hidden_state: torch.Tensor, r_vec: torch.Tensor) -> dict:
-        """Create commitment for a single token position."""
+        """Create commitment for a single token position.
+
+        Emits ``{"sketch": int, "hidden_norm": float}``. The
+        ``hidden_norm`` field lets the validator's
+        ``verify_commitment`` cross-check against its own
+        recomputation — closes the dim-downsizing attack vector
+        flagged in the 2026-04-29 security audit (#3). Backwards
+        compatible: validators that don't enforce the bound simply
+        ignore the field.
+        """
         abs_hidden = torch.abs(hidden_state)
         topk_result = torch.topk(abs_hidden, k=self.topk)
         indices = topk_result.indices
@@ -166,8 +176,9 @@ class SketchProofVerifier:
             r_vec.to(device=buckets.device, dtype=torch.float32),
         ).to(torch.int64)
         sketch_val = int(sketch.item()) % PRIME_Q
+        hidden_norm = float(hidden_state.float().norm().item())
 
-        return {"sketch": sketch_val}
+        return {"sketch": sketch_val, "hidden_norm": hidden_norm}
 
     def create_commitments_batch(self, h_layer: torch.Tensor, r_vec: torch.Tensor) -> list[dict]:
         """Create commitments for all positions at once (vectorized).
@@ -194,7 +205,14 @@ class SketchProofVerifier:
         sketches_list = sketches.tolist()
         sketch_vals = [s % PRIME_Q for s in sketches_list]
 
-        return [{"sketch": sketch_vals[pos]} for pos in range(seq_len)]
+        # Per-position hidden_norm — see create_commitment docstring
+        # for rationale. Vectorised: one norm per row of h_layer.
+        hidden_norms = h_layer.float().norm(dim=1).tolist()
+
+        return [
+            {"sketch": sketch_vals[pos], "hidden_norm": float(hidden_norms[pos])}
+            for pos in range(seq_len)
+        ]
 
     def verify_commitment(
         self,
@@ -229,14 +247,50 @@ class SketchProofVerifier:
         mod_diff = min(sketch_diff, PRIME_Q - sketch_diff)
         is_valid = mod_diff <= tolerance
 
+        # Hidden-norm cross-check (security audit #3): if the miner
+        # included ``hidden_norm`` in the commitment, compare it
+        # against the validator's recomputation. Catches a class of
+        # cheating where an attacker submits sketches consistent with
+        # a smaller hidden_dim (e.g. via adapter compression) but
+        # whose underlying activation magnitudes don't match what
+        # this layer would emit. Env-gated default-off so testnet
+        # miners can roll out the new commitment shape before the
+        # validator starts enforcing.
+        validator_hidden_norm = float(validator_hidden.float().norm().item())
+        miner_hidden_norm: float | None = None
+        hidden_norm_valid: bool = True
+        hidden_norm_diff_rel: float | None = None
+        try:
+            raw_norm = miner_commitment.get("hidden_norm")  # type: ignore[union-attr]
+            if raw_norm is not None:
+                miner_hidden_norm = float(raw_norm)
+        except Exception:
+            miner_hidden_norm = None
+        if miner_hidden_norm is not None:
+            denom = max(abs(validator_hidden_norm), 1e-9)
+            hidden_norm_diff_rel = abs(validator_hidden_norm - miner_hidden_norm) / denom
+            tol_rel = float(
+                _os.environ.get("RELIQUARY_INFERENCE_HIDDEN_NORM_TOL_REL", "0.05")
+            )
+            enforce = _os.environ.get(
+                "RELIQUARY_INFERENCE_ENFORCE_HIDDEN_NORM_BOUNDS", ""
+            ).lower() in {"1", "true", "yes", "on"}
+            hidden_norm_valid = hidden_norm_diff_rel <= tol_rel
+            if enforce and not hidden_norm_valid:
+                is_valid = False
+
         diagnostics = {
             "sketch_diff": mod_diff,
-            "sketch_valid": is_valid,
+            "sketch_valid": (mod_diff <= tolerance),
             "sketch_tolerance": tolerance,
             "overall_valid": is_valid,
             "validator_sketch": validator_sketch_val,
             "miner_sketch": miner_sketch_val,
             "position": position,
+            "validator_hidden_norm": validator_hidden_norm,
+            "miner_hidden_norm": miner_hidden_norm,
+            "hidden_norm_diff_rel": hidden_norm_diff_rel,
+            "hidden_norm_valid": hidden_norm_valid,
         }
 
         if not is_valid:

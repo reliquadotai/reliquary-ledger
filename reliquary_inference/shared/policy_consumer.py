@@ -192,6 +192,74 @@ class PolicyConsumer:
         }
 
     # ------------------------------------------------------------------
+    # State recovery — replay defense
+    # ------------------------------------------------------------------
+
+    def anchor_to_latest_commitment(self) -> int:
+        """Scan R2 for the highest signature-verified ``PolicyCommitment``
+        already published, and advance ``current_policy_window`` to its
+        ``effective_at_window``.
+
+        Closes the replay-on-state-loss vector flagged by the
+        2026-04-29 security audit (#1): without this, a validator
+        whose local state was wiped (disk failure, fresh container
+        without persisted state) would boot with
+        ``current_policy_window = -1`` and accept any old commitment
+        an attacker holds. With this, the consumer initialises to
+        the last-known applied window, so a stale commitment with
+        ``effective_at_window <= current_policy_window`` is rejected
+        regardless of how the local state was reset.
+
+        Returns the resolved anchor window (the new
+        ``current_policy_window``). Best-effort: if the scan fails
+        for any reason (network, R2 outage, deserialisation), logs
+        a warning and leaves ``current_policy_window`` unchanged so
+        the consumer still functions in degraded mode — the
+        validator's mesh consensus + the trainer's signature on the
+        commitment itself are independent defences against poisoning.
+        """
+        prefix = f"commitments/{self.inference_netuid}/policy/"
+        try:
+            keys = list(self.backend.list(prefix))
+        except Exception as exc:  # pragma: no cover — best-effort
+            logger.warning(
+                "anchor_to_latest_commitment: list(%s) failed (%s); "
+                "continuing without anchor",
+                prefix, exc,
+            )
+            return self.current_policy_window
+        highest = self.current_policy_window
+        scanned = 0
+        for key in keys:
+            try:
+                raw = self.backend.get(key)
+                if raw is None:
+                    continue
+                envelope_dict = json.loads(raw.decode("utf-8"))
+                commitment = PolicyCommitment.from_dict(envelope_dict)
+            except Exception:
+                continue  # malformed; ignore
+            if commitment.version != BRIDGE_VERSION:
+                continue
+            if commitment.inference_netuid != self.inference_netuid:
+                continue
+            if commitment.training_netuid != self.training_netuid:
+                continue
+            if not verify_policy_commitment(commitment, self.verifier):
+                continue
+            scanned += 1
+            if int(commitment.effective_at_window) > highest:
+                highest = int(commitment.effective_at_window)
+        if highest > self.current_policy_window:
+            logger.info(
+                "policy_consumer: anchored current_policy_window to %d "
+                "(was %d) from %d signed commitments in R2",
+                highest, self.current_policy_window, scanned,
+            )
+            self.current_policy_window = highest
+        return self.current_policy_window
+
+    # ------------------------------------------------------------------
     # Primary API
     # ------------------------------------------------------------------
 

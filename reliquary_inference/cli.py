@@ -858,7 +858,7 @@ def _build_miner_policy_consumer_hook(cfg: dict):
             loader = bundle_aware_delta_loader(_fetch_bundle, lambda: store)
             engine = _ensure_engine()
             applier = ReloadingPolicyApplier(engine)
-            state["consumer"] = PolicyConsumer(
+            consumer = PolicyConsumer(
                 backend=store,
                 verifier=verifier,
                 inference_netuid=int(cfg["netuid"]),
@@ -867,6 +867,12 @@ def _build_miner_policy_consumer_hook(cfg: dict):
                 smoke_runner=default_smoke_runner,
                 applier=applier,
             )
+            # Replay defense (security audit #1): anchor to the highest
+            # signed commitment already in R2. Without this, a fresh
+            # consumer on a wiped state would accept replays of any
+            # historical commitment the attacker holds.
+            consumer.anchor_to_latest_commitment()
+            state["consumer"] = consumer
         return state["consumer"]
 
     def _hook(*, ledger_window: int) -> None:
@@ -1128,6 +1134,16 @@ def _build_validator_policy_consumer_hook(cfg: dict):
         smoke_runner=default_smoke_runner,
         applier=applier,
     )
+    # Replay defense (security audit #1): anchor to the highest
+    # signed commitment already in R2 so a wiped local state can't
+    # be tricked into re-applying stale commitments.
+    try:
+        consumer.anchor_to_latest_commitment()
+    except Exception as exc:
+        console.print(
+            f"[yellow]validator policy_consumer: anchor failed ({exc}); "
+            "continuing without replay anchor[/yellow]"
+        )
 
     def _hook(*, ledger_window: int) -> None:
         try:

@@ -52,7 +52,14 @@ COPYCAT_INTERVAL_THRESHOLD: float = 0.03
 COPYCAT_INTERVAL_LENGTH: int = 12
 COPYCAT_GATE_DURATION_WINDOWS: int = 12
 
-MESH_STAKE_CAP_FRACTION: float = 0.10
+# Tightened 2026-04-29 from 0.10 to 0.05 per the pre-cutover security
+# audit. Rationale: at 0.10, 10 sybil validators each capped at 10%
+# could control 100% of the stake-weighted median, defeating the cap.
+# At 0.05, the same attacker needs 20 capped validators — meaningfully
+# harder to assemble. The honest mesh fits under the new cap with
+# margin (4 validators × 25% raw stake → each capped at 5%, full
+# participation preserved).
+MESH_STAKE_CAP_FRACTION: float = 0.05
 MESH_MIN_QUORUM_STAKE_FRACTION: float = 0.50
 MESH_OUTLIER_THRESHOLD: float = 0.25
 MESH_OUTLIER_RATE_GATE: float = 0.05
