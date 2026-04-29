@@ -192,7 +192,7 @@ Per `docs/mainnet-cutover-checklist.md` and
 `feedback_autonomous_mainnet.md`:
 
 - No multi-sig signer ceremony — not gating.
-- No external stakeholder coordination (OTF, Jake, etc.) — not gating.
+- No external stakeholder coordination — not gating.
 - No subnet-ownership / conviction-style delegation — not gating; the
   canonical reference implementations run on mainnet as a normal
   operator deployment first; ownership comes when it comes.
@@ -206,6 +206,33 @@ Per `docs/mainnet-cutover-checklist.md` and
   growth activity, not a pre-launch readiness requirement.
 
 ---
+
+## Pre-cutover security audit
+
+A pre-production security audit ran on 2026-04-29. The full report
+lives off-repo in `private/reliquary-plan/audit/security-2026-04-29/`
+(operator-only). Public-repo summary:
+
+- **Secrets / tokens / wallets:** clean across all three repos and
+  their full git history.
+- **Personal info / real names:** clean in current files; old commit
+  metadata retained (`0xShonen` author tag) by policy.
+- **Public-rule violations found + fixed in this cycle:** `OTF` /
+  `Jake` / `Romain13190`-with-capital-R / specific Targon pod
+  hostnames have been redacted from the public repos.
+- **Protocol exploits:** one finding (sybil + stake-majority trainer
+  poisoning) warrants a defense-in-depth gate before mainnet — the
+  recommended fix is `min_distinct_miners_per_assembled_group ≥ 2`
+  in the trainer (~30 LOC). Other findings (sketch tolerance gaming,
+  zone-σ gaming, stake-cap median manipulation, replay on validator
+  state loss, HF Hub trust, resume-from poisoning) are MEDIUM or
+  LOW and are queued post-cutover hardening — none gate the
+  cutover trigger directly.
+- **Bug audit:** one HIGH (the cutover-script silent-failure
+  diagnose-config gap, already fixed and captured in
+  [`docs/cutover-dry-run-2026-04-29.md`](cutover-dry-run-2026-04-29.md)),
+  several MEDIUM (asyncio.run from sync interface, type-hint laxness
+  on bridge payloads, file-handle leaks). All non-blocking.
 
 ## Operator decision
 

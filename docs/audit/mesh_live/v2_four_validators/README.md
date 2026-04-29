@@ -6,9 +6,9 @@ Second-generation mesh-live integration run, extending the initial 3-validator a
 
 | Validator | Host | GPU | Stake | Scenario |
 |---|---|---|---|---|
-| mesh-A | `wrk-mnmhkheic6r7` (dev server) | RTX PRO 6000 Blackwell | 40.0 | honest |
-| mesh-B | `wrk-j8nq3c7xn81v` (staging1) | RTX PRO 6000 Blackwell | 35.0 | honest |
-| mesh-C | `wrk-nyfmqa78r5ld` (staging2) | RTX PRO 6000 Blackwell | 15.0 | honest |
+| mesh-A | dev server (rtx6000b alias) | RTX PRO 6000 Blackwell | 40.0 | honest |
+| mesh-B | staging1                    | RTX PRO 6000 Blackwell | 35.0 | honest |
+| mesh-C | staging2                    | RTX PRO 6000 Blackwell | 15.0 | honest |
 | mesh-M | local (simulated) | — | 10.0 | malicious (rejects + emits far-from-median scores) |
 
 Window id: `88888`. Each validator produces 64 completion verdicts → 256 total verdicts across 4 validators.

@@ -17,7 +17,7 @@ Why MATH specifically:
     which is exactly where GRPO pulls gradient signal.
 
 Licensing:
-  - Romain13190/reliquary is MIT (same license as this repo).
+  - romain13190/reliquary is MIT (same license as this repo).
   - Origin of the extract/normalize logic: Hendrycks et al., "Measuring
     Mathematical Problem Solving" (MATH dataset), NeurIPS 2021.
   - HF mirror: ``qwedsacf/competition_math`` (the original

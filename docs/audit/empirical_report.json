@@ -1,6 +1,6 @@
 {
   "timestamp": "2026-04-17T06:14:48Z",
-  "host": "wrk-mnmhkheic6r7-c99c9fcdc-l4xlq",
+  "host": "rtx6000b",
   "torch_version": "2.11.0+cu130",
   "cuda_available": true,
   "hidden_dim": 256,

@@ -1,7 +1,7 @@
 # Cutover dry-run capture — 2026-04-29
 
 **Closes:** gate F-1 of `docs/mainnet-cutover-checklist.md` ("`deploy/apply-mainnet-sn81-profile.sh` runs cleanly with `ALLOW_MAINNET=1` against a local subtensor or dry-run env, verifies `diagnose-config` output, and the resulting service starts publishing weights without error").
-**Host:** `staging1rtx6000` (`wrk-j8nq3c7xn81v-78f5546865-gkvxn`)
+**Host:** `staging1rtx6000`
 **Date (UTC):** 2026-04-29T06:32:26Z
 **Operator:** autonomous run
 
@@ -68,7 +68,7 @@ All five pass. Gate F-1 closes green.
 ```
 ################################################################
 # Reliquary cutover dry-run capture
-# host:     wrk-j8nq3c7xn81v-78f5546865-gkvxn
+# host:     staging1rtx6000 (Targon pod, alias only — full pod ID redacted)
 # date:     2026-04-29T06:32:26Z
 # script:   deploy/apply-mainnet-sn81-profile.sh
 # env file: /tmp/sn81-dryrun.env (testnet target — NOT finney)

@@ -64,7 +64,7 @@ class MiningEngine:
         the dual-engine vLLM path (which already batches server-side).
 
         Expected speedup on H100-class GPUs: 5-7× vs serial, based on
-        upstream observations (Romain13190/reliquary@f7510fb).
+        upstream observations (romain13190/reliquary@f7510fb).
         """
         if num_samples == 1 or (
             str(self.cfg["miner_mode"]) == "dual_engine" and self.cfg.get("vllm_base_url")

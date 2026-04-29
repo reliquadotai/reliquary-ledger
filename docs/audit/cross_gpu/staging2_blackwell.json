@@ -1,6 +1,6 @@
 {
   "timestamp": "2026-04-17T13:27:26Z",
-  "host": "wrk-nyfmqa78r5ld-994db9b-stnnz",
+  "host": "staging2",
   "torch_version": "2.11.0+cu130",
   "cuda_available": true,
   "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",

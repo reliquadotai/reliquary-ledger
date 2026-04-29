@@ -1,6 +1,6 @@
 {
   "timestamp": "2026-04-17T13:40:40Z",
-  "host": "wrk-1yd80wogo5xd-689dbf778c-8zxt9",
+  "host": "staging3h100",
   "torch_version": "2.5.1+cu124",
   "cuda_available": true,
   "gpu_name": "NVIDIA H100 80GB HBM3",

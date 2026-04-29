@@ -6,7 +6,7 @@
 #   deploy-staging-validator.sh <ssh_user_host> <hotkey_name>
 #
 # Example:
-#   deploy-staging-validator.sh wrk-abc123@ssh.deployments.targon.com staging1
+#   deploy-staging-validator.sh <YOUR_TARGON_USER>@ssh.deployments.targon.com staging1
 #
 # Expectations (operator-managed before running this):
 #   - $HOME/.bittensor/wallets/reliquary-validator/coldkeypub.txt exists

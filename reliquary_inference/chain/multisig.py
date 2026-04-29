@@ -1,18 +1,18 @@
-"""Multi-sig coldkey drill — plan-only scaffolding for the OTF conviction flow.
+"""Multi-sig coldkey drill — plan-only scaffolding for the
+subnet-ownership-acceptance flow.
 
 Produces the command sequence an operator runs to exercise a
-threshold-signature proposal (e.g. accepting subnet ownership on SN81,
+threshold-signature proposal (e.g. accepting subnet ownership,
 updating the subnet-owner hotkey, rotating a validator coldkey) against a
 Bittensor testnet multi-sig coldkey. No live chain calls are issued from
 this module; everything is a plan the operator executes via ``btcli``.
 
-Intent: the first time a 3-of-5 multi-sig owner-claim transaction goes
-live should not be a production event. This module lets the team dry-run
-the exact flow, including per-signer subcommands, expected block
-confirmation windows, and the status transitions of a proposal.
+Intent: the first time a multi-sig owner-claim transaction goes
+live should not be a production event. This module lets the operator
+dry-run the exact flow, including per-signer subcommands, expected
+block confirmation windows, and the status transitions of a proposal.
 
-Spec reference: ``01_TIER1_PRD.md`` Epic 5 chain safety + ``00_STRATEGY.md``
-multi-sig coldkey policy.
+Spec reference: internal chain-safety plan (off-repo).
 """
 
 from __future__ import annotations
