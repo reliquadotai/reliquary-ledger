@@ -120,8 +120,8 @@ class Chain:
             if self._sub is not None:
                 try:
                     self._sub.substrate.close()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logging.debug("substrate close failed (ignored): %s", exc)
         finally:
             self._sub = None
 
@@ -383,8 +383,8 @@ def acquire_lock() -> None:
 def release_lock() -> None:
     try:
         LOCK_FILE.unlink(missing_ok=True)
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.debug("lock-file unlink failed (ignored): %s", exc)
 
 
 def on_signal(signum, _frame):
