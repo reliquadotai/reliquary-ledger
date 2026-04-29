@@ -534,6 +534,103 @@ def build_audit_index_command(
         console.print(result["published"])
 
 
+@app.command("diagnose-config")
+def diagnose_config_command() -> None:
+    """Print + validate the active environment.
+
+    Used by ``deploy/apply-mainnet-sn81-profile.sh`` as a pre-flight
+    check after sourcing the operator's env file. Emits a structured
+    summary of the resolved config and an explicit PASS/FAIL line per
+    required-field check; exits non-zero if any required field is
+    missing or any sanity check fails so a stuck cutover script
+    propagates the error instead of silently continuing.
+    """
+    import os as _os
+    import pathlib as _pathlib
+
+    cfg = _cfg()
+    network = str(cfg.get("network", ""))
+    netuid = int(cfg.get("netuid") or 0)
+    chain_endpoint = str(cfg.get("chain_endpoint", ""))
+    model_ref = str(cfg.get("model_ref", ""))
+    storage_backend = str(cfg.get("storage_backend", ""))
+    miner_id = str(cfg.get("miner_id", ""))
+    wallet_name = str(cfg.get("wallet_name", ""))
+    hotkey_name = str(cfg.get("hotkey_name", ""))
+    wallet_path = _pathlib.Path(_os.path.expanduser(str(cfg.get("wallet_path", ""))))
+    signature_scheme = str(cfg.get("signature_scheme", ""))
+
+    # Mainnet hint: finney + netuid 81 means the operator is pointed at the
+    # production subnet. Surface this loudly so an operator who forgot to
+    # swap a value sees it before launching services.
+    is_mainnet_target = network == "finney" and netuid == 81
+
+    console.print("[bold]reliquary-inference diagnose-config[/bold]")
+    console.print(f"  network         : {network}")
+    console.print(f"  netuid          : {netuid}")
+    console.print(f"  chain_endpoint  : {chain_endpoint or '<unset>'}")
+    console.print(f"  model_ref       : {model_ref or '<unset>'}")
+    console.print(f"  storage_backend : {storage_backend or '<unset>'}")
+    console.print(f"  miner_id        : {miner_id or '<unset>'}")
+    console.print(f"  wallet_name     : {wallet_name}")
+    console.print(f"  hotkey_name     : {hotkey_name}")
+    console.print(f"  wallet_path     : {wallet_path}")
+    console.print(f"  signature_scheme: {signature_scheme}")
+    console.print(
+        f"  target_class    : {'MAINNET (finney/SN81)' if is_mainnet_target else 'non-mainnet'}"
+    )
+
+    failures: list[str] = []
+
+    def _check(label: str, ok: bool, detail: str = "") -> None:
+        marker = "PASS" if ok else "FAIL"
+        line = f"  [{marker}] {label}"
+        if detail:
+            line += f" — {detail}"
+        console.print(line)
+        if not ok:
+            failures.append(label)
+
+    _check("network is set", bool(network))
+    _check("netuid is set + non-zero", netuid > 0, f"netuid={netuid}")
+    _check("chain_endpoint is set", bool(chain_endpoint))
+    _check("model_ref is set", bool(model_ref))
+    _check("storage_backend is set", bool(storage_backend))
+    _check("wallet_path exists", wallet_path.exists(), str(wallet_path))
+
+    # Storage-backend-specific required fields. We don't dial anything;
+    # we just check that the operator has filled the env values needed
+    # for the chosen backend so a downstream R2 call doesn't 4xx.
+    if storage_backend in {"r2", "r2_rest"}:
+        bucket = str(cfg.get("r2_bucket", "") or cfg.get("r2_rest_bucket", ""))
+        _check("r2_bucket is set", bool(bucket), bucket or "<unset>")
+        if storage_backend == "r2_rest":
+            r2_account = str(cfg.get("r2_rest_account_id", ""))
+            r2_token = str(cfg.get("r2_rest_cf_api_token", ""))
+            _check("r2_rest_account_id is set", bool(r2_account))
+            _check("r2_rest_cf_api_token is set", bool(r2_token))
+        else:
+            r2_access = str(cfg.get("r2_access_key_id", ""))
+            r2_secret = str(cfg.get("r2_secret_access_key", ""))
+            _check("r2_access_key_id is set", bool(r2_access))
+            _check("r2_secret_access_key is set", bool(r2_secret))
+
+    # Hotkey wallet file check: bittensor stores hotkeys under
+    # <wallet_path>/<wallet_name>/hotkeys/<hotkey_name>.
+    hotkey_file = wallet_path / wallet_name / "hotkeys" / hotkey_name
+    if wallet_path.exists():
+        _check(
+            "hotkey file exists",
+            hotkey_file.exists(),
+            str(hotkey_file),
+        )
+
+    if failures:
+        console.print(f"[red]diagnose-config FAIL — {len(failures)} check(s) failed[/red]")
+        raise typer.Exit(code=1)
+    console.print("[green]diagnose-config OK[/green]")
+
+
 @app.command("status")
 def status_command(
     as_json: Annotated[bool, typer.Option("--json")] = False,

@@ -74,7 +74,7 @@ publishing weights without them.
 
 | item | status | note |
 |---|---|---|
-| `deploy/apply-mainnet-sn81-profile.sh` runs cleanly with `ALLOW_MAINNET=1` against a local subtensor or dry-run env | partial | dry-run path exercised; full local-subtensor rehearsal not yet recorded as a capture document |
+| `deploy/apply-mainnet-sn81-profile.sh` runs cleanly with `ALLOW_MAINNET=1` against a local subtensor or dry-run env | **green** | recorded end-to-end on staging1 2026-04-29T06:32Z, all 5 tests pass with expected exit codes (refusal/missing-env/full-green/standalone/failure-surfacing). Capture committed at `docs/cutover-dry-run-2026-04-29.md`. The dry-run also surfaced + fixed a real bug — the script's `python -m reliquary_inference.cli diagnose-config || true` pre-flight was silently broken because `python -m` doesn't invoke the typer app and the `|| true` masked the failure. Fix: added a real `diagnose-config` typer command that validates every required-by-backend field with PASS/FAIL semantics, and rewrote the script to invoke the venv entrypoint directly with proper exit-code propagation. |
 | `docs/runbook-rollback.md` procedure rehearsed | partial | runbook authored; in-process rehearsal capture pending |
 | One operator has walked through the runbook end-to-end on a non-production box | partial | self-walkthrough completed today; no second operator rehearsal recorded |
 

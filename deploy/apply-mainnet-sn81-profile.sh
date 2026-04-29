@@ -29,7 +29,20 @@ set -a
 source "$ENV_FILE"
 set +a
 
-python3 -m reliquary_inference.cli diagnose-config || true
+# Pre-flight: run diagnose-config and propagate the exit code. The
+# operator wants the script to abort if the env file is missing
+# required fields; the previous version swallowed failures with
+# `|| true` and printed a misleading "profile applied" line even when
+# config validation tripped. Use the entrypoint binary so we don't
+# rely on `python -m` semantics (the typer app is wired via
+# [project.scripts] in pyproject.toml, not as a __main__ block).
+if command -v reliquary-inference >/dev/null 2>&1; then
+  reliquary-inference diagnose-config
+else
+  echo "reliquary-inference entrypoint not found in PATH; aborting" >&2
+  echo "ensure the venv (e.g. /opt/reliquary-venv) is activated before re-running" >&2
+  exit 3
+fi
 
 echo "profile applied in current shell; launch services with this env active:"
 echo "  systemctl --user start reliquary-ledger-miner-mainnet"
