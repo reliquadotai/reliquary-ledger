@@ -17,10 +17,12 @@ from pathlib import Path
 import pytest
 
 from reliquary_inference.validator.resume import (
+    ChecksumMismatchError,
     InvalidResumeSourceError,
     PathSource,
     ShaSource,
     apply_resume_from,
+    compute_resume_checksum,
     parse_resume_source,
     resolve_resume_source,
 )
@@ -212,3 +214,102 @@ def test_apply_resume_from_propagates_missing_path_error(tmp_path: Path) -> None
         apply_resume_from(cfg, f"path:{missing}")
     # cfg.model_ref should be untouched on failure
     assert cfg["model_ref"] == "Qwen/Qwen3-4B-Instruct"
+
+
+# ────────  --checksum-expected (audit finding #11)  ────────
+
+
+def _make_snapshot(parent: Path, payload: bytes = b"\x00\x01\x02\x03") -> Path:
+    """Build a fake snapshot dir with a single model.safetensors file."""
+    d = parent / "snap"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "model.safetensors").write_bytes(payload)
+    return d
+
+
+def test_compute_resume_checksum_returns_empty_when_no_safetensors(
+    tmp_path: Path,
+) -> None:
+    d = tmp_path / "empty-snap"
+    d.mkdir()
+    (d / "config.json").write_text("{}")
+    assert compute_resume_checksum(d) == ""
+
+
+def test_compute_resume_checksum_deterministic_for_same_payload(
+    tmp_path: Path,
+) -> None:
+    d1 = _make_snapshot(tmp_path / "a", payload=b"abc123")
+    d2 = _make_snapshot(tmp_path / "b", payload=b"abc123")
+    assert compute_resume_checksum(d1) == compute_resume_checksum(d2)
+
+
+def test_compute_resume_checksum_changes_on_payload_change(
+    tmp_path: Path,
+) -> None:
+    d1 = _make_snapshot(tmp_path / "a", payload=b"abc123")
+    d2 = _make_snapshot(tmp_path / "b", payload=b"abc124")
+    assert compute_resume_checksum(d1) != compute_resume_checksum(d2)
+
+
+def test_apply_resume_from_accepts_correct_checksum(tmp_path: Path) -> None:
+    snap = _make_snapshot(tmp_path)
+    expected = compute_resume_checksum(snap)
+    cfg = {"model_ref": "Qwen/Qwen3-4B-Instruct"}
+    apply_resume_from(cfg, f"path:{snap}", expected_checksum=expected)
+    assert cfg["model_ref"] == str(snap)
+
+
+def test_apply_resume_from_accepts_sha256_prefixed_checksum(
+    tmp_path: Path,
+) -> None:
+    snap = _make_snapshot(tmp_path)
+    expected = compute_resume_checksum(snap)
+    cfg = {"model_ref": "Qwen/Qwen3-4B-Instruct"}
+    apply_resume_from(
+        cfg, f"path:{snap}", expected_checksum=f"sha256:{expected}"
+    )
+    assert cfg["model_ref"] == str(snap)
+
+
+def test_apply_resume_from_rejects_mismatched_checksum(tmp_path: Path) -> None:
+    snap = _make_snapshot(tmp_path, payload=b"real-weights")
+    cfg = {"model_ref": "Qwen/Qwen3-4B-Instruct"}
+    bogus = "0" * 64
+    with pytest.raises(ChecksumMismatchError, match="checksum mismatch"):
+        apply_resume_from(cfg, f"path:{snap}", expected_checksum=bogus)
+    # cfg should NOT be mutated when verification fails
+    assert cfg["model_ref"] == "Qwen/Qwen3-4B-Instruct"
+
+
+def test_apply_resume_from_rejects_empty_expected_checksum(
+    tmp_path: Path,
+) -> None:
+    snap = _make_snapshot(tmp_path)
+    cfg = {"model_ref": "Qwen/Qwen3-4B-Instruct"}
+    with pytest.raises(ChecksumMismatchError, match="empty"):
+        apply_resume_from(cfg, f"path:{snap}", expected_checksum="")
+    assert cfg["model_ref"] == "Qwen/Qwen3-4B-Instruct"
+
+
+def test_apply_resume_from_rejects_snapshot_with_no_safetensors(
+    tmp_path: Path,
+) -> None:
+    d = tmp_path / "empty"
+    d.mkdir()
+    (d / "config.json").write_text("{}")
+    cfg = {"model_ref": "Qwen/Qwen3-4B-Instruct"}
+    with pytest.raises(ChecksumMismatchError, match="no .safetensors files"):
+        apply_resume_from(cfg, f"path:{d}", expected_checksum="0" * 64)
+    assert cfg["model_ref"] == "Qwen/Qwen3-4B-Instruct"
+
+
+def test_apply_resume_from_no_checksum_skips_verification(
+    tmp_path: Path,
+) -> None:
+    """Backwards compat: legacy callers without --checksum-expected
+    skip the new check entirely."""
+    snap = _make_snapshot(tmp_path)
+    cfg = {"model_ref": "Qwen/Qwen3-4B-Instruct"}
+    apply_resume_from(cfg, f"path:{snap}")  # no expected_checksum
+    assert cfg["model_ref"] == str(snap)

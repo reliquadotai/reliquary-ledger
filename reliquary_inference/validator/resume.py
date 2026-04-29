@@ -149,11 +149,67 @@ def resolve_resume_source(
     return source.path
 
 
+class ChecksumMismatchError(Exception):
+    """Raised when the resolved snapshot's checksum does not match the
+    operator-supplied ``--checksum-expected`` value.
+
+    The audit (#11) recommends comparing the resumed weights against
+    an on-chain registry (e.g. an attestation merkle_root). When an
+    operator passes ``--checksum-expected sha256:<hex>``, the resume
+    flow computes a canonical digest over the resolved model
+    directory and refuses to advance unless the digest matches.
+    """
+
+
+def compute_resume_checksum(local_path: Path) -> str:
+    """Compute a canonical sha256 over the resolved model snapshot.
+
+    Algorithm:
+      1. Enumerate all ``*.safetensors`` files under ``local_path``,
+         sorted by relative path for determinism.
+      2. For each file, append ``"<rel_path>:<sha256_of_bytes>\\n"``
+         to a canonical string.
+      3. Final digest = ``sha256(canonical_string).hexdigest()``.
+
+    No safetensors files → ``""`` (caller should treat as a hard
+    error since there's nothing to verify).
+    """
+    import hashlib
+
+    base = Path(local_path)
+    files = sorted(base.rglob("*.safetensors"))
+    if not files:
+        return ""
+    canonical_lines: list[str] = []
+    for f in files:
+        h = hashlib.sha256()
+        with open(f, "rb") as fh:
+            for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+                h.update(chunk)
+        rel = f.relative_to(base).as_posix()
+        canonical_lines.append(f"{rel}:{h.hexdigest()}")
+    canonical = "\n".join(canonical_lines)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _normalise_expected_checksum(raw: str) -> str:
+    """Strip an optional ``sha256:`` prefix and lowercase the hex.
+
+    Operator may pass either ``--checksum-expected sha256:abc…`` or
+    just the hex; both forms accepted.
+    """
+    cleaned = raw.strip().lower()
+    if cleaned.startswith("sha256:"):
+        cleaned = cleaned[len("sha256:") :]
+    return cleaned
+
+
 def apply_resume_from(
     cfg: dict,
     raw_source: str,
     *,
     snapshot_download: _SnapshotDownloader | None = None,
+    expected_checksum: str | None = None,
 ) -> Path:
     """Parse + resolve a ``--resume-from`` source and override ``cfg["model_ref"]``.
 
@@ -161,6 +217,12 @@ def apply_resume_from(
     can log or further inspect it. Raises ``InvalidResumeSourceError`` if
     the source is malformed; raises ``RuntimeError`` if a sha source needs
     huggingface_hub but it isn't installed.
+
+    When ``expected_checksum`` is supplied, the resolved snapshot is
+    digested via :func:`compute_resume_checksum` and compared; on
+    mismatch raises :class:`ChecksumMismatchError` BEFORE the cfg
+    mutation lands (so a poisoned snapshot can't be silently
+    activated). Closes audit finding #11 (``--resume-from`` poisoning).
     """
     source = parse_resume_source(raw_source)
     repo_id = str(cfg.get("model_ref", "")).strip()
@@ -169,16 +231,36 @@ def apply_resume_from(
         repo_id=repo_id,
         snapshot_download=snapshot_download,
     )
+    if expected_checksum is not None:
+        expected_hex = _normalise_expected_checksum(expected_checksum)
+        if not expected_hex:
+            raise ChecksumMismatchError(
+                "expected_checksum is empty; pass sha256:<hex> or <hex>"
+            )
+        actual_hex = compute_resume_checksum(local_path)
+        if not actual_hex:
+            raise ChecksumMismatchError(
+                f"resume snapshot at {local_path} contains no .safetensors "
+                "files — refusing to apply unverified weights"
+            )
+        if actual_hex != expected_hex:
+            raise ChecksumMismatchError(
+                f"checksum mismatch on resume snapshot at {local_path}: "
+                f"expected sha256:{expected_hex}, got sha256:{actual_hex}. "
+                "Refusing to swap to potentially-poisoned weights."
+            )
     cfg["model_ref"] = str(local_path)
     return local_path
 
 
 __all__ = [
+    "ChecksumMismatchError",
     "InvalidResumeSourceError",
     "PathSource",
     "ResumeSource",
     "ShaSource",
     "apply_resume_from",
+    "compute_resume_checksum",
     "parse_resume_source",
     "resolve_resume_source",
 ]

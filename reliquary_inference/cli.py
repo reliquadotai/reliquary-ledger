@@ -73,18 +73,31 @@ def _make_mining_engine(cfg: dict):
     return MiningEngine(cfg=cfg)
 
 
-def _apply_resume_from(cfg: dict, raw_source: str) -> None:
+def _apply_resume_from(
+    cfg: dict,
+    raw_source: str,
+    *,
+    expected_checksum: str | None = None,
+) -> None:
     """Apply a ``--resume-from`` source string to ``cfg`` and log the change.
 
     Thin CLI-side wrapper around
     ``reliquary_inference.validator.resume.apply_resume_from`` so the bulk
     of the resolve logic is testable without pulling in typer/rich.
+
+    When ``expected_checksum`` is supplied, the resolved snapshot is
+    digested and compared before ``cfg["model_ref"]`` is mutated;
+    refuses to advance on mismatch (audit finding #11).
     """
     from .validator.resume import apply_resume_from
 
-    apply_resume_from(cfg, raw_source)
+    apply_resume_from(cfg, raw_source, expected_checksum=expected_checksum)
+    integrity = (
+        f" checksum=verified" if expected_checksum else " checksum=unverified"
+    )
     console.print(
-        f"[cyan]--resume-from {raw_source} → model_ref={cfg['model_ref']}[/cyan]"
+        f"[cyan]--resume-from {raw_source} → model_ref={cfg['model_ref']}"
+        f"{integrity}[/cyan]"
     )
 
 
@@ -700,10 +713,24 @@ def run_miner(
             ),
         ),
     ] = None,
+    checksum_expected: Annotated[
+        str | None,
+        typer.Option(
+            "--checksum-expected",
+            envvar="RELIQUARY_INFERENCE_RESUME_CHECKSUM_EXPECTED",
+            help=(
+                "Optional: sha256 (or sha256:<hex>) the resumed snapshot "
+                "must match. The digest is computed canonically over the "
+                "resolved directory's *.safetensors files. Closes audit "
+                "finding #11 (--resume-from poisoning) — refuses to apply "
+                "weights whose digest doesn't match."
+            ),
+        ),
+    ] = None,
 ) -> None:
     cfg = _cfg()
     if resume_from is not None:
-        _apply_resume_from(cfg, resume_from)
+        _apply_resume_from(cfg, resume_from, expected_checksum=checksum_expected)
     interval = int(cfg["poll_interval"]) if poll_interval is None else poll_interval
     registry = _registry(cfg)
     chain = _chain(cfg)
@@ -914,10 +941,23 @@ def run_validator(
             ),
         ),
     ] = None,
+    checksum_expected: Annotated[
+        str | None,
+        typer.Option(
+            "--checksum-expected",
+            envvar="RELIQUARY_INFERENCE_RESUME_CHECKSUM_EXPECTED",
+            help=(
+                "Optional: sha256 (or sha256:<hex>) the resumed snapshot "
+                "must match. Closes audit finding #11 (--resume-from "
+                "poisoning) — refuses to apply weights whose digest "
+                "doesn't match."
+            ),
+        ),
+    ] = None,
 ) -> None:
     cfg = _cfg()
     if resume_from is not None:
-        _apply_resume_from(cfg, resume_from)
+        _apply_resume_from(cfg, resume_from, expected_checksum=checksum_expected)
     interval = int(cfg["poll_interval"]) if poll_interval is None else poll_interval
     registry = _registry(cfg)
     chain = _chain(cfg)
