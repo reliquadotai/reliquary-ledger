@@ -1,0 +1,80 @@
+# Reliquary Ledger validator-LITE deployment.
+#
+# CPU-only validator that runs the 6 CPU stages of the 9-stage
+# verifier independently and borrows the 3 GPU stages from a quorum
+# of full validators' published verdicts. Watchtower auto-updates
+# the image when a new tag lands at the registry.
+#
+# Operator setup:
+#
+#   1. Have a registered hotkey on netuid 462 (testnet) or 81 (mainnet).
+#      btcli wallet new-hotkey --wallet-name reliquary --hotkey v1
+#      btcli subnet register --wallet-name reliquary --hotkey v1 \
+#        --netuid 462 --subtensor.network test
+#
+#   2. Bring up the lite validator:
+#      WALLET_NAME=reliquary HOTKEY_NAME=v1 \
+#        docker compose -f docker-compose.validator-lite.yml up -d
+#
+# That's it. No env file. No GPU. No R2 credentials. Watchtower
+# pulls fresh images from ghcr automatically; the image's hardcoded
+# profile keeps your validator pointed at the right netuid + chain
+# endpoint without operator action.
+#
+# To switch to mainnet (after we cut over):
+#   - add `RELIQUARY_INFERENCE_NETWORK=finney` and
+#     `RELIQUARY_INFERENCE_NETUID=81` and
+#     `RELIQUARY_INFERENCE_CHAIN_ENDPOINT=wss://entrypoint-finney.opentensor.ai:443`
+#     to the `environment:` section below; restart.
+
+services:
+  reliquary-validator-lite:
+    image: ghcr.io/reliquadotai/reliquary-validator-lite:latest
+    container_name: reliquary-validator-lite
+    restart: unless-stopped
+    environment:
+      # Operator-provided wallet identity. These two are the ONLY
+      # required env vars for a testnet operator.
+      WALLET_NAME: ${WALLET_NAME:?set WALLET_NAME (e.g. reliquary)}
+      HOTKEY_NAME: ${HOTKEY_NAME:?set HOTKEY_NAME (e.g. v1)}
+      # Hardcoded operator profile lives in the image; nothing else
+      # to set unless overriding for mainnet (see header comment).
+    volumes:
+      # Mount the operator's wallet directory read-only.
+      - ${BT_WALLET_PATH:-${HOME}/.bittensor/wallets}:/wallets:ro
+      # Persistent state for verdict cache + cooldown map.
+      - reliquary-validator-lite-state:/opt/reliquary-state
+    ports:
+      # /healthz on 9180. Bind to 127.0.0.1 by default — operator can
+      # publish to the host network if they want monitoring.
+      - "127.0.0.1:9180:9180"
+      # Prometheus on 9108. Same comment.
+      - "127.0.0.1:9108:9108"
+    labels:
+      # Watchtower will auto-pull + restart this container when a new
+      # image is published at ghcr.io/reliquadotai/reliquary-validator-lite.
+      com.centurylinklabs.watchtower.enable: "true"
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: reliquary-watchtower
+    restart: unless-stopped
+    environment:
+      # Check for new images every 5 minutes.
+      WATCHTOWER_POLL_INTERVAL: "300"
+      # Only update containers that explicitly opt in via label.
+      WATCHTOWER_LABEL_ENABLE: "true"
+      # Clean up old images on update.
+      WATCHTOWER_CLEANUP: "true"
+      # Don't restart watchtower itself even if a new image lands.
+      WATCHTOWER_INCLUDE_RESTARTING: "false"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  reliquary-validator-lite-state:

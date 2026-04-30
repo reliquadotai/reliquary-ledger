@@ -126,6 +126,15 @@ def load_config() -> dict[str, object]:
         "vllm_base_url": _env_str("RELIQUARY_INFERENCE_VLLM_BASE_URL", ""),
         "miner_id": miner_id,
         "validator_id": _env_str("RELIQUARY_INFERENCE_VALIDATOR_ID", "local-validator"),
+        # Validator mode: "full" runs all 9 stages independently (canonical
+        # mainnet validator); "lite" runs the 6 CPU stages independently and
+        # borrows GPU stages (proof, logprob, distribution) from a quorum of
+        # full validators' published verdicts; "mirror" pure aggregator
+        # (mirrors mesh-aggregated weights, no own verdict). See
+        # ``validator/mode.py`` and ``validator/lite_verifier.py`` for the
+        # quorum-borrow logic and the spec.
+        "validator_mode": _env_str("RELIQUARY_INFERENCE_VALIDATOR_MODE", "full"),
+        "lite_quorum": _env_int("RELIQUARY_INFERENCE_LITE_QUORUM", 2),
         "miner_ss58": _env_str("RELIQUARY_INFERENCE_MINER_SS58", ""),
         "validator_ss58": _env_str("RELIQUARY_INFERENCE_VALIDATOR_SS58", ""),
         "signature_scheme": _env_str("RELIQUARY_INFERENCE_SIGNATURE_SCHEME", "local_hmac"),

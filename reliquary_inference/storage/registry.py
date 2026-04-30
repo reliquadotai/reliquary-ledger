@@ -131,6 +131,25 @@ class LocalRegistry(RegistryBase):
     def read_verdict_bundle(self, ref: dict[str, Any]) -> list[dict[str, Any]]:
         return _gunzip_json_bytes(Path(ref["path"]).read_bytes())
 
+    def list_verdict_bundles(self, *, window_id: int) -> list[dict[str, Any]]:
+        """List per-validator verdict bundles published for the given
+        window. Used by lite validators to pull peer-published verdicts
+        for the GPU-stage quorum borrow."""
+        directory = self.artifact_root / "verdict_bundles" / f"window-{window_id:08d}"
+        if not directory.exists():
+            return []
+        refs = []
+        for path in sorted(directory.glob("*.json.gz")):
+            refs.append(
+                {
+                    "backend": "local",
+                    "path": str(path),
+                    "validator_id": path.name.removesuffix(".json.gz"),
+                    "uploaded_at": path.stat().st_mtime,
+                }
+            )
+        return refs
+
     def run_dir(self, run_id: str) -> Path:
         path = self.export_root / run_id
         path.mkdir(parents=True, exist_ok=True)
@@ -300,6 +319,15 @@ class ObjectRegistry(RegistryBase):
 
     def read_verdict_bundle(self, ref: dict[str, Any]) -> list[dict[str, Any]]:
         return _gunzip_json_bytes(self.store.get_bytes(ref["key"]))
+
+    def list_verdict_bundles(self, *, window_id: int) -> list[dict[str, Any]]:
+        """List per-validator verdict bundles published for the given
+        window. Used by lite validators to pull peer-published verdicts
+        for the GPU-stage quorum borrow."""
+        refs = self.store.list_prefix(f"verdict_bundles/window-{window_id:08d}")
+        for ref in refs:
+            ref["validator_id"] = Path(ref["key"]).name.removesuffix(".json.gz")
+        return refs
 
     def run_dir(self, run_id: str) -> Path:
         path = self.export_root / run_id

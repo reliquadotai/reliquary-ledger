@@ -437,10 +437,21 @@ def mine_window(
 def validate_window_command(
     window: Annotated[int | None, typer.Option("--window")] = None,
     source: Annotated[str | None, typer.Option("--source")] = None,
+    mode: Annotated[
+        str | None,
+        typer.Option(
+            "--mode",
+            envvar="RELIQUARY_INFERENCE_VALIDATOR_MODE",
+            help="full | lite | mirror — see validator/mode.py.",
+        ),
+    ] = None,
 ) -> None:
     cfg = _cfg()
     if source:
         cfg["task_source"] = source
+    if mode is not None:
+        from .validator.mode import normalise_mode
+        cfg["validator_mode"] = normalise_mode(mode)
     registry = _registry(cfg)
     chain = _chain(cfg)
     window_context = chain.get_window_context(cfg=cfg, window_id=window).as_dict()
@@ -954,10 +965,32 @@ def run_validator(
             ),
         ),
     ] = None,
+    mode: Annotated[
+        str | None,
+        typer.Option(
+            "--mode",
+            envvar="RELIQUARY_INFERENCE_VALIDATOR_MODE",
+            help=(
+                "Validator mode: 'full' (default, all 9 stages "
+                "independently — needs GPU), 'lite' (6 CPU stages "
+                "independently + GPU stages borrowed from a quorum of "
+                "full validators — no GPU required), 'mirror' (pure "
+                "weight aggregator). See validator/mode.py for the "
+                "full spec."
+            ),
+        ),
+    ] = None,
 ) -> None:
     cfg = _cfg()
     if resume_from is not None:
         _apply_resume_from(cfg, resume_from, expected_checksum=checksum_expected)
+    if mode is not None:
+        from .validator.mode import normalise_mode
+        cfg["validator_mode"] = normalise_mode(mode)
+        console.print(
+            f"[cyan]validator_mode={cfg['validator_mode']} "
+            f"(via --mode)[/cyan]"
+        )
     interval = int(cfg["poll_interval"]) if poll_interval is None else poll_interval
     registry = _registry(cfg)
     chain = _chain(cfg)

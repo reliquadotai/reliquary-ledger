@@ -1,0 +1,115 @@
+# syntax=docker/dockerfile:1.6
+# Reliquary Ledger validator-LITE image — CPU-only.
+#
+# Targets the operator-friction sweet spot: a validator that runs the
+# 6 CPU stages of the 9-stage verifier independently and BORROWS the
+# 3 GPU stages (proof, logprob, distribution) from a quorum of full
+# validators' published verdicts. No GPU. No flash-attn. ~200 MB.
+# Watchtower-friendly: hardcode every non-secret default in the image
+# so the operator only needs to mount their wallet.
+#
+# Build:
+#   docker build -f Dockerfile.validator-lite \
+#     -t ghcr.io/reliquadotai/reliquary-validator-lite:latest .
+#
+# Run (testnet 462):
+#   docker run -d --restart unless-stopped \
+#     -v $HOME/.bittensor/wallets:/wallets:ro \
+#     -e WALLET_NAME=reliquary -e HOTKEY_NAME=v1 \
+#     --label com.centurylinklabs.watchtower.enable=true \
+#     ghcr.io/reliquadotai/reliquary-validator-lite:latest
+#
+# Memory + storage footprint: ~200 MB image, 1 GB RAM at runtime,
+# 1 vCPU sufficient. Suitable for a $5/mo VPS.
+
+FROM python:3.12-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update -qq && apt-get install -y -qq \
+        git curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install reliquary-inference + the slim CPU-only deps. Skip torch
+# (huge, GPU-only path), skip flash-attn (GPU only), keep tokenizer
+# (we need transformers.AutoTokenizer + AutoConfig — KB-sized loads).
+WORKDIR /opt/reliquary-ledger
+COPY pyproject.toml /opt/reliquary-ledger/
+COPY reliquary_inference /opt/reliquary-ledger/reliquary_inference
+COPY README.md /opt/reliquary-ledger/
+
+# Core install. transformers gives us AutoTokenizer + AutoConfig
+# (no torch needed — they're config-only). bittensor for chain ops.
+# boto3 for R2.
+RUN pip install --upgrade pip wheel setuptools
+RUN pip install \
+        bittensor==9.12.1 \
+        'async-substrate-interface<2.0.0' \
+        scalecodec==1.2.12 \
+        boto3 \
+        requests \
+        rich \
+        typer \
+        fastapi \
+        uvicorn \
+        prometheus-client \
+        transformers==4.46.0 \
+        tokenizers==0.20.0
+# editable install of reliquary-inference itself
+RUN pip install --no-deps -e .
+
+# Hardcoded operator profile for testnet 462. The operator's only
+# inputs are WALLET_NAME / HOTKEY_NAME at run time — every other
+# config below is baked into the image. Watchtower image bumps
+# replace this profile atomically.
+ENV RELIQUARY_INFERENCE_NETWORK=test \
+    RELIQUARY_INFERENCE_NETUID=462 \
+    RELIQUARY_INFERENCE_CHAIN_ENDPOINT=wss://test.finney.opentensor.ai:443 \
+    RELIQUARY_INFERENCE_TASK_SOURCE=math \
+    RELIQUARY_INFERENCE_MODEL_REF=Qwen/Qwen2.5-3B-Instruct \
+    RELIQUARY_INFERENCE_DEVICE=cpu \
+    RELIQUARY_INFERENCE_LOAD_DTYPE=float32 \
+    RELIQUARY_INFERENCE_VALIDATOR_MODE=lite \
+    RELIQUARY_INFERENCE_LITE_QUORUM=2 \
+    RELIQUARY_INFERENCE_SIGNATURE_SCHEME=local_hmac \
+    RELIQUARY_INFERENCE_USE_DRAND=false \
+    RELIQUARY_INFERENCE_STORAGE_BACKEND=r2_rest \
+    RELIQUARY_INFERENCE_R2_ACCOUNT_ID=d5332aea7e3780d0f2391a4e4f6ddfbc \
+    RELIQUARY_INFERENCE_R2_BUCKET=reliquary \
+    RELIQUARY_INFERENCE_R2_PUBLIC_URL=https://pub-954f95c7d2f3478886c8a8ff7a4946e0.r2.dev \
+    RELIQUARY_INFERENCE_REQUIRE_FLASH_ATTENTION=0 \
+    RELIQUARY_INFERENCE_HEALTH_BIND=0.0.0.0 \
+    RELIQUARY_INFERENCE_HEALTH_PORT=9180 \
+    RELIQUARY_INFERENCE_METRICS_BIND=0.0.0.0 \
+    RELIQUARY_INFERENCE_METRICS_PORT=9108 \
+    RELIQUARY_INFERENCE_STATE_ROOT=/opt/reliquary-state \
+    RELIQUARY_INFERENCE_LOG_DIR=/opt/reliquary-state/logs \
+    BT_WALLET_PATH=/wallets \
+    BT_SUBTENSOR_NETWORK=test \
+    PYTHONPATH=/opt/reliquary-ledger
+
+RUN mkdir -p /opt/reliquary-state/logs /wallets
+
+# Mainnet operator overrides (commented; set via -e at run time):
+#   -e RELIQUARY_INFERENCE_NETWORK=finney \
+#   -e RELIQUARY_INFERENCE_NETUID=81 \
+#   -e RELIQUARY_INFERENCE_CHAIN_ENDPOINT=wss://entrypoint-finney.opentensor.ai:443 \
+#   -e BT_SUBTENSOR_NETWORK=finney
+
+EXPOSE 9108 9180
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=4 --start-period=60s \
+  CMD curl -fsS http://127.0.0.1:9180/healthz || exit 1
+
+# WALLET_NAME + HOTKEY_NAME come from -e at run time.
+# RELIQUARY_INFERENCE_R2_CF_API_TOKEN is OPTIONAL — lite validator
+# only needs read access to the public bucket (audit + verdict
+# bundles) which is fetched via the public URL; no R2 write access
+# required for lite mode. (The full validator path needs the token
+# to publish verdict bundles; lite borrows other validators' bundles
+# instead.)
+ENTRYPOINT ["reliquary-inference", "run-validator", "--mode", "lite"]

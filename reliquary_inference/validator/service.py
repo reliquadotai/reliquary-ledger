@@ -11,6 +11,17 @@ from .batched_verify import (
 )
 from .cooldown import DEFAULT_COOLDOWN_WINDOWS, CooldownMap, default_cooldown_path
 from .copycat import detect_index_copycats
+from .lite_verifier import (
+    index_peer_verdicts_by_completion,
+    verify_completion_lite,
+)
+from .mode import (
+    DEFAULT_LITE_QUORUM,
+    VALIDATOR_MODE_FULL,
+    VALIDATOR_MODE_LITE,
+    VALIDATOR_MODE_MIRROR,
+    normalise_mode,
+)
 from .verifier import verify_completion
 from .weights import compute_weights
 from .zone_filter import filter_groups, zone_summary
@@ -64,14 +75,67 @@ def validate_window(
         "reasoning_final_answer_count": 0,
         "per_task_source": {},
     }
+    # Validator-mode dispatch (full vs lite vs mirror). The full path
+    # below is unchanged; lite loads only the tokenizer + AutoConfig
+    # (no GPU) and fetches peer verdicts from R2 to borrow GPU-stage
+    # results from a quorum of full validators.
+    validator_mode = normalise_mode(str(cfg.get("validator_mode", VALIDATOR_MODE_FULL)))
+    lite_tokenizer = None
+    lite_model_stub = None
+    peer_verdicts_by_completion: dict[str, list[dict[str, Any]]] = {}
+    if validator_mode == VALIDATOR_MODE_LITE:
+        # Pull peer (full validator) verdicts for this window.
+        try:
+            peer_refs = registry.list_verdict_bundles(
+                window_id=int(window_context["window_id"])
+            )
+            peer_payloads: list[dict[str, Any]] = []
+            for ref in peer_refs:
+                try:
+                    bundle_verdicts = registry.read_verdict_bundle(ref)
+                except Exception:
+                    continue
+                for v in bundle_verdicts:
+                    p = v.get("payload") if isinstance(v.get("payload"), dict) else v
+                    if isinstance(p, dict):
+                        peer_payloads.append(p)
+            peer_verdicts_by_completion = index_peer_verdicts_by_completion(
+                peer_payloads
+            )
+        except Exception:
+            peer_verdicts_by_completion = {}
+        # Load tokenizer + AutoConfig only (no GPU).
+        try:
+            from transformers import AutoTokenizer
+            from .lite_verifier import _build_lite_model_stub
+            lite_tokenizer = AutoTokenizer.from_pretrained(
+                str(task_batch_artifact["payload"]["model_ref"])
+            )
+            lite_model_stub = _build_lite_model_stub(
+                str(task_batch_artifact["payload"]["model_ref"])
+            )
+        except Exception:
+            # Fail soft: lite validator without tokenizer/config will
+            # reject its CPU stages on first model.config access; that
+            # matches the operator-visible "broken setup" semantics
+            # rather than silently letting bad verdicts through.
+            lite_tokenizer = None
+            lite_model_stub = None
+
     # Batched proof verification: one forward pass per (miner, window)
     # group instead of per-completion. Mirrors the miner's batched
     # generate — essential for the validator to keep up with M=8 GRPO
     # groups. Feature-flag gated via cfg["batched_verify"] (default True).
     # Gracefully empty on any failure → per-completion ProofStage falls
     # back to its own forward.
+    # Lite mode skips this entire block — no GPU available, no batched
+    # forward to run.
     cached_hidden_states: dict[str, Any] = {}
-    if bool(cfg.get("batched_verify", True)) and all_completions:
+    if (
+        validator_mode == VALIDATOR_MODE_FULL
+        and bool(cfg.get("batched_verify", True))
+        and all_completions
+    ):
         try:
             from ..shared.modeling import load_model_bundle
             bundle = load_model_bundle(
@@ -103,13 +167,28 @@ def validate_window(
         rollout_key = (payload["task_id"], int(payload.get("sample_index", 0)))
         duplicate_task = rollout_key in seen_rollout_keys_by_miner[miner_id]
         seen_rollout_keys_by_miner[miner_id].add(rollout_key)
-        report = verify_completion(
-            cfg=cfg,
-            completion=completion,
-            task_batch=task_batch_artifact,
-            seen_nonces=seen_nonces,
-            cached_hidden_states=cached_hidden_states,
-        )
+        if validator_mode == VALIDATOR_MODE_LITE:
+            peer_verdicts = peer_verdicts_by_completion.get(
+                completion["artifact_id"], []
+            )
+            report = verify_completion_lite(
+                cfg=cfg,
+                completion=completion,
+                task_batch=task_batch_artifact,
+                seen_nonces=seen_nonces,
+                tokenizer=lite_tokenizer,
+                model_stub=lite_model_stub,
+                peer_full_verdicts_for_completion=peer_verdicts,
+                quorum=int(cfg.get("lite_quorum", DEFAULT_LITE_QUORUM)),
+            )
+        else:
+            report = verify_completion(
+                cfg=cfg,
+                completion=completion,
+                task_batch=task_batch_artifact,
+                seen_nonces=seen_nonces,
+                cached_hidden_states=cached_hidden_states,
+            )
         if duplicate_task:
             report["accepted"] = False
             report["soft_fail_reason"] = "duplicate_task_submission"
