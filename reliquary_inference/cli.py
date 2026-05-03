@@ -12,7 +12,10 @@ from .chain.adapter import BittensorChainAdapter, LocalChainAdapter
 from .config import load_config
 from .dataset.task_sources import build_task_source
 from .metrics import MetricsCache, serve_metrics
-from .miner.engine import MiningEngine
+# MiningEngine import is deferred to runtime so the validator-lite
+# image (CPU-only, no torch) can import this CLI module without
+# pulling the GPU stack. The miner-only code paths re-import
+# MiningEngine inside their function bodies.
 from .protocol.artifacts import make_artifact
 from .status import status_summary
 from .storage.registry import LocalRegistry, R2Registry, RestR2Registry
@@ -70,6 +73,10 @@ def _make_mining_engine(cfg: dict):
             "cooldown-aware + local σ gate)[/cyan]"
         )
         return make_optimized_mining_engine(cfg=cfg)
+    # Deferred import — keeps the validator-lite CPU-only image from
+    # pulling torch transitively at module-load time.
+    from .miner.engine import MiningEngine
+
     return MiningEngine(cfg=cfg)
 
 

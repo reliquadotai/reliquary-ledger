@@ -42,10 +42,12 @@ COPY pyproject.toml /opt/reliquary-ledger/
 COPY reliquary_inference /opt/reliquary-ledger/reliquary_inference
 COPY README.md /opt/reliquary-ledger/
 
-# Core install. transformers gives us AutoTokenizer + AutoConfig
-# (no torch needed — they're config-only). bittensor for chain ops.
-# boto3 for R2.
+# Core install. transformers + AutoTokenizer + AutoConfig still
+# transitively pull a torch install — but the lite image gets the
+# CPU-only torch wheel (~80 MB) instead of the full CUDA wheel
+# (~3 GB). No CUDA libs, no flash-attn, no GPU.
 RUN pip install --upgrade pip wheel setuptools
+RUN pip install --index-url https://download.pytorch.org/whl/cpu torch==2.7.0
 RUN pip install \
         bittensor==9.12.1 \
         'async-substrate-interface<2.0.0' \
