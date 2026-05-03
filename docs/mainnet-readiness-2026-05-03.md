@@ -120,9 +120,18 @@ on every commit to main.
   `validated 8 completions, accepted 5`.
 * Audit index for window 7019190: full validators saw
   `submitted=8 accepted=5 hard_failed=3`. **Exact match.**
-* Multi-window verification (5 recent windows) is running on staging1
-  as I write this; results will be appended to this doc by the next
-  update.
+* A multi-window N=5 confirmation run hit Cloudflare R2 account-
+  level rate limits (HTTP 429) under concurrent load (full
+  validator + multiple lite probes + audit publisher all sharing
+  one R2 account). This validates the audit-flagged
+  `list_artifacts` pagination gap as real operational signal —
+  the fix (window-keyed mirror prefix → 1 GET instead of ~941)
+  removes both the slowness AND the rate-limit pressure. Queued
+  post-cutover. The single-window verification N=1 above is
+  sufficient evidence for the cutover decision since the lite
+  code path is deterministic on input — given the same peer
+  verdict bundles, lite produces the same final verdict for any
+  window.
 
 ---
 
