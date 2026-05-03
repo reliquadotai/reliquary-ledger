@@ -257,14 +257,38 @@ class R2ObjectStore:
                 continuation_token = response.get("NextContinuationToken")
         return refs
 
+    def _run_async(self, coro):
+        """Run an awaitable from a sync context.
+
+        Naive ``asyncio.run`` deadlocks if invoked from inside a
+        running event loop (e.g. a future async caller). Probe for
+        an active loop and dispatch into a worker thread when one is
+        present so this method works from both sync and async
+        callers without changing the public sync interface. Closes
+        audit finding ``asyncio.run from sync interface`` (MEDIUM —
+        latent today; would deadlock the moment a caller becomes
+        async).
+        """
+        import concurrent.futures
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            # No running loop in this thread: original fast path.
+            return asyncio.run(coro)
+        # We're inside an event loop already. Run in a separate
+        # thread with its own loop so we don't reenter.
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            future = ex.submit(asyncio.run, coro)
+            return future.result()
+
     def put_bytes(self, key: str, data: bytes) -> dict[str, Any]:
-        return asyncio.run(self._put_bytes(key, data))
+        return self._run_async(self._put_bytes(key, data))
 
     def get_bytes(self, key: str) -> bytes:
-        return asyncio.run(self._get_bytes(key))
+        return self._run_async(self._get_bytes(key))
 
     def list_prefix(self, prefix: str) -> list[dict[str, Any]]:
-        return asyncio.run(self._list_prefix(prefix))
+        return self._run_async(self._list_prefix(prefix))
 
 
 class ObjectRegistry(RegistryBase):
