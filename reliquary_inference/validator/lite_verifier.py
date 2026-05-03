@@ -100,6 +100,7 @@ def verify_completion_lite(
     model_stub,
     peer_full_verdicts_for_completion: list[dict[str, Any]],
     quorum: int = DEFAULT_LITE_QUORUM,
+    enabled_stages: frozenset[str] | None = None,
 ) -> dict[str, Any]:
     """Lite-mode analog of :func:`verifier.verify_completion`.
 
@@ -146,9 +147,14 @@ def verify_completion_lite(
         signing_secret=cfg.get("signing_secret"),
     )
 
-    # Run only the 6 CPU stages. Hard-fail short-circuits as in full
-    # mode; the GPU stages are simply not in the enabled set.
-    cpu_policy = StagePolicy(enabled_stages=set(LITE_ENABLED_STAGES))
+    # Run only the enabled CPU stages. Hard-fail short-circuits as in
+    # full mode; the GPU stages are simply not in the enabled set.
+    # Lite mode passes ``LITE_ENABLED_STAGES`` (the 6 CPU stages);
+    # mirror mode passes an empty set, in which case no CPU
+    # verification is done at all and the GPU-stage borrow decides
+    # everything (mirror = pure aggregator).
+    stages_to_run = enabled_stages if enabled_stages is not None else LITE_ENABLED_STAGES
+    cpu_policy = StagePolicy(enabled_stages=set(stages_to_run))
     cpu_verdict = run_pipeline(default_stages(), context, policy=cpu_policy)
 
     if not cpu_verdict.accepted:

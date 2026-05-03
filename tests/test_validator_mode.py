@@ -253,3 +253,44 @@ def test_index_peer_verdicts_skips_entries_without_completion_id() -> None:
     verdicts = [{"payload": {"foo": "bar"}}]
     grouped = index_peer_verdicts_by_completion(verdicts)
     assert grouped == {}
+
+
+# ────────  mirror mode (degenerate lite, zero CPU stages)  ────────
+
+
+def test_mirror_mode_recognised_by_normalise() -> None:
+    assert normalise_mode("mirror") == VALIDATOR_MODE_MIRROR
+    assert normalise_mode(" MIRROR ") == VALIDATOR_MODE_MIRROR
+
+
+def test_mirror_pipeline_accepts_empty_enabled_stages() -> None:
+    """Verify the pipeline accepts an empty enabled_stages set (which
+    is how mirror mode disables all CPU verification). Without an
+    explicit test here, a future StagePolicy refactor could
+    accidentally introduce a "must enable at least one stage" check
+    and silently break mirror.
+    """
+    from reliquary_inference.validator.pipeline import (
+        StagePolicy,
+        default_stages,
+        run_pipeline,
+    )
+    from reliquary_inference.validator.validators.base import StageContext
+
+    # Empty completion / task_batch — pipeline should run zero stages
+    # and return accepted=True without touching either field.
+    ctx = StageContext(
+        completion={"payload": {"task_id": "t", "tokens": [], "commitments": [],
+                                "randomness": "00", "model_name": "x",
+                                "layer_index": 0, "proof_version": "v",
+                                "signature": "", "signature_scheme": "local_hmac",
+                                "task_source": "math", "sample_index": 0,
+                                "miner_id": "m", "producer_role": "miner"}},
+        task_batch={"payload": {"tasks": [], "model_ref": "x", "model_name": "x"}},
+        seen_nonces=set(),
+        model=None,
+        tokenizer=None,
+    )
+    verdict = run_pipeline(default_stages(), ctx, policy=StagePolicy(enabled_stages=set()))
+    assert verdict.accepted is True
+    assert verdict.stage_results == []

@@ -75,15 +75,20 @@ def validate_window(
         "reasoning_final_answer_count": 0,
         "per_task_source": {},
     }
-    # Validator-mode dispatch (full vs lite vs mirror). The full path
-    # below is unchanged; lite loads only the tokenizer + AutoConfig
-    # (no GPU) and fetches peer verdicts from R2 to borrow GPU-stage
-    # results from a quorum of full validators.
+    # Validator-mode dispatch (full vs lite vs mirror).
+    # * full   — unchanged below; runs all 9 stages, needs GPU.
+    # * lite   — runs the 6 CPU stages independently + borrows the 3
+    #            GPU stages from the quorum.
+    # * mirror — pure aggregator; runs zero CPU stages, takes the
+    #            quorum's GPU-stage verdict as the final verdict.
+    #            Even lower friction than lite for operators who just
+    #            want to mirror the mesh.
     validator_mode = normalise_mode(str(cfg.get("validator_mode", VALIDATOR_MODE_FULL)))
     lite_tokenizer = None
     lite_model_stub = None
     peer_verdicts_by_completion: dict[str, list[dict[str, Any]]] = {}
-    if validator_mode == VALIDATOR_MODE_LITE:
+    is_lite_or_mirror = validator_mode in (VALIDATOR_MODE_LITE, VALIDATOR_MODE_MIRROR)
+    if is_lite_or_mirror:
         # Pull peer (full validator) verdicts for this window.
         try:
             peer_refs = registry.list_verdict_bundles(
@@ -104,23 +109,26 @@ def validate_window(
             )
         except Exception:
             peer_verdicts_by_completion = {}
-        # Load tokenizer + AutoConfig only (no GPU).
-        try:
-            from transformers import AutoTokenizer
-            from .lite_verifier import _build_lite_model_stub
-            lite_tokenizer = AutoTokenizer.from_pretrained(
-                str(task_batch_artifact["payload"]["model_ref"])
-            )
-            lite_model_stub = _build_lite_model_stub(
-                str(task_batch_artifact["payload"]["model_ref"])
-            )
-        except Exception:
-            # Fail soft: lite validator without tokenizer/config will
-            # reject its CPU stages on first model.config access; that
-            # matches the operator-visible "broken setup" semantics
-            # rather than silently letting bad verdicts through.
-            lite_tokenizer = None
-            lite_model_stub = None
+        # Load tokenizer + AutoConfig only (no GPU). Mirror mode
+        # doesn't need either (zero CPU stages run), but loading them
+        # is cheap and harmless.
+        if validator_mode == VALIDATOR_MODE_LITE:
+            try:
+                from transformers import AutoTokenizer
+                from .lite_verifier import _build_lite_model_stub
+                lite_tokenizer = AutoTokenizer.from_pretrained(
+                    str(task_batch_artifact["payload"]["model_ref"])
+                )
+                lite_model_stub = _build_lite_model_stub(
+                    str(task_batch_artifact["payload"]["model_ref"])
+                )
+            except Exception:
+                # Fail soft: lite validator without tokenizer/config will
+                # reject its CPU stages on first model.config access; that
+                # matches the operator-visible "broken setup" semantics
+                # rather than silently letting bad verdicts through.
+                lite_tokenizer = None
+                lite_model_stub = None
 
     # Batched proof verification: one forward pass per (miner, window)
     # group instead of per-completion. Mirrors the miner's batched
@@ -167,9 +175,16 @@ def validate_window(
         rollout_key = (payload["task_id"], int(payload.get("sample_index", 0)))
         duplicate_task = rollout_key in seen_rollout_keys_by_miner[miner_id]
         seen_rollout_keys_by_miner[miner_id].add(rollout_key)
-        if validator_mode == VALIDATOR_MODE_LITE:
+        if is_lite_or_mirror:
             peer_verdicts = peer_verdicts_by_completion.get(
                 completion["artifact_id"], []
+            )
+            # Mirror mode: zero CPU stages → empty enabled set; the
+            # GPU-stage borrow alone decides the verdict.
+            enabled = (
+                frozenset()
+                if validator_mode == VALIDATOR_MODE_MIRROR
+                else None  # lite_verifier defaults to LITE_ENABLED_STAGES
             )
             report = verify_completion_lite(
                 cfg=cfg,
@@ -180,6 +195,7 @@ def validate_window(
                 model_stub=lite_model_stub,
                 peer_full_verdicts_for_completion=peer_verdicts,
                 quorum=int(cfg.get("lite_quorum", DEFAULT_LITE_QUORUM)),
+                enabled_stages=enabled,
             )
         else:
             report = verify_completion(
