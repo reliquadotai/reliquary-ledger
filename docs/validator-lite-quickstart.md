@@ -3,12 +3,29 @@
 A CPU-only Reliquary validator. Runs the 6 CPU stages of the 9-stage
 verifier independently and borrows the 3 GPU stages (sketch proof,
 logprob replay, distribution KL) from a quorum of full validators'
-published verdicts. No GPU. No env file. ~200 MB image, ~1 GB RAM,
+published verdicts. No GPU. No env file. ~1.3 GB image, ~1 GB RAM,
 $5/month VPS class.
 
-If you don't know whether you want lite or full: **want lite.** Full
-validator needs an H100-class GPU and full setup. Lite is what most
-operators run.
+The image lives at `ghcr.io/reliquadotai/reliquary-validator-lite:latest`
+and is rebuilt automatically on every commit to `main` via
+`.github/workflows/docker-ghcr-publish-lite.yml`. Watchtower
+auto-pulls fresh tags.
+
+If you don't know whether you want lite, full, or mirror: **want
+lite.** Full validator needs an H100-class GPU + full setup; mirror
+is even lower-friction but contributes zero independent verification
+signal. Lite is the sweet spot.
+
+## Three validator tiers
+
+| Tier | What it runs | Image | GPU? | Earns weights? | Use case |
+|---|---|---|---|---|---|
+| Full | All 9 stages independently | `ghcr.io/reliquadotai/reliquary-ledger:latest` | yes | yes | the canonical mainnet validator we run |
+| **Lite** | 6 CPU stages independently + 3 GPU stages borrowed from quorum | `ghcr.io/reliquadotai/reliquary-validator-lite:latest` | **no** | **yes** | external operator default |
+| Mirror | Zero stages — pure quorum aggregator | `ghcr.io/reliquadotai/reliquary-validator-lite:latest` (env override) | no | yes (no independent signal) | maximally low-friction; trust mesh fully |
+
+To switch a lite container into mirror mode: add `-e RELIQUARY_INFERENCE_VALIDATOR_MODE=mirror`
+to the run command.
 
 ## What lite does (vs full)
 
