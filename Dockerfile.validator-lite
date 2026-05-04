@@ -42,6 +42,13 @@ COPY pyproject.toml /opt/reliquary-ledger/
 COPY reliquary_inference /opt/reliquary-ledger/reliquary_inference
 COPY README.md /opt/reliquary-ledger/
 
+# reliquary-protocol is a sibling repo, expected at
+# ../reliquary-protocol relative to the build context. The lite image
+# build context is the reliquary-ledger root, so we copy from a
+# vendored ./vendor/reliquary-protocol/ directory that the bundle
+# step (or the GHA workflow) places before docker build runs.
+COPY vendor/reliquary-protocol /opt/reliquary-protocol
+
 # Core install. transformers + AutoTokenizer + AutoConfig still
 # transitively pull a torch install — but the lite image gets the
 # CPU-only torch wheel (~80 MB) instead of the full CUDA wheel
@@ -61,7 +68,9 @@ RUN pip install \
         prometheus-client \
         transformers==4.46.0 \
         tokenizers==0.20.0
-# editable install of reliquary-inference itself
+# editable install of reliquary-protocol first (reliquary-inference depends on it).
+RUN pip install --no-deps -e /opt/reliquary-protocol
+# editable install of reliquary-inference itself.
 RUN pip install --no-deps -e .
 
 # Hardcoded operator profile for testnet 462. The operator's only

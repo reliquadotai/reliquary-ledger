@@ -25,3 +25,6 @@ build/
 *.egg-info/
 .DS_Store
 .claude/
+
+# Vendored sibling repos for docker-build context (re-vendored via CI).
+vendor/
