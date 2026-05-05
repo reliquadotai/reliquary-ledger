@@ -172,3 +172,12 @@ to mainnet, observe 48h, then scale.
 Both auto-published via GHA on every push to main; tags are
 immutable per commit (sha-<short>) for pinned operator deploys,
 mutable (latest) for Watchtower auto-update operators.
+
+---
+
+## 2026-05-05 update — pagination fix shipped + strategic review
+
+* [@3ae6d5d](https://github.com/reliquadotai/reliquary-ledger/commit/3ae6d5d): R2 list_artifacts pagination fix (window-keyed mirror prefix). Closes the audit gap that was visibly biting on testnet — staging1's R2 account hit Cloudflare's HTTP-429 rate limit under concurrent load, blocking miners + lite probes. New code writes every window-bearing artifact to BOTH the flat prefix AND a `by_window/window-XXXXXXXX/` mirror; reads prefer the mirror when filtering by window (~1-2 GETs vs ~941). Falls back to flat scan for legacy data.
+* 10 by-window unit tests + 771 full-suite tests green.
+* Fleet redeployed (validators + miner restarted on the new code). Mirrors populate going forward as new artifacts land.
+* Strategic review committed off-repo at `private/reliquary-plan/audit/strategic-review-2026-05-05.md`. Honest take: technically solid + paper-worthy primitives; economically the value-capture story is the open question that only mainnet will answer. Recommendation: ship within 7 days; treat first 30 days as demand discovery; protocol paper draft in parallel.
