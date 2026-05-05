@@ -74,15 +74,51 @@ class LocalRegistry(RegistryBase):
     def _artifact_path(self, artifact_type: str, artifact_id: str) -> Path:
         return self.artifact_root / artifact_directory_name(artifact_type) / f"{artifact_id}.json"
 
+    def _by_window_dir(self, artifact_type: str, window_id: int) -> Path:
+        """Window-keyed mirror directory. See ObjectRegistry's
+        ``_by_window_prefix`` for the rationale; mirrored on the
+        local filesystem for consistency."""
+        return (
+            self.artifact_root
+            / artifact_directory_name(artifact_type)
+            / "by_window"
+            / f"window-{int(window_id):08d}"
+        )
+
+    def _by_window_artifact_path(
+        self, artifact_type: str, window_id: int, artifact_id: str
+    ) -> Path:
+        return self._by_window_dir(artifact_type, window_id) / f"{artifact_id}.json"
+
     def put_artifact(self, artifact: dict[str, Any]) -> Path:
         path = self._artifact_path(artifact["artifact_type"], artifact["artifact_id"])
         write_json(path, artifact)
+        # Window-keyed mirror — same rationale as ObjectRegistry.
+        window_id = artifact.get("window_id")
+        if window_id is not None:
+            try:
+                mirror_path = self._by_window_artifact_path(
+                    artifact["artifact_type"],
+                    int(window_id),
+                    artifact["artifact_id"],
+                )
+                mirror_path.parent.mkdir(parents=True, exist_ok=True)
+                write_json(mirror_path, artifact)
+            except Exception:
+                pass
         return path
 
     def get_artifact(self, artifact_type: str, artifact_id: str) -> dict[str, Any]:
         return read_json(self._artifact_path(artifact_type, artifact_id))
 
     def list_artifacts(self, artifact_type: str, *, window_id: int | None = None) -> list[dict[str, Any]]:
+        if window_id is not None:
+            mirror_dir = self._by_window_dir(artifact_type, int(window_id))
+            if mirror_dir.exists():
+                paths = sorted(mirror_dir.glob("*.json"))
+                if paths:
+                    return [read_json(p) for p in paths]
+            # Mirror miss → flat fallback below.
         directory = self.artifact_root / artifact_directory_name(artifact_type)
         if not directory.exists():
             return []
@@ -300,18 +336,71 @@ class ObjectRegistry(RegistryBase):
     def _artifact_key(self, artifact_type: str, artifact_id: str) -> str:
         return f"{artifact_directory_name(artifact_type)}/{artifact_id}.json"
 
+    def _by_window_prefix(self, artifact_type: str, window_id: int) -> str:
+        """Window-keyed mirror prefix. Audit-flagged perf path: a
+        ``list_artifacts(..., window_id=W)`` lookup against this prefix
+        returns the 1-2 keys for that window in a single LIST call,
+        instead of walking the full flat prefix (~941 keys on testnet
+        462 today; ~3,300 for scorecards). Closes the
+        ``list_artifacts pagination`` gap from the 2026-04-29
+        security audit + the multi-window lite-validator stall
+        reproduced on a fresh Targon pod 2026-05-04.
+        """
+        return f"{artifact_directory_name(artifact_type)}/by_window/window-{int(window_id):08d}/"
+
+    def _by_window_artifact_key(
+        self, artifact_type: str, window_id: int, artifact_id: str
+    ) -> str:
+        return f"{self._by_window_prefix(artifact_type, window_id)}{artifact_id}.json"
+
     def put_artifact(self, artifact: dict[str, Any]) -> str:
-        key = self._artifact_key(artifact["artifact_type"], artifact["artifact_id"])
-        self.store.put_bytes(key, json.dumps(artifact, indent=2, sort_keys=True).encode("utf-8"))
-        return key
+        flat_key = self._artifact_key(artifact["artifact_type"], artifact["artifact_id"])
+        body = json.dumps(artifact, indent=2, sort_keys=True).encode("utf-8")
+        self.store.put_bytes(flat_key, body)
+        # Write a window-keyed mirror IF the artifact carries a
+        # window_id. Best-effort — the flat write is the source of
+        # truth, the mirror is a list-fast-path optimisation.
+        window_id = artifact.get("window_id")
+        if window_id is not None:
+            try:
+                mirror_key = self._by_window_artifact_key(
+                    artifact["artifact_type"],
+                    int(window_id),
+                    artifact["artifact_id"],
+                )
+                self.store.put_bytes(mirror_key, body)
+            except Exception:
+                pass
+        return flat_key
 
     def get_artifact(self, artifact_type: str, artifact_id: str) -> dict[str, Any]:
         raw = self.store.get_bytes(self._artifact_key(artifact_type, artifact_id))
         return json.loads(raw.decode("utf-8"))
 
     def list_artifacts(self, artifact_type: str, *, window_id: int | None = None) -> list[dict[str, Any]]:
+        if window_id is not None:
+            # Fast path: window-keyed mirror prefix has just this
+            # window's artifacts (typically 1-2 keys). One LIST call
+            # instead of walking the entire flat prefix.
+            mirror_prefix = self._by_window_prefix(artifact_type, int(window_id))
+            mirror_refs = self.store.list_prefix(mirror_prefix)
+            if mirror_refs:
+                return [
+                    json.loads(self.store.get_bytes(r["key"]).decode("utf-8"))
+                    for r in mirror_refs
+                ]
+            # Mirror miss → fall back to the flat scan (handles legacy
+            # data written before the mirror was deployed).
         refs = self.store.list_prefix(artifact_directory_name(artifact_type))
-        artifacts = [json.loads(self.store.get_bytes(ref["key"]).decode("utf-8")) for ref in refs]
+        # Skip mirror entries during the legacy walk so we don't
+        # double-count when both prefixes have data for some window.
+        flat_refs = [
+            r for r in refs if "/by_window/" not in str(r.get("key", ""))
+        ]
+        artifacts = [
+            json.loads(self.store.get_bytes(ref["key"]).decode("utf-8"))
+            for ref in flat_refs
+        ]
         if window_id is not None:
             artifacts = [artifact for artifact in artifacts if int(artifact["window_id"]) == int(window_id)]
         return artifacts
