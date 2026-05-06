@@ -3,6 +3,8 @@
 [![Testnet Live](https://img.shields.io/badge/testnet-netuid_462-brightgreen)](docs/status.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+> **Looking for the canonical Reliquary subnet?** The mainnet implementation lives at **[`reliquadotai/reliquary`](https://github.com/reliquadotai/reliquary)** (subnet 81). The canonical design is an event-driven GRPO market where miners compete on **prompt-selection intelligence** — predicting which prompts sit at the policy's learning frontier and earning batch slots when they pick well — rather than on rollout volume. This repo (`reliquary-ledger`) hosts an earlier multi-validator-mesh exploration that informed the canonical design; the design notes + cross-GPU determinism audits remain here for reference and reproducibility.
+
 # Reliquary Ledger
 
 **Reliquary Ledger** is the inference runtime for [Reliquary](https://github.com/reliquadotai/reliquary-forge),
