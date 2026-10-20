@@ -28,3 +28,15 @@ build/
 
 # Vendored sibling repos for docker-build context (re-vendored via CI).
 vendor/
+
+/test-results/
+
+/.private-research/
+
+/reports/private/
+
+*.private.*
+.coverage
+.coverage.*
+.ruff_cache/
+htmlcov/
