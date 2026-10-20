@@ -11,6 +11,10 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,7 +22,10 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v4
       - name: Install
-        run: uv pip install --system -e ".[dev]"
+        run: |
+          uv pip install --system torch==2.7.0 --index-url https://download.pytorch.org/whl/cpu
+          uv pip install --system "reliquary-protocol @ git+https://github.com/reliquadotai/reliquary-protocol@a54a79c3c327ec9002cf72b816ffb34ba54201e8"
+          uv pip install --system -e ".[dev]"
       - name: PyCompile
         run: python -m py_compile $(find reliquary_inference tests -name '*.py' -print)
       - name: Pytest
